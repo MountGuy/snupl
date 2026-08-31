@@ -107,8 +107,8 @@ Expr *parse_alt(Parser *parser)
         Expr *expr2 = parse_alt(parser);
         Expr *expr = alloc_arena(parser);
         expr->kind = E_ALT;
-        expr->alt.l_expr = expr1;
-        expr->alt.r_expr = expr2;
+        expr->binary.l_expr = expr1;
+        expr->binary.r_expr = expr2;
         #ifdef debug
         printf("return alt\n");
         #endif
@@ -120,8 +120,8 @@ Expr *parse_alt(Parser *parser)
         Expr *expr2 = parse_con(parser);
         Expr *expr = alloc_arena(parser);
         expr->kind = E_CON;
-        expr->con.l_expr = expr1;
-        expr->con.r_expr = expr2;
+        expr->binary.l_expr = expr1;
+        expr->binary.r_expr = expr2;
         #ifdef debug
         printf("return alt\n");
         #endif
@@ -153,8 +153,8 @@ Expr *parse_con(Parser *parser)
         Expr *expr2 = parse_con(parser);
         Expr *expr = alloc_arena(parser);
         expr->kind = E_CON;
-        expr->con.l_expr = expr1;
-        expr->con.r_expr = expr2;
+        expr->binary.l_expr = expr1;
+        expr->binary.r_expr = expr2;
         #ifdef debug
         printf("return con\n");
         #endif
@@ -191,7 +191,7 @@ Expr *parse_prime(Parser *parser)
                 advance_parser(parser);
                 Expr *expr_new = alloc_arena(parser);
                 expr_new->kind = groups[i][2];
-                expr_new->grp.expr = expr;
+                expr_new->unary.expr = expr;
                 #ifdef debug
                 printf("return prime\n");
                 #endif
@@ -209,7 +209,7 @@ Expr *parse_prime(Parser *parser)
             advance_parser(parser);
             Expr *expr = alloc_arena(parser);
             expr->kind = E_LETS;
-            strcpy(expr->lets.letters.string, i_tok->token);
+            strcpy(expr->identity.string, i_tok->token);
             #ifdef debug
             printf("return prime\n");
             #endif
@@ -220,7 +220,7 @@ Expr *parse_prime(Parser *parser)
             advance_parser(parser);
             Expr *expr = alloc_arena(parser);
             expr->kind = E_IDENT;
-            strcpy(expr->ident.identity.string, i_tok->token);
+            strcpy(expr->identity.string, i_tok->token);
             #ifdef debug
             printf("return prime\n");
             #endif

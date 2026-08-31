@@ -15,7 +15,6 @@ char *ebnf_lparen = "(",
      *ebnf_con = ",";
 
 
-
 void print_tokens(int tok_n, Token *tokens)
 {
     for (int i = 0; i < tok_n; i++)
@@ -59,50 +58,50 @@ void print_expr(Expr *expr)
         case E_ALT:
         {
             printf("<");
-            print_expr(expr->alt.l_expr);
+            print_expr(expr->binary.l_expr);
             printf(" | ");
-            print_expr(expr->alt.r_expr);
+            print_expr(expr->binary.r_expr);
             printf(">");
             break;
         }
         case E_CON:
         {
             printf("<");
-            print_expr(expr->con.l_expr);
+            print_expr(expr->binary.l_expr);
             printf(" , ");
-            print_expr(expr->con.r_expr);
+            print_expr(expr->binary.r_expr);
             printf(">");
             break;
         }
         case E_OPT:
         {
             printf("[");
-            print_expr(expr->opt.expr);
+            print_expr(expr->unary.expr);
             printf("]");
             break;
         }
         case E_REP:
         {
             printf("{");
-            print_expr(expr->opt.expr);
+            print_expr(expr->unary.expr);
             printf("}");
             break;
         }
         case E_GRP:
         {
             printf("(");
-            print_expr(expr->opt.expr);
+            print_expr(expr->unary.expr);
             printf(")");
             break;
         }
         case E_LETS:
         {
-            printf("\"%s\"", expr->lets.letters.string);
+            printf("\"%s\"", expr->identity.string);
             break;
         }
         case E_IDENT:
         {
-            printf("%s", expr->ident.identity.string);
+            printf("%s", expr->identity.string);
             break;
         }
         default:
