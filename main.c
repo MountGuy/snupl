@@ -31,6 +31,7 @@ int main(int argv, char *argc[])
     Token *tokens = (Token*) malloc(sizeof(Token) * (char_num + 10));
     
     fread(buf, 1, char_num, fp);
+    buf[char_num] = c_null;
     Lexer lexer;
     ebnf_lexer(buf, &lexer, tokens);
 

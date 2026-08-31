@@ -11,7 +11,7 @@ void advance_parser(Parser *parser);
 Token *peek_tok(Parser *parser);
 Expr *alloc_expr(Parser *parser);
 
-void print_tokens(int tok_n, Token *tokens);
+void print_tokens(int tok_num, Token *tokens);
 void print_expr(Expr *expr);
 void print_parser(Parser *parser);
 

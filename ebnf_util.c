@@ -15,9 +15,9 @@ char *S_LPAREN = "(", *S_RPAREN = ")",
      *S_ALTER = "|", *S_CONCAT = ",";
 
 
-void print_tokens(int tok_n, Token *tokens)
+void print_tokens(int tok_num, Token *tokens)
 {
-    for (int i = 0; i < tok_n; i++)
+    for (int i = 0; i < tok_num; i++)
     {
         // printf("%p %s\n", tokens[i].string, tokens[i].string);
     }

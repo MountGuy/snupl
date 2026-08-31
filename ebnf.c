@@ -122,6 +122,7 @@ int ebnf_parser(Lexer *lexer, Token *tokens)
     while (parser.pos < parser.tok_num)
         parse_define(&parser);
 
+    return 0;
 }
 
 Expr *parse_define(Parser *parser)
@@ -156,7 +157,6 @@ Expr *parse_alter(Parser *parser)
 {
     Expr *curr_expr = parse_concat(parser);
     Token *tok = peek_tok(parser);
-    TType ttype = tok->ttype;
 
     switch (tok->string[0])
     {
@@ -174,6 +174,8 @@ Expr *parse_alter(Parser *parser)
         case C_END:
             return curr_expr;
         default:
+            printf("unexpected parsing: parse alter\n");
+            exit(1);
     }
 
 }
@@ -182,7 +184,6 @@ Expr *parse_concat(Parser *parser)
 {
     Expr *curr_expr = parse_primary(parser);
     Token *tok = peek_tok(parser);
-    TType ttype = tok->ttype;
 
     switch (tok->string[0])
     {
@@ -201,6 +202,8 @@ Expr *parse_concat(Parser *parser)
         case C_END:
             return curr_expr;
         default:
+            printf("unexpected parsing: parse concat\n");
+            exit(1);
     }
 }
 
@@ -241,6 +244,13 @@ Expr *parse_primary(Parser *parser)
                     }
                 }
             }
+            printf("unexpected parsing: parse primary\n");
+            exit(1);
+        }
+        default:
+        {
+            printf("unexpected parsing: parse primary\n");
+            exit(1);
         }
     }
 }

@@ -1,0 +1,51 @@
+module = "module" , ident , ";" , { constDeclaration | varDeclaration | subroutineDecl } , [ "begin" , statSequence ] , "end" , ident , "." ;
+
+letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "_" ;
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+hexdigit = digit | "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f" ;
+character = latin1char | "\n" | "\t" | "\"" | "\'" | "\\" | hexencoded ;
+hexencoded = "\x" , hexdigit , hexdigit ;
+char = "'" , ( character | "\0" ) , "'" ;
+string = '"' , { character } , '"' ;
+
+ident = letter , { letter | digit } ;
+number = digit , { digit } , [ "L" ] ;
+boolean = "true" | "false" ;
+type = basetype | type , "[" , [ simpleexpr ] , "]" ;
+basetype = "boolean" | "char" | "integer" | "longint" ;
+
+qualident = ident , { "[" , simpleexpr , "]" } ;
+factOp = "*" | "/" | "&&" ;
+termOp = "+" | "-" | "||" ;
+relOp = "=" | "#" | "<" | "<=" | ">" | ">=" ;
+
+factor = qualident | number | boolean | char | string | "(" , expression , ")" | subroutineCall | "!" , factor ;
+term = factor , { factOp , factor } ;
+simpleexpr = [ "+" | "-" ] , term , { termOp , term } ;
+expression = simpleexpr , [ relOp , simpleexpr ] ;
+
+assignment = qualident , ":=" , expression ;
+subroutineCall = ident , "(" , [ expression , { "," , expression } ] , ")" ;
+ifStatement = "if" , "(" , expression , ")" , "then" , statSequence , [ "else" , statSequence ] , "end" ;
+whileStatement = "while" , "(" , expression , ")" , "do" , statSequence , "end" ;
+returnStatement = "return" , [ expression ] ;
+
+statement = assignment | subroutineCall | ifStatement | whileStatement | returnStatement ;
+statSequence = [ statement , { ";" , statement } ] ;
+
+constDeclaration = [ "const" , constDeclSequence ] ;
+constDeclSequence = constDecl , ";" , { constDecl , ";" } ;
+constDecl = varDecl , "=" , expression ;
+
+varDeclaration = [ "var" , varDeclSequence , ";" ] ;
+varDeclSequence = varDecl , { ";" , varDecl } ;
+varDecl = ident , { "," , ident } , ":" , type ;
+
+subroutineDecl = ( procedureDecl | functionDecl ) , ( "extern" | subroutineBody , ident ) , ";" ;
+procedureDecl = "procedure" , ident , [ formalParam ] , ";" ;
+functionDecl = "function" , ident , [ formalParam ] , ":" , type , ";" ;
+formalParam = "(" , [ varDeclSequence ] , ")" ;
+subroutineBody = { constDeclaration | varDeclaration } , "begin" , statSequence , "end" ;
+
+comment = "//" , { notnewline } , "\n" ;
+whitespace = { " " | "\t" | "\n" } ;
