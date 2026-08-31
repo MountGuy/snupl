@@ -27,11 +27,13 @@ int main(int argv, char *argc[])
     int char_num = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    char *buf = (char*) malloc(sizeof(char) * char_num);
-    Token *tokens = (Token*) malloc(sizeof(Token) * char_num);
+    char *buf = (char*) malloc(sizeof(char) * (char_num + 10));
+    Token *tokens = (Token*) malloc(sizeof(Token) * (char_num + 10));
     
     fread(buf, 1, char_num, fp);
     Lexer lexer;
     ebnf_lexer(buf, &lexer, tokens);
+
+    ebnf_parser(&lexer, tokens);
     return 0;
 }

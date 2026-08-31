@@ -23,7 +23,7 @@ void print_tokens(int tok_n, Token *tokens)
 {
     for (int i = 0; i < tok_n; i++)
     {
-        printf("%p %s\n", tokens[i].token, tokens[i].token);
+        printf("%p %s\n", tokens[i].string, tokens[i].string);
     }
 }
 
@@ -108,6 +108,18 @@ void print_expr(Expr *expr)
             printf("%s", expr->identity.string);
             break;
         }
+        case E_END:
+        {
+            printf("\n");
+            break;
+        }
+        case E_DEF:
+        {
+            printf("%s := ", expr->definition.string);
+            print_expr(expr->definition.expr);
+            printf("\n");
+            break;
+        }
         default:
         {
             printf("error on print expr\n");
@@ -124,12 +136,12 @@ void print_parser(Parser *parser)
     printf(">>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     for (int i = 0; i < parser->pos; i++)
     {
-        printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].token);
+        printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].string);
     }
     printf("\n");
     for (int i = parser->pos; i < parser->tok_num; i++)
     {
-        printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].token);
+        printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].string);
     }
     printf("<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 }

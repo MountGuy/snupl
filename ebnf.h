@@ -8,6 +8,7 @@
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens);
 int ebnf_parser(Lexer *lexer, Token *tokens);
 
+Expr *parse_def(Parser *parser);
 Expr *parse_alt(Parser *parser);
 Expr *parse_con(Parser *parser);
 Expr *parse_prime(Parser *parser);

@@ -1,10 +1,10 @@
 #ifndef STRUCT_H
 #define STRUCT_H 1
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR, T_END } TType;
-typedef struct { char *token; TType ttype; } Token;
+typedef struct { char *string; TType ttype; } Token;
 
 
-typedef enum { E_ALT, E_CON, E_OPT, E_REP, E_GRP, E_LETS, E_IDENT, E_TMP } ExprKind;
+typedef enum { E_ALT, E_CON, E_OPT, E_REP, E_GRP, E_LETS, E_IDENT, E_TMP, E_END, E_DEF } ExprKind;
 
 typedef struct Expr {
     ExprKind kind;
@@ -12,6 +12,7 @@ typedef struct Expr {
         struct { struct Expr *l, *r; } binary;
         struct { struct Expr *expr; } unary;
         struct { char *string; } identity;
+        struct { char *string; struct Expr *expr;} definition;
         struct {} tmp;
     };
 } Expr;

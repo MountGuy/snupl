@@ -22,6 +22,7 @@ void print_parser(Parser *parser);
 #define C_RPAREN ')'
 #define C_RBRACE '}'
 #define C_RBRAKET ']'
+#define C_END ';'
 #define C_DEFINE '='
 #define C_ALTER '|'
 #define C_CONCAT ','
