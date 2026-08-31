@@ -47,20 +47,20 @@ void print_expr(Expr *expr)
     {
         case E_ALT:
         {
-            printf("(");
+            printf("<");
             print_expr(expr->alt.l_expr);
             printf(" | ");
             print_expr(expr->alt.r_expr);
-            printf(")");
+            printf(">");
             break;
         }
         case E_CON:
         {
-            printf("(");
+            printf("<");
             print_expr(expr->con.l_expr);
             printf(" , ");
             print_expr(expr->con.r_expr);
-            printf(")");
+            printf(">");
             break;
         }
         case E_OPT:
@@ -91,7 +91,7 @@ void print_expr(Expr *expr)
         }
         case E_IDENT:
         {
-            printf("<%s>", expr->ident.identity.string);
+            printf("%s", expr->ident.identity.string);
             break;
         }
         default:
@@ -196,7 +196,7 @@ Expr *parse_con(Parser *parser)
     if (tok->ttype == T_OPERATOR && TTOK_C(tok) == ',')
     {
         enhance_parser(parser);
-        Expr *expr2 = parse_prime(parser);
+        Expr *expr2 = parse_con(parser);
         Expr *expr = enhance_arena(parser);
         expr->kind = E_CON;
         expr->con.l_expr = expr1;

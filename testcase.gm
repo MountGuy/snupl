@@ -1,0 +1,67 @@
+concatTwo = a , b
+concatThree = a , b , c
+concatFour = a , b , c , d
+
+altTwo = a | b
+altThree = a | b | c
+altFive = a | b | c | d | e
+
+mixedBoth = a , b | c , d
+altThenConcat = a | b , c , d
+altConcatAlt = a | b , c | d
+
+groupSimple = ( a )
+optSimple = [ a ]
+repSimple = { a }
+groupConcat = ( a , b , c )
+groupFour = ( a , b , c , d )
+groupAlt = ( a | b )
+optAlt = [ a | b ]
+repConcat = { a , b }
+optConcat = [ a , b ]
+repAlt = { a | b }
+
+nestedGroup = ( ( a ) )
+nestedTriple = ( ( ( a ) ) )
+nestedMixed = { [ ( a ) ] }
+deepNest = ( ( ( ( ( ( ( ( ( ( a ) ) ) ) ) ) ) ) ) )
+groupSeq = ( a | b ) , ( c | d )
+groupAltGroup = ( a , b ) | ( c , d )
+nestedDeep = ( a , { b , [ c | d ] } )
+optInRep = { a , [ b ] }
+repInOpt = [ a , { b } ]
+
+stringOnly = "x"
+stringAlt = "a" | "b"
+stringConcat = "a" , "b" , "c"
+stringSpace = " "
+stringEscape = "\n" | "\t"
+stringOps = "|" , "," , "(" , ")"
+stringBraces = "[" | "]" | "{" | "}"
+stringAssign = ":="
+mixedTerms = a , "b" , c
+mixedGroup = ( "a" | b ) , "c"
+
+noSpaces = a,b,c
+tightGroup = (a|b),c
+tightNest = {[a|b]}
+tightAll = (a,b)|(c,d)
+
+concatFive = a , b , c , d , e
+concatSix = a , b , c , d , e , f
+concatSeven = a , b , c , d , e , f , g
+concatThenAlt = a , b , c | d
+longMixed = a , b , c | d , e , f
+concatThenOpt = a , b , c , [ d ]
+realistic = ident , ":=" , expr , ";" , ident , "."
+
+longNameTrunc = aVeryLongNonterminalNameHere
+
+concatInGroup = ( a , b , c , d , e )
+optConcatFive = [ a , b , c , d , e ]
+repConcatFive = { a , b , c , d , e }
+groupConcatAlt = ( a , b , c | d )
+
+ruleWithDigit1 = a
+
+arenaOverflow = x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x

@@ -14,7 +14,7 @@ int lexer(char *str, Token *tokens)
         else if (is_char(*c))
         {
             char *start = c;
-            while (is_char(*(c+1))) c++;
+            while (is_char(*(c+1)) || is_digit(*(c+1))) c++;
             strncpy(tokens[tok_n].token, start, c - start + 1);
             tokens[tok_n].token[c - start + 1] = c_null;
             tokens[tok_n].ttype = T_IDENTITY;
