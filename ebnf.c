@@ -8,117 +8,48 @@
 // #define debug
 #define TTOK_C(t) ((t)->token[0])
 
-char parens[][3] = { {'(', ')', E_GRP}, {'{', '}', E_REP}, {'[', ']', E_OPT}};
-
-void enhance_parser(Parser *parser)
+int ebnf_lexer(char *buf, Token *tokens)
 {
-    #ifdef debug
-    printf("consume %s\n", parser->tokens[parser->pos]);
-    #endif
-    parser->pos++;
-}
+    int tok_n = 0;
 
-Token *peek_tok(Parser *parser)
-{
-    return parser->tokens + parser->pos;
-}
-
-Expr *enhance_arena(Parser *parser)
-{
-    Expr *expr = parser->arena + parser->arena_num;
-    parser->arena_num++;
-
-    return expr;
-}
-
-int parser_end(Parser *parser)
-{
-    return parser->tokens[parser->pos].ttype == T_END;
-}
-
-void print_expr(Expr *expr)
-{
-    // #ifndef debug
-    // return;
-    // #endif
-    ExprKind kind = expr->kind;
-
-    switch (kind)
+    for (char *c = buf; *c; c++)
     {
-        case E_ALT:
+        if (*c == ' ') continue;
+        else if (*c == '\n')
         {
-            printf("<");
-            print_expr(expr->alt.l_expr);
-            printf(" | ");
-            print_expr(expr->alt.r_expr);
-            printf(">");
-            break;
+            tokens[tok_n].token = ebnf_end;
+            tokens[tok_n].ttype = T_END;
+            *c = c_null;
         }
-        case E_CON:
+        else if (is_char(*c))
         {
-            printf("<");
-            print_expr(expr->con.l_expr);
-            printf(" , ");
-            print_expr(expr->con.r_expr);
-            printf(">");
-            break;
+            char *start = c;
+            while (is_char(*(c + 1)) || is_digit(*(c + 1))) c++;
+            strncpy(tokens[tok_n].token, start, c - start + 1);
+            tokens[tok_n].token[c - start + 1] = c_null;
+            tokens[tok_n].ttype = T_IDENTITY;
+            // printf("%s %d %d %d\n", tokens[tok_n].token, tok_n, start - str, c - start + 1);
         }
-        case E_OPT:
+        else if (*c == '\"')
         {
-            printf("[");
-            print_expr(expr->opt.expr);
-            printf("]");
-            break;
+            char *start = c;
+            c++;
+            while (*c != '\"') c++;
+            strncpy(tokens[tok_n].token, start + 1, c - start - 1);
+            tokens[tok_n].token[c - start - 1] = c_null;
+            tokens[tok_n].ttype = T_STRING;
+            // printf("%s %d %d %d\n", tokens[tok_n].token, tok_n, start + 1 - str, c - start - 1);
         }
-        case E_REP:
-        {
-            printf("{");
-            print_expr(expr->opt.expr);
-            printf("}");
-            break;
+        else {
+            tokens[tok_n].token[0] = *c;
+            tokens[tok_n].token[1] = c_null;
+            tokens[tok_n].ttype = T_OPERATOR;
         }
-        case E_GRP:
-        {
-            printf("(");
-            print_expr(expr->opt.expr);
-            printf(")");
-            break;
-        }
-        case E_LETS:
-        {
-            printf("\"%s\"", expr->lets.letters.string);
-            break;
-        }
-        case E_IDENT:
-        {
-            printf("%s", expr->ident.identity.string);
-            break;
-        }
-        default:
-        {
-            printf("error on print expr\n");
-            break;
-        }
+        tok_n++;
+    }
+    tokens[tok_n].ttype = T_END;
 
-    }
-}
-
-void print_parser(Parser *parser)
-{
-    #ifndef debug
-    return;
-    #endif
-    printf(">>>>>>>>>>>>>>>>>\n");
-    for (int i = 0; i < parser->pos; i++)
-    {
-        printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].token);
-    }
-    printf("\n");
-    for (int i = parser->pos; i < parser->tok_num; i++)
-    {
-        printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].token);
-    }
-    printf("<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+    return tok_n;
 }
 
 int ebnf_parser(int tok_num, Token *tokens)
@@ -149,9 +80,9 @@ Expr *parse_alt(Parser *parser)
     Token *tok = peek_tok(parser);
     if (tok->ttype == T_OPERATOR && TTOK_C(tok) == '|')
     {
-        enhance_parser(parser);
+        advance_parser(parser);
         Expr *expr2 = parse_alt(parser);
-        Expr *expr = enhance_arena(parser);
+        Expr *expr = alloc_arena(parser);
         expr->kind = E_ALT;
         expr->alt.l_expr = expr1;
         expr->alt.r_expr = expr2;
@@ -162,9 +93,9 @@ Expr *parse_alt(Parser *parser)
     }
     else if (tok->ttype == T_OPERATOR && TTOK_C(tok) == ',')
     {
-        enhance_parser(parser);
+        advance_parser(parser);
         Expr *expr2 = parse_con(parser);
-        Expr *expr = enhance_arena(parser);
+        Expr *expr = alloc_arena(parser);
         expr->kind = E_CON;
         expr->con.l_expr = expr1;
         expr->con.r_expr = expr2;
@@ -195,9 +126,9 @@ Expr *parse_con(Parser *parser)
 
     if (tok->ttype == T_OPERATOR && TTOK_C(tok) == ',')
     {
-        enhance_parser(parser);
+        advance_parser(parser);
         Expr *expr2 = parse_con(parser);
-        Expr *expr = enhance_arena(parser);
+        Expr *expr = alloc_arena(parser);
         expr->kind = E_CON;
         expr->con.l_expr = expr1;
         expr->con.r_expr = expr2;
@@ -225,18 +156,18 @@ Expr *parse_prime(Parser *parser)
     Token *i_tok = peek_tok(parser);
     // print_parser(parser);
 
-    for (int i = 0; i < sizeof(parens) / sizeof(parens[0]); i++)
+    for (int i = 0; i < sizeof(groups) / sizeof(groups[0]); i++)
     {
-        if (i_tok->ttype == T_OPERATOR && TTOK_C(i_tok) == parens[i][0])
+        if (i_tok->ttype == T_OPERATOR && TTOK_C(i_tok) == groups[i][0])
         {
-            enhance_parser(parser);
+            advance_parser(parser);
             Expr *expr = parse_alt(parser);
             Token *f_tok = peek_tok(parser);
-            if (f_tok->ttype == T_OPERATOR && TTOK_C(f_tok) == parens[i][1] || f_tok->ttype == T_END)
+            if (f_tok->ttype == T_OPERATOR && TTOK_C(f_tok) == groups[i][1] || f_tok->ttype == T_END)
             {
-                enhance_parser(parser);
-                Expr *expr_new = enhance_arena(parser);
-                expr_new->kind = parens[i][2];
+                advance_parser(parser);
+                Expr *expr_new = alloc_arena(parser);
+                expr_new->kind = groups[i][2];
                 expr_new->grp.expr = expr;
                 #ifdef debug
                 printf("return prime\n");
@@ -245,15 +176,15 @@ Expr *parse_prime(Parser *parser)
             }
             else
             {
-                printf("%d %s %c %c\n", f_tok->ttype, f_tok->token, parens[i][0], parens[i][1]);
+                printf("%d %s %c %c\n", f_tok->ttype, f_tok->token, groups[i][0], groups[i][1]);
                 printf("return prime with null\n");
                 return p_null;
             }
         }
         if (i_tok->ttype == T_STRING)
         {
-            enhance_parser(parser);
-            Expr *expr = enhance_arena(parser);
+            advance_parser(parser);
+            Expr *expr = alloc_arena(parser);
             expr->kind = E_LETS;
             strcpy(expr->lets.letters.string, i_tok->token);
             #ifdef debug
@@ -263,8 +194,8 @@ Expr *parse_prime(Parser *parser)
         }
         if (i_tok->ttype == T_IDENTITY)
         {
-            enhance_parser(parser);
-            Expr *expr = enhance_arena(parser);
+            advance_parser(parser);
+            Expr *expr = alloc_arena(parser);
             expr->kind = E_IDENT;
             strcpy(expr->ident.identity.string, i_tok->token);
             #ifdef debug

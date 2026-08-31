@@ -5,7 +5,6 @@
 #include <ctype.h>
 
 #include "common.h"
-#include "lexer.h"
 #include "ebnf.h"
 
 
@@ -24,9 +23,15 @@ int main(int argv, char *argc[])
         return 1;
     }
 
-    char buf[500], *line;
-    Token tokens[100];
-    int stack = 0;
+    fseek(fp, 0, SEEK_END);
+    int file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    char *buf = (char*) malloc(sizeof(char) * file_size);
+    Token *tokens = (Token*) malloc(sizeof(Token) * file_size);
+    
+    fread(buf, 1, file_size, fp);
+    int tok_num = ebnf_lexer(buf, tokens);
 
     while (true)
     {
@@ -35,7 +40,7 @@ int main(int argv, char *argc[])
         // printf("buf: %s\n", buf);
         buf[strcspn(buf, "\n")] = c_null;
 
-        int tok_num = lexer(buf, tokens);
+        int tok_num = ebnf_lexer(buf, tokens);
         // printf("tok_num: %d\n", tok_num);
         ebnf_parser(tok_num, tokens);
         // for (int i = 0; i < tok_num; i++)

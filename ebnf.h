@@ -1,3 +1,8 @@
+#ifndef EBNF_H
+#define EBNF_H 1
+
+#include "common.h"
+
 typedef enum { E_ALT, E_CON, E_OPT, E_REP, E_GRP, E_LETS, E_IDENT, E_TMP } ExprKind;
 
 typedef struct Expr {
@@ -23,11 +28,31 @@ typedef struct {
     int arena_num;
 } Parser;
 
-int compare_peek(Parser *parser, char *target);
+int ebnf_lexer(char *buf, Token *tokens);
 int ebnf_parser(int tok_num, Token *tokens);
 
-Token *peek_tok(Parser *parser);
-Expr *enhance_arena(Parser *parser);
 Expr *parse_alt(Parser *parser);
 Expr *parse_con(Parser *parser);
 Expr *parse_prime(Parser *parser);
+
+#define L_PAREN '('
+#define L_BRACE '{'
+#define L_BRAKET '['
+#define R_PAREN ')'
+#define R_BRACE '}'
+#define R_BRAKET ']'
+
+char groups[][3] = {{L_PAREN, R_PAREN, E_GRP}, {L_BRACE, R_BRACE, E_REP}, {L_BRAKET, R_BRAKET, E_OPT}};
+
+char *ebnf_lparen = "(";
+char *ebnf_rparen = ")";
+char *ebnf_lbrace = "{";
+char *ebnf_rbrace = "}";
+char *ebnf_lbraket = "[";
+char *ebnf_rbraket = "]";
+char *ebnf_end = "\n";
+char *ebnf_alt = "|";
+char *ebnf_con = ",";
+
+
+#endif

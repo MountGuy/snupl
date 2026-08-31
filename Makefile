@@ -1,5 +1,6 @@
 all: scanner
 	./scanner snupl1.gm
+	./scanner testcase.gm
 
 test: scanner testcase.gm
 	./scanner testcase.gm
