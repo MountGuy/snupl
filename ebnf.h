@@ -5,13 +5,14 @@
 #include "struct.h"
 #include "ebnf_util.h"
 
+char *search_asset(Lexer *lexer, char *target);
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens);
 int ebnf_parser(Lexer *lexer, Token *tokens);
 
-Expr *parse_def(Parser *parser);
-Expr *parse_alt(Parser *parser);
-Expr *parse_con(Parser *parser);
-Expr *parse_prime(Parser *parser);
+Expr *parse_define(Parser *parser);
+Expr *parse_alter(Parser *parser);
+Expr *parse_concat(Parser *parser);
+Expr *parse_primary(Parser *parser);
 
 
 #endif

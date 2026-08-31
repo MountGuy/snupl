@@ -1,5 +1,5 @@
 #ifndef COMMON_H
-#define COMMON_H
+#define COMMON_H 1
 
 #define p_null NULL
 #define c_null ('\0')

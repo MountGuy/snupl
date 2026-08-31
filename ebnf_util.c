@@ -8,29 +8,24 @@ char groups[N_GROUPS][3] = {
     {C_LBRACE, C_RBRACE, E_REP},
     {C_LBRAKET, C_RBRAKET, E_OPT}
 };
-char *S_LPAREN = "(",
-     *S_RPAREN = ")",
-     *S_LBRACE = "{",
-     *S_RBRACE = "}",
-     *S_LBRAKET = "[",
-     *S_RBRAKET = "]",
-     *S_END = ";\n",
-     *S_DEFINE = "=",
-     *S_ALTER = "|",
-     *S_CONCAT = ",";
+char *S_LPAREN = "(", *S_RPAREN = ")",
+     *S_LBRACE = "{", *S_RBRACE = "}",
+     *S_LBRAKET = "[", *S_RBRAKET = "]",
+     *S_END = ";", *S_DEFINE = "=",
+     *S_ALTER = "|", *S_CONCAT = ",";
 
 
 void print_tokens(int tok_n, Token *tokens)
 {
     for (int i = 0; i < tok_n; i++)
     {
-        printf("%p %s\n", tokens[i].string, tokens[i].string);
+        // printf("%p %s\n", tokens[i].string, tokens[i].string);
     }
 }
 
 void advance_parser(Parser *parser)
 {
-    printf("(%d/%d) consume %s\n", parser->pos, parser->tok_num, parser->tokens[parser->pos].string);
+    // printf("(%d/%d) consume %s\n", parser->pos, parser->tok_num, parser->tokens[parser->pos].string);
     parser->pos++;
 }
 
@@ -43,14 +38,9 @@ Expr *alloc_expr(Parser *parser)
 {
     Expr *expr = parser->exprs + parser->expr_num;
     parser->expr_num++;
-    printf("expr num: %d\n", parser->expr_num);
+    // printf("expr num: %d\n", parser->expr_num);
 
     return expr;
-}
-
-int parser_end(Parser *parser)
-{
-    return parser->tokens[parser->pos].ttype == T_END;
 }
 
 void print_expr(Expr *expr)
