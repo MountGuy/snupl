@@ -2,17 +2,21 @@
 
 #include "ebnf_util.h"
 
-char groups[N_GROUPS][3] = {{L_PAREN, R_PAREN, E_GRP}, {L_BRACE, R_BRACE, E_REP}, {L_BRAKET, R_BRAKET, E_OPT}};
-char *ebnf_lparen = "(",
-     *ebnf_rparen = ")",
-     *ebnf_lbrace = "{",
-     *ebnf_rbrace = "}",
-     *ebnf_lbraket = "[",
-     *ebnf_rbraket = "]",
-     *ebnf_end = ";\n",
-     *ebnf_def = "=",
-     *ebnf_alt = "|",
-     *ebnf_con = ",";
+char groups[N_GROUPS][3] = {
+    {C_LPAREN, C_RPAREN, E_GRP},
+    {C_LBRACE, C_RBRACE, E_REP},
+    {C_LBRAKET, C_RBRAKET, E_OPT}
+};
+char *S_LPAREN = "(",
+     *S_RPAREN = ")",
+     *S_LBRACE = "{",
+     *S_RBRACE = "}",
+     *S_LBRAKET = "[",
+     *S_RBRAKET = "]",
+     *S_END = ";\n",
+     *S_DEFINE = "=",
+     *S_ALTER = "|",
+     *S_CONCAT = ",";
 
 
 void print_tokens(int tok_n, Token *tokens)
@@ -36,10 +40,10 @@ Token *peek_tok(Parser *parser)
     return parser->tokens + parser->pos;
 }
 
-Expr *alloc_arena(Parser *parser)
+Expr *alloc_expr(Parser *parser)
 {
-    Expr *expr = parser->arena + parser->arena_num;
-    parser->arena_num++;
+    Expr *expr = parser->exprs + parser->expr_num;
+    parser->expr_num++;
 
     return expr;
 }
@@ -58,18 +62,18 @@ void print_expr(Expr *expr)
         case E_ALT:
         {
             printf("<");
-            print_expr(expr->binary.l_expr);
+            print_expr(expr->binary.l);
             printf(" | ");
-            print_expr(expr->binary.r_expr);
+            print_expr(expr->binary.r);
             printf(">");
             break;
         }
         case E_CON:
         {
             printf("<");
-            print_expr(expr->binary.l_expr);
+            print_expr(expr->binary.l);
             printf(" , ");
-            print_expr(expr->binary.r_expr);
+            print_expr(expr->binary.r);
             printf(">");
             break;
         }

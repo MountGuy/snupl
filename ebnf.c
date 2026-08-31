@@ -46,7 +46,7 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
         if (*c == ' ' || *c == '\n') continue;
         else if (*c == ';')
         {
-            tokens[tok_num].token = ebnf_end;
+            tokens[tok_num].token = S_END;
             tokens[tok_num].ttype = T_END;
             *c = c_null;
         }
@@ -67,32 +67,32 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
         else {
             switch (*c)
             {
-                case L_PAREN:
-                tokens[tok_num].token = ebnf_lparen;
+                case C_LPAREN:
+                tokens[tok_num].token = S_LPAREN;
                 break;
-                case R_PAREN:
-                tokens[tok_num].token = ebnf_rparen;
+                case C_RPAREN:
+                tokens[tok_num].token = S_RPAREN;
                 break;
-                case L_BRACE:
-                tokens[tok_num].token = ebnf_lbrace;
+                case C_LBRACE:
+                tokens[tok_num].token = S_LBRACE;
                 break;
-                case R_BRACE:
-                tokens[tok_num].token = ebnf_rbrace;
+                case C_RBRACE:
+                tokens[tok_num].token = S_RBRACE;
                 break;
-                case L_BRAKET:
-                tokens[tok_num].token = ebnf_lbraket;
+                case C_LBRAKET:
+                tokens[tok_num].token = S_LBRAKET;
                 break;
-                case R_BRAKET:
-                tokens[tok_num].token = ebnf_rbraket;
+                case C_RBRAKET:
+                tokens[tok_num].token = S_RBRAKET;
                 break;
-                case '=':
-                tokens[tok_num].token = ebnf_def;
+                case C_DEFINE:
+                tokens[tok_num].token = S_DEFINE;
                 break;
-                case '|':
-                tokens[tok_num].token = ebnf_alt;
+                case C_ALTER:
+                tokens[tok_num].token = S_ALTER;
                 break;
-                case ',':
-                tokens[tok_num].token = ebnf_con;
+                case C_CONCAT:
+                tokens[tok_num].token = S_CONCAT;
                 break;
             }
             *c = c_null;
@@ -100,8 +100,6 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
         }
         tok_num++;
     }
-
-    print_tokens(tok_num, tokens);
 
     for (int i = 0; i < tok_num; i++)
     {
@@ -111,12 +109,11 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
             tokens[i].token = stored;
         }
     }
-    print_tokens(tok_num, tokens);
 
     lexer->tok_num = tok_num;
 }
 
-int ebnf_parser(int tok_num, Token *tokens)
+int ebnf_parser(Lexer *lexer, Token *tokens)
 {
 
     // printf("\ntokens: ");
@@ -139,45 +136,36 @@ Expr *parse_alt(Parser *parser)
     #ifdef debug
     printf("parse alt\n");
     #endif
-    Expr *expr1 = parse_con(parser);
-    if (parser_end(parser)) return expr1;
+    Expr *curr_expr = parse_con(parser);
+    if (parser_end(parser)) return curr_expr;
 
     Token *tok = peek_tok(parser);
-    if (tok->ttype == T_OPERATOR && TTOK_C(tok) == '|')
+    TType ttype = tok->ttype;
+    char *token = tok->token;
+
+
+    if (token == S_ALTER)
     {
         advance_parser(parser);
-        Expr *expr2 = parse_alt(parser);
-        Expr *expr = alloc_arena(parser);
-        expr->kind = E_ALT;
-        expr->binary.l_expr = expr1;
-        expr->binary.r_expr = expr2;
+        Expr *next_expr = parse_alt(parser);
+        Expr *new_expr = alloc_expr(parser);
+        new_expr->kind = E_ALT;
+        new_expr->binary.l = curr_expr;
+        new_expr->binary.r = next_expr;
         #ifdef debug
         printf("return alt\n");
         #endif
-        return expr;
+        return new_expr;
     }
-    else if (tok->ttype == T_OPERATOR && TTOK_C(tok) == ',')
-    {
-        advance_parser(parser);
-        Expr *expr2 = parse_con(parser);
-        Expr *expr = alloc_arena(parser);
-        expr->kind = E_CON;
-        expr->binary.l_expr = expr1;
-        expr->binary.r_expr = expr2;
-        #ifdef debug
-        printf("return alt\n");
-        #endif
-        return expr;
-    }
-    else if (TTOK_C(tok) == ')' || TTOK_C(tok) == '}' || TTOK_C(tok) == ']' || tok->ttype == T_END)
+    else if (token == S_RPAREN || token == S_RBRACE || token == S_RBRACE || token == S_END)
     {
         #ifdef debug
         printf("return alt\n");
         #endif
-        return expr1;
+        return curr_expr;
     }
     else {
-        printf("%d %c error on alt\n", tok->ttype, TTOK_C(tok));
+        printf("%d %s error on alt\n", ttype, token);
     }
 }
 
@@ -193,10 +181,10 @@ Expr *parse_con(Parser *parser)
     {
         advance_parser(parser);
         Expr *expr2 = parse_con(parser);
-        Expr *expr = alloc_arena(parser);
+        Expr *expr = alloc_expr(parser);
         expr->kind = E_CON;
-        expr->binary.l_expr = expr1;
-        expr->binary.r_expr = expr2;
+        expr->binary.l = expr1;
+        expr->binary.r = expr2;
         #ifdef debug
         printf("return con\n");
         #endif
@@ -231,7 +219,7 @@ Expr *parse_prime(Parser *parser)
             if (f_tok->ttype == T_OPERATOR && TTOK_C(f_tok) == groups[i][1] || f_tok->ttype == T_END)
             {
                 advance_parser(parser);
-                Expr *expr_new = alloc_arena(parser);
+                Expr *expr_new = alloc_expr(parser);
                 expr_new->kind = groups[i][2];
                 expr_new->unary.expr = expr;
                 #ifdef debug
@@ -249,7 +237,7 @@ Expr *parse_prime(Parser *parser)
         if (i_tok->ttype == T_STRING)
         {
             advance_parser(parser);
-            Expr *expr = alloc_arena(parser);
+            Expr *expr = alloc_expr(parser);
             expr->kind = E_LETS;
             strcpy(expr->identity.string, i_tok->token);
             #ifdef debug
@@ -260,7 +248,7 @@ Expr *parse_prime(Parser *parser)
         if (i_tok->ttype == T_IDENTITY)
         {
             advance_parser(parser);
-            Expr *expr = alloc_arena(parser);
+            Expr *expr = alloc_expr(parser);
             expr->kind = E_IDENT;
             strcpy(expr->identity.string, i_tok->token);
             #ifdef debug

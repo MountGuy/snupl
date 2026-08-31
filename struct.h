@@ -9,7 +9,7 @@ typedef enum { E_ALT, E_CON, E_OPT, E_REP, E_GRP, E_LETS, E_IDENT, E_TMP } ExprK
 typedef struct Expr {
     ExprKind kind;
     union {
-        struct { struct Expr *l_expr, *r_expr; } binary;
+        struct { struct Expr *l, *r; } binary;
         struct { struct Expr *expr; } unary;
         struct { char *string; } identity;
         struct {} tmp;
@@ -27,8 +27,8 @@ typedef struct {
     int pos;
     int tok_num;
 
-    Expr arena[100];
-    int arena_num;
+    Expr *exprs;
+    int expr_num;
 } Parser;
 
 

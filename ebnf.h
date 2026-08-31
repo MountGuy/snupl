@@ -6,7 +6,7 @@
 #include "ebnf_util.h"
 
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens);
-int ebnf_parser(int tok_num, Token *tokens);
+int ebnf_parser(Lexer *lexer, Token *tokens);
 
 Expr *parse_alt(Parser *parser);
 Expr *parse_con(Parser *parser);
