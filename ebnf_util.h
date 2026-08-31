@@ -6,11 +6,13 @@
 
 #define N_GROUPS 3
 
-void print_tokens(int tok_n, Token *tokens);
+
 void advance_parser(Parser *parser);
 Token *peek_tok(Parser *parser);
 Expr *alloc_arena(Parser *parser);
 int parser_end(Parser *parser);
+
+void print_tokens(int tok_n, Token *tokens);
 void print_expr(Expr *expr);
 void print_parser(Parser *parser);
 

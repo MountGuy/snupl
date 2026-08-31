@@ -24,14 +24,14 @@ int main(int argv, char *argc[])
     }
 
     fseek(fp, 0, SEEK_END);
-    int file_size = ftell(fp);
+    int char_num = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    char *buf = (char*) malloc(sizeof(char) * file_size);
-    Token *tokens = (Token*) malloc(sizeof(Token) * file_size);
+    char *buf = (char*) malloc(sizeof(char) * char_num);
+    Token *tokens = (Token*) malloc(sizeof(Token) * char_num);
     
-    fread(buf, 1, file_size, fp);
-    int tok_num = ebnf_lexer(buf, tokens);
-    print_tokens(tok_num, tokens);
+    fread(buf, 1, char_num, fp);
+    Lexer lexer;
+    ebnf_lexer(buf, &lexer, tokens);
     return 0;
 }

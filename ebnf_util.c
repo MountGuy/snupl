@@ -19,7 +19,7 @@ void print_tokens(int tok_n, Token *tokens)
 {
     for (int i = 0; i < tok_n; i++)
     {
-        printf(" %s", tokens[i].token);
+        printf("%p %s\n", tokens[i].token, tokens[i].token);
     }
 }
 

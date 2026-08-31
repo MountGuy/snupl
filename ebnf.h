@@ -3,8 +3,9 @@
 
 #include "common.h"
 #include "struct.h"
+#include "ebnf_util.h"
 
-int ebnf_lexer(char *buf, Token *tokens);
+void ebnf_lexer(char *input, Lexer *lexer, Token *tokens);
 int ebnf_parser(int tok_num, Token *tokens);
 
 Expr *parse_alt(Parser *parser);

@@ -17,6 +17,12 @@ typedef struct Expr {
 } Expr;
 
 typedef struct {
+    char *input;
+    char *asset, *top, **starts;
+    int char_num, asset_num, tok_num;
+} Lexer;
+
+typedef struct {
     Token *tokens;
     int pos;
     int tok_num;
@@ -24,4 +30,6 @@ typedef struct {
     Expr arena[100];
     int arena_num;
 } Parser;
+
+
 #endif

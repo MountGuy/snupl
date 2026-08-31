@@ -8,29 +8,58 @@
 // #define debug
 #define TTOK_C(t) ((t)->token[0])
 
-int ebnf_lexer(char *buf, Token *tokens)
+char *search_asset(Lexer *asset, char *target)
 {
-    int tok_n = 0;
+    for (int i = 0; i < asset->asset_num; i++)
+        if (strcmp(asset->starts[i], target) == 0)
+            return asset->starts[i];
 
-    for (char *c = buf; *c; c++)
+    int target_len = strlen(target);
+
+    strcpy(asset->top, target);
+    asset->starts[asset->asset_num] = asset->top;
+    asset->top += target_len + 1;
+    asset->asset_num += 1;
+    return asset->starts[asset->asset_num - 1];
+}
+
+void init_lexer(char *input, Lexer *lexer)
+{
+    int char_num = strlen(input);
+
+    lexer->input = input;
+    lexer->asset = (char*) malloc(sizeof(char) * char_num);
+    lexer->starts = (char**) malloc(sizeof(char*) * char_num);
+    lexer->top = lexer->asset;
+    lexer->asset_num = 0;
+
+}
+
+void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
+{
+    init_lexer(input, lexer);
+    
+    int tok_num = 0;
+
+    for (char *c = lexer->input; *c; c++)
     {
         if (*c == ' ' || *c == '\n') continue;
         else if (*c == ';')
         {
-            tokens[tok_n].token = ebnf_end;
-            tokens[tok_n].ttype = T_END;
+            tokens[tok_num].token = ebnf_end;
+            tokens[tok_num].ttype = T_END;
             *c = c_null;
         }
         else if (is_char(*c))
         {
-            tokens[tok_n].token = c;
-            tokens[tok_n].ttype = T_IDENTITY;
+            tokens[tok_num].token = c;
+            tokens[tok_num].ttype = T_IDENTITY;
             while (is_char(*(c + 1)) || is_digit(*(c + 1))) c++;
         }
         else if (*c == '\"')
         {
-            tokens[tok_n].token = c + 1;
-            tokens[tok_n].ttype = T_STRING;
+            tokens[tok_num].token = c + 1;
+            tokens[tok_num].ttype = T_STRING;
             *c = c_null;
             while (*c != '\"') c++;
             *c = c_null;
@@ -39,56 +68,69 @@ int ebnf_lexer(char *buf, Token *tokens)
             switch (*c)
             {
                 case L_PAREN:
-                tokens[tok_n].token = ebnf_lparen;
+                tokens[tok_num].token = ebnf_lparen;
                 break;
                 case R_PAREN:
-                tokens[tok_n].token = ebnf_rparen;
+                tokens[tok_num].token = ebnf_rparen;
                 break;
                 case L_BRACE:
-                tokens[tok_n].token = ebnf_lbrace;
+                tokens[tok_num].token = ebnf_lbrace;
                 break;
                 case R_BRACE:
-                tokens[tok_n].token = ebnf_rbrace;
+                tokens[tok_num].token = ebnf_rbrace;
                 break;
                 case L_BRAKET:
-                tokens[tok_n].token = ebnf_lbraket;
+                tokens[tok_num].token = ebnf_lbraket;
                 break;
                 case R_BRAKET:
-                tokens[tok_n].token = ebnf_rbraket;
+                tokens[tok_num].token = ebnf_rbraket;
                 break;
                 case '=':
-                tokens[tok_n].token = ebnf_def;
+                tokens[tok_num].token = ebnf_def;
                 break;
                 case '|':
-                tokens[tok_n].token = ebnf_alt;
+                tokens[tok_num].token = ebnf_alt;
                 break;
                 case ',':
-                tokens[tok_n].token = ebnf_con;
+                tokens[tok_num].token = ebnf_con;
                 break;
             }
             *c = c_null;
-            tokens[tok_n].ttype = T_OPERATOR;
+            tokens[tok_num].ttype = T_OPERATOR;
         }
-        tok_n++;
+        tok_num++;
     }
 
-    return tok_n;
+    print_tokens(tok_num, tokens);
+
+    for (int i = 0; i < tok_num; i++)
+    {
+        if (tokens[i].ttype == T_IDENTITY || tokens[i].ttype == T_STRING)
+        {
+            char *stored = search_asset(lexer, tokens[i].token);
+            tokens[i].token = stored;
+        }
+    }
+    print_tokens(tok_num, tokens);
+
+    lexer->tok_num = tok_num;
 }
 
 int ebnf_parser(int tok_num, Token *tokens)
 {
-    printf("\ntokens: ");
-    for (int i = 0; i < tok_num; i++)
-    {
-        printf("%s ", tokens[i].token);
-    }
-    printf("\n");
-    Parser parser = {0};
-    parser.tokens = tokens + 2;
-    parser.tok_num = tok_num - 2;
-    Expr *expr = parse_alt(&parser);
-    print_expr(expr); printf("\n");
-    return 0;
+
+    // printf("\ntokens: ");
+    // for (int i = 0; i < tok_num; i++)
+    // {
+    //     printf("%s ", tokens[i].token);
+    // }
+    // printf("\n");
+    // Parser parser = {0};
+    // parser.tokens = tokens + 2;
+    // parser.tok_num = tok_num - 2;
+    // Expr *expr = parse_alt(&parser);
+    // print_expr(expr); printf("\n");
+    // return 0;
 
 }
 
