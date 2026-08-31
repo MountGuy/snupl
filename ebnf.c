@@ -10,12 +10,6 @@
 
 int indent;
 
-void print_indent()
-{
-    for (int i = 0; i < indent; i++)
-        printf("    ");
-}
-
 char *search_asset(Lexer *asset, char *target)
 {
     for (int i = 0; i < asset->asset_num; i++)
@@ -36,8 +30,8 @@ void init_lexer(char *input, Lexer *lexer)
     int char_num = strlen(input);
 
     lexer->input = input;
-    lexer->asset = (char*) malloc(sizeof(char) * char_num);
-    lexer->starts = (char**) malloc(sizeof(char*) * char_num);
+    lexer->asset = (char*) malloc(sizeof(char) * (char_num + 10));
+    lexer->starts = (char**) malloc(sizeof(char*) * (char_num + 10));
     lexer->top = lexer->asset;
     lexer->asset_num = 0;
 
@@ -70,9 +64,9 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
         }
         else if (*c == '\"')
         {
+            *c = c_null;
             tokens[tok_num].string = c + 1;
             tokens[tok_num].ttype = T_STRING;
-            *c = c_null;
             while (*c != '\"') c++;
             *c = c_null;
         }
@@ -127,16 +121,16 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
 
 int ebnf_parser(Lexer *lexer, Token *tokens)
 {
-    Parser parser;
-    parser.tokens = tokens;
-    parser.tok_num = lexer->tok_num;
-    parser.pos = 0;
-    parser.exprs = (Expr*) malloc(sizeof(Expr) * (parser.tok_num + 5) * 2);
+    Parser parser = {
+        .tokens = tokens,
+        .pos = 0,
+        .tok_num = 0,
+        .exprs = (Expr*) malloc(sizeof(Expr) * (parser.tok_num + 10)),
+        .expr_num = 0,
+    };
 
     while (parser.pos < parser.tok_num)
-    {
         parse_def(&parser);
-    }
 
 }
 
@@ -149,12 +143,14 @@ Expr *parse_def(Parser *parser)
 
     if (!(tok->ttype == T_IDENTITY && tok2->ttype == T_OPERATOR && tok2->string == S_DEFINE))
     {
+        exit(1);
     }
 
     Expr *curr_expr = parse_alt(parser);
     Token *tok3 = peek_tok(parser);
     if (tok3->string != S_END)
     {
+        exit(1);
     }
     advance_parser(parser);
     Expr *new_expr = alloc_expr(parser);
@@ -162,7 +158,7 @@ Expr *parse_def(Parser *parser)
     new_expr->definition.string = tok->string;
     new_expr->definition.expr = curr_expr;
 
-    print_expr(new_expr);
+    // print_expr(new_expr);
     return new_expr;
 }
 

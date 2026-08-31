@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "ebnf_util.h"
 
@@ -29,9 +30,7 @@ void print_tokens(int tok_n, Token *tokens)
 
 void advance_parser(Parser *parser)
 {
-    #ifdef debug
-    printf("consume %s\n", parser->tokens[parser->pos]);
-    #endif
+    printf("(%d/%d) consume %s\n", parser->pos, parser->tok_num, parser->tokens[parser->pos].string);
     parser->pos++;
 }
 
@@ -44,6 +43,7 @@ Expr *alloc_expr(Parser *parser)
 {
     Expr *expr = parser->exprs + parser->expr_num;
     parser->expr_num++;
+    printf("expr num: %d\n", parser->expr_num);
 
     return expr;
 }
@@ -122,7 +122,8 @@ void print_expr(Expr *expr)
         }
         default:
         {
-            printf("error on print expr\n");
+            printf("error on print expr: %d\n", kind);
+            exit(1);
             break;
         }
     }

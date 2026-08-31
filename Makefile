@@ -10,3 +10,5 @@ scanner: main.c ebnf_util.c ebnf.c
 
 clean:
 	rm scanner
+count:
+	@./count.sh
