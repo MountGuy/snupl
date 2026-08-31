@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include "ebnf_util.h"
 #include "ebnf.h"
 
 // #define debug
@@ -14,8 +14,8 @@ int ebnf_lexer(char *buf, Token *tokens)
 
     for (char *c = buf; *c; c++)
     {
-        if (*c == ' ') continue;
-        else if (*c == '\n')
+        if (*c == ' ' || *c == '\n') continue;
+        else if (*c == ';')
         {
             tokens[tok_n].token = ebnf_end;
             tokens[tok_n].ttype = T_END;
@@ -23,31 +23,54 @@ int ebnf_lexer(char *buf, Token *tokens)
         }
         else if (is_char(*c))
         {
-            char *start = c;
-            while (is_char(*(c + 1)) || is_digit(*(c + 1))) c++;
-            strncpy(tokens[tok_n].token, start, c - start + 1);
-            tokens[tok_n].token[c - start + 1] = c_null;
+            tokens[tok_n].token = c;
             tokens[tok_n].ttype = T_IDENTITY;
-            // printf("%s %d %d %d\n", tokens[tok_n].token, tok_n, start - str, c - start + 1);
+            while (is_char(*(c + 1)) || is_digit(*(c + 1))) c++;
         }
         else if (*c == '\"')
         {
-            char *start = c;
-            c++;
-            while (*c != '\"') c++;
-            strncpy(tokens[tok_n].token, start + 1, c - start - 1);
-            tokens[tok_n].token[c - start - 1] = c_null;
+            tokens[tok_n].token = c + 1;
             tokens[tok_n].ttype = T_STRING;
-            // printf("%s %d %d %d\n", tokens[tok_n].token, tok_n, start + 1 - str, c - start - 1);
+            *c = c_null;
+            while (*c != '\"') c++;
+            *c = c_null;
         }
         else {
-            tokens[tok_n].token[0] = *c;
-            tokens[tok_n].token[1] = c_null;
+            switch (*c)
+            {
+                case L_PAREN:
+                tokens[tok_n].token = ebnf_lparen;
+                break;
+                case R_PAREN:
+                tokens[tok_n].token = ebnf_rparen;
+                break;
+                case L_BRACE:
+                tokens[tok_n].token = ebnf_lbrace;
+                break;
+                case R_BRACE:
+                tokens[tok_n].token = ebnf_rbrace;
+                break;
+                case L_BRAKET:
+                tokens[tok_n].token = ebnf_lbraket;
+                break;
+                case R_BRAKET:
+                tokens[tok_n].token = ebnf_rbraket;
+                break;
+                case '=':
+                tokens[tok_n].token = ebnf_def;
+                break;
+                case '|':
+                tokens[tok_n].token = ebnf_alt;
+                break;
+                case ',':
+                tokens[tok_n].token = ebnf_con;
+                break;
+            }
+            *c = c_null;
             tokens[tok_n].ttype = T_OPERATOR;
         }
         tok_n++;
     }
-    tokens[tok_n].ttype = T_END;
 
     return tok_n;
 }

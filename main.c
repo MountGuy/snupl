@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-#include "common.h"
 #include "ebnf.h"
+#include "ebnf_util.h"
 
 
 int main(int argv, char *argc[])
@@ -32,21 +32,6 @@ int main(int argv, char *argc[])
     
     fread(buf, 1, file_size, fp);
     int tok_num = ebnf_lexer(buf, tokens);
-
-    while (true)
-    {
-        if ( fgets(buf, 500, fp) == p_null ) break;
-        if (strlen(buf) == 1) continue;
-        // printf("buf: %s\n", buf);
-        buf[strcspn(buf, "\n")] = c_null;
-
-        int tok_num = ebnf_lexer(buf, tokens);
-        // printf("tok_num: %d\n", tok_num);
-        ebnf_parser(tok_num, tokens);
-        // for (int i = 0; i < tok_num; i++)
-        // printf("%d %s\n", tokens[i].ttype, tokens[i].token);
-        // if (tok_n > 0) printf("======================\n");
-    }
-
+    print_tokens(tok_num, tokens);
     return 0;
 }

@@ -1,4 +1,28 @@
+#include <stdio.h>
+
 #include "ebnf_util.h"
+
+char groups[N_GROUPS][3] = {{L_PAREN, R_PAREN, E_GRP}, {L_BRACE, R_BRACE, E_REP}, {L_BRAKET, R_BRAKET, E_OPT}};
+char *ebnf_lparen = "(",
+     *ebnf_rparen = ")",
+     *ebnf_lbrace = "{",
+     *ebnf_rbrace = "}",
+     *ebnf_lbraket = "[",
+     *ebnf_rbraket = "]",
+     *ebnf_end = ";\n",
+     *ebnf_def = "=",
+     *ebnf_alt = "|",
+     *ebnf_con = ",";
+
+
+
+void print_tokens(int tok_n, Token *tokens)
+{
+    for (int i = 0; i < tok_n; i++)
+    {
+        printf(" %s", tokens[i].token);
+    }
+}
 
 void advance_parser(Parser *parser)
 {
@@ -28,9 +52,6 @@ int parser_end(Parser *parser)
 
 void print_expr(Expr *expr)
 {
-    // #ifndef debug
-    // return;
-    // #endif
     ExprKind kind = expr->kind;
 
     switch (kind)
@@ -97,7 +118,7 @@ void print_parser(Parser *parser)
     #ifndef debug
     return;
     #endif
-    printf(">>>>>>>>>>>>>>>>>\n");
+    printf(">>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     for (int i = 0; i < parser->pos; i++)
     {
         printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].token);
