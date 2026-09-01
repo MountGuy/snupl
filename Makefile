@@ -1,6 +1,8 @@
+.PHONY: all clean test scanner
+
 all: test
 
-scanner: src
+scanner:
 	$(MAKE) -C src scanner
 
 clean:
@@ -8,6 +10,4 @@ clean:
 	rm -rf scanner
 
 test: scanner
-# 	./scanner testcase.gm
-# 	./scanner snupl1.gm
 	./scanner snupl2.gm

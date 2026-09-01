@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = "-Wall"
 TARGET = scanner
-SRCS = main.c ebnf.c ebnf_util.c
+SRCS = main.c ebnf.c ebnf_util.c analysis.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)

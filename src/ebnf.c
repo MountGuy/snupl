@@ -4,6 +4,7 @@
 
 #include "ebnf_util.h"
 #include "ebnf.h"
+#include "analysis.h"
 
 
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
@@ -108,24 +109,25 @@ int ebnf_parser(Lexer *lexer, Token *tokens)
     parse_define(&parser);
     for (int i = 0; i < parser.def_num; i++)
     {
-        resolve_refer(&parser, parser.defs[i].identity.expr);
+        resolve_refer(parser.defs[i].identity.expr, &parser);
     }
-    print_parser(&parser);
+    // print_parser(&parser);
+    parser_nulltest(&parser);
     return 0;
 }
 
-void resolve_refer(Parser *parser, Expr *target)
+void resolve_refer(Expr *expr, Parser *parser)
 {
-    switch (target->kind)
+    switch (expr->kind)
     {
         case E_ALTER:
         case E_CONCAT:
         case E_OPTION:
         case E_REPEAT:
         {
-            for (int i = 0; i < target->nary.expr_num; i++)
+            for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                resolve_refer(parser, target->nary.exprs[i]);
+                resolve_refer(expr->nary.exprs[i], parser);
             }
             break;
         }
@@ -134,11 +136,11 @@ void resolve_refer(Parser *parser, Expr *target)
             int id;
             for (id = 0; id < parser->def_num; id++)
             {
-                if (parser->defs[id].identity.str == target->identity.str) break;
+                if (parser->defs[id].identity.str == expr->identity.str) break;
             }
             Expr definition = parser->defs[id];
-            *target = definition;
-            target->kind = E_IDENTITY;
+            *expr = definition;
+            expr->kind = E_IDENTITY;
             break;
         }
         case E_STRING:
