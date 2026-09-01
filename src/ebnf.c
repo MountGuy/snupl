@@ -100,43 +100,100 @@ int ebnf_parser(Lexer *lexer, Token *tokens)
     Parser parser = {
         .tokens = tokens,
         .exprs = (Expr*) malloc(sizeof(Expr) * (lexer->tok_num + 10)),
+        .defs = (Expr*) malloc(sizeof(Expr) * (lexer->tok_num + 10)),
         .buffer = (Expr**) malloc(sizeof(Expr*) * (lexer->tok_num + 10)),
         .pos = 0,
         .tok_num = lexer->tok_num,
         .expr_num = 0,
+        .def_num = 0,
     };
 
-    while (parser.pos < parser.tok_num)
-        parse_define(&parser);
+    parse_define(&parser);
+    for (int i = 0; i < parser.def_num; i++)
+    {
+        resolve_refer(&parser, parser.defs[i].identity.expr);
+    }
+    print_parser(&parser);
     return 0;
+}
+
+void resolve_refer(Parser *parser, Expr *target)
+{
+    switch (target->kind)
+    {
+        case E_ALTER:
+        case E_CONCAT:
+        case E_OPTION:
+        case E_REPEAT:
+        {
+            for (int i = 0; i < target->nary.expr_num; i++)
+            {
+                resolve_refer(parser, target->nary.exprs[i]);
+            }
+            break;
+        }
+        case E_IDENTITY:
+        {
+            int id;
+            for (id = 0; id < parser->def_num; id++)
+            {
+                if (parser->defs[id].identity.str == target->identity.str) break;
+            }
+            Expr definition = parser->defs[id];
+            *target = definition;
+            target->kind = E_IDENTITY;
+            break;
+        }
+        case E_STRING:
+        {
+            break;
+        }
+        case E_DEFINE:
+        default:
+        {
+            printf("error while resolving\n");
+            exit(1);
+        }
+    }
 }
 
 Expr *parse_define(Parser *parser)
 {
-    Token *tok1 = peek_tok(parser); advance_parser(parser);
-    Token *tok2 = peek_tok(parser); advance_parser(parser);
+    int def_num = 0;
 
-    if (!(tok1->ttype == T_IDENTITY && tok2->ttype == T_OPERATOR && tok2->string == S_DEFINE))
+    while (parser->pos < parser->tok_num)
     {
-        printf("definition format error\n");
-        exit(1);
+        Token *tok_id = pop_tok(parser);
+        Token *tok_def = pop_tok(parser);
+
+        if (!(
+            tok_id->ttype == T_IDENTITY &&
+            tok_def->ttype == T_OPERATOR &&
+            tok_def->string == S_DEFINE
+        ))
+        {
+            printf("definition format error\n");
+            exit(1);
+        }
+
+        Expr *expr = parse_alter(parser);
+        Token *tok_end = pop_tok(parser);
+        if (tok_end->string != S_END)
+        {
+            printf("definition format error\n");
+            exit(1);
+        }
+
+        parser->defs[def_num].kind = E_DEFINE;
+        parser->defs[def_num].identity.id = def_num;
+        parser->defs[def_num].identity.str = tok_id->string;
+        parser->defs[def_num].identity.expr = expr;
+        def_num++;
     }
 
-    Expr *curr_expr = parse_alter(parser);
-    Token *tok3 = peek_tok(parser);
-    if (tok3->string != S_END)
-    {
-        printf("definition format error\n");
-        exit(1);
-    }
-    advance_parser(parser);
-    Expr *new_expr = alloc_expr(parser);
-    new_expr->kind = E_DEFINE;
-    new_expr->definition.string = tok1->string;
-    new_expr->definition.expr = curr_expr;
+    parser->def_num = def_num;
 
-    print_fexpr(new_expr);
-    return new_expr;
+    return parser->defs;
 }
 
 Expr *parse_alter(Parser *parser)
@@ -144,7 +201,7 @@ Expr *parse_alter(Parser *parser)
     int expr_num = 0;
     Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->tok_num);
 
-    while (true)
+    while (B_TRUE)
     {
         buffer[expr_num] = parse_concat(parser);
         char *token_string = peek_tok(parser)->string;
@@ -185,7 +242,7 @@ Expr *parse_concat(Parser *parser)
     int expr_num = 0;
     Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->tok_num);
 
-    while (true)
+    while (B_TRUE)
     {
         buffer[expr_num] = parse_primary(parser);
         char *token_string = peek_tok(parser)->string;
@@ -230,12 +287,21 @@ Expr *parse_primary(Parser *parser)
     switch (ttype)
     {
         case T_STRING:
+        {
+            advance_parser(parser);
+            Expr *expr = alloc_expr(parser);
+            expr->kind = E_STRING;
+            expr->string.str = string;
+            return expr;
+        }
         case T_IDENTITY:
         {
             advance_parser(parser);
             Expr *expr = alloc_expr(parser);
-            expr->kind = (ttype == T_STRING? E_STRING: E_IDENTITY);
-            expr->identity.string = string;
+            expr->kind = E_IDENTITY;
+            expr->identity.id = 0;
+            expr->identity.str = string;
+            expr->identity.expr = p_null;
             return expr;
         }
         case T_OPERATOR:

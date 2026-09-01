@@ -18,12 +18,15 @@
 #define C_CONCAT  ','
 
 char *search_asset(Lexer *lexer, char *target);
+
 void advance_parser(Parser *parser);
 Token *peek_tok(Parser *parser);
+Token *pop_tok(Parser *parser);
 Expr *alloc_expr(Parser *parser);
 
 void print_tokens(int tok_num, Token *tokens);
-void print_fexpr(Expr *expr);
+void print_expr(Expr *expr);
+void print_parser(Parser *parser);
 
 extern char *S_LPAREN, *S_RPAREN, *S_LBRACE, *S_RBRACE, *S_LBRAKET, *S_RBRAKET, *S_END, *S_DEFINE, *S_ALTER, *S_CONCAT;
 

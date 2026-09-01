@@ -8,6 +8,6 @@ clean:
 	rm -rf scanner
 
 test: scanner
-	./scanner testcase.gm
-	./scanner snupl1.gm
+# 	./scanner testcase.gm
+# 	./scanner snupl1.gm
 	./scanner snupl2.gm

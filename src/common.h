@@ -1,8 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H 1
 
-#define true 1
-#define false 0
+#define B_FALSE 0
+#define B_TRUE 1
+#define B_VAR 2
 
 #define p_null NULL
 #define c_null ('\0')

@@ -36,6 +36,14 @@ Token *peek_tok(Parser *parser)
     return parser->tokens + parser->pos;
 }
 
+Token *pop_tok(Parser *parser)
+{
+    Token *tok = parser->tokens + parser->pos;
+    parser->pos++;
+
+    return tok; 
+}
+
 Expr *alloc_expr(Parser *parser)
 {
     Expr *expr = parser->exprs + parser->expr_num;
@@ -52,7 +60,7 @@ void print_tokens(int tok_num, Token *tokens)
     }
 }
 
-void print_fexpr(Expr *expr)
+void print_expr(Expr *expr)
 {
     ExprKind kind = expr->kind;
 
@@ -63,7 +71,7 @@ void print_fexpr(Expr *expr)
             printf("(");
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                print_fexpr(expr->nary.exprs[i]);
+                print_expr(expr->nary.exprs[i]);
                 if (i < expr->nary.expr_num - 1)
                     printf(" | ");
             }
@@ -75,7 +83,7 @@ void print_fexpr(Expr *expr)
             printf("(");
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                print_fexpr(expr->nary.exprs[i]);
+                print_expr(expr->nary.exprs[i]);
                 if (i < expr->nary.expr_num - 1)
                     printf(" , ");
             }
@@ -85,36 +93,31 @@ void print_fexpr(Expr *expr)
         case E_OPTION:
         {
             printf("[");
-            print_fexpr(expr->nary.exprs[0]);
+            print_expr(expr->nary.exprs[0]);
             printf("]");
             break;
         }
         case E_REPEAT:
         {
             printf("{");
-            print_fexpr(expr->nary.exprs[0]);
+            print_expr(expr->nary.exprs[0]);
             printf("}");
             break;
         }
         case E_STRING:
         {
-            printf("\"%s\"", expr->identity.string);
+            printf("\"%s\"", expr->string.str);
             break;
         }
         case E_IDENTITY:
         {
-            printf("%s", expr->identity.string);
-            break;
-        }
-        case E_END:
-        {
-            printf("\n");
+            printf("%s[%d]", expr->identity.str, expr->identity.id);
             break;
         }
         case E_DEFINE:
         {
-            printf("%s := ", expr->definition.string);
-            print_fexpr(expr->definition.expr);
+            printf("%s := ", expr->identity.str);
+            print_expr(expr->identity.expr);
             printf("\n");
             break;
         }
@@ -124,5 +127,16 @@ void print_fexpr(Expr *expr)
             exit(1);
             break;
         }
+    }
+}
+
+void print_parser(Parser *parser)
+{
+    for (int i = 0; i < parser->def_num; i++)
+    {
+        Expr def = parser->defs[i];
+        printf("[%3d] %s := ", i, def.identity.str);
+        print_expr(def.identity.expr);
+        printf("\n");
     }
 }
