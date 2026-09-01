@@ -6,7 +6,7 @@
 #include "ebnf_util.h"
 
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens);
-int ebnf_parser(Lexer *lexer, Token *tokens);
+void ebnf_parser(Lexer *lexer, Token *tokens);
 void resolve_refer(Expr *target, Parser *parser);
 
 Expr *parse_define(Parser *parser);

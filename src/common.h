@@ -1,13 +1,11 @@
 #ifndef COMMON_H
 #define COMMON_H 1
 
-#define B_FALSE 0
-#define B_TRUE 1
-#define B_VAR 2
-
 #define p_null NULL
 #define c_null ('\0')
 #define is_char(c) (('a' <= (c) && (c) <= 'z') || ('A' <= (c) && (c) <= 'Z'))
 #define is_digit(c) ('0' <= c && c <= '9')
+
+typedef enum {B_FALSE, B_TRUE, B_VAR} Boolean;
 
 #endif

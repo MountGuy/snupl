@@ -45,35 +45,35 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
             switch (*c)
             {
                 case C_LPAREN:
-                tokens[tok_num].string = S_LPAREN;
-                break;
+                    tokens[tok_num].string = S_LPAREN;
+                    break;
                 case C_RPAREN:
-                tokens[tok_num].string = S_RPAREN;
-                break;
+                    tokens[tok_num].string = S_RPAREN;
+                    break;
                 case C_LBRACE:
-                tokens[tok_num].string = S_LBRACE;
-                break;
+                    tokens[tok_num].string = S_LBRACE;
+                    break;
                 case C_RBRACE:
-                tokens[tok_num].string = S_RBRACE;
-                break;
+                    tokens[tok_num].string = S_RBRACE;
+                    break;
                 case C_LBRAKET:
-                tokens[tok_num].string = S_LBRAKET;
-                break;
+                    tokens[tok_num].string = S_LBRAKET;
+                    break;
                 case C_RBRAKET:
-                tokens[tok_num].string = S_RBRAKET;
-                break;
+                    tokens[tok_num].string = S_RBRAKET;
+                    break;
                 case C_DEFINE:
-                tokens[tok_num].string = S_DEFINE;
-                break;
+                    tokens[tok_num].string = S_DEFINE;
+                    break;
                 case C_ALTER:
-                tokens[tok_num].string = S_ALTER;
-                break;
+                    tokens[tok_num].string = S_ALTER;
+                    break;
                 case C_CONCAT:
-                tokens[tok_num].string = S_CONCAT;
-                break;
+                    tokens[tok_num].string = S_CONCAT;
+                    break;
                 case C_END:
-                tokens[tok_num].string = S_END;
-                break;
+                    tokens[tok_num].string = S_END;
+                    break;
             }
             *c = c_null;
             tokens[tok_num].ttype = T_OPERATOR;
@@ -84,16 +84,13 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
     for (int i = 0; i < tok_num; i++)
     {
         if (tokens[i].ttype == T_IDENTITY || tokens[i].ttype == T_STRING)
-        {
-            char *stored = search_asset(lexer, tokens[i].string);
-            tokens[i].string = stored;
-        }
+            tokens[i].string = search_asset(lexer, tokens[i].string);
     }
 
     lexer->tok_num = tok_num;
 }
 
-int ebnf_parser(Lexer *lexer, Token *tokens)
+void ebnf_parser(Lexer *lexer, Token *tokens)
 {
     Parser parser = {
         .tokens = tokens,
@@ -108,12 +105,9 @@ int ebnf_parser(Lexer *lexer, Token *tokens)
 
     parse_define(&parser);
     for (int i = 0; i < parser.def_num; i++)
-    {
         resolve_refer(parser.defs[i].identity.expr, &parser);
-    }
-    // print_parser(&parser);
-    parser_nulltest(&parser);
-    return 0;
+
+    null_test(&parser);
 }
 
 void resolve_refer(Expr *expr, Parser *parser)
@@ -124,35 +118,24 @@ void resolve_refer(Expr *expr, Parser *parser)
         case E_CONCAT:
         case E_OPTION:
         case E_REPEAT:
-        {
             for (int i = 0; i < expr->nary.expr_num; i++)
-            {
                 resolve_refer(expr->nary.exprs[i], parser);
-            }
             break;
-        }
         case E_IDENTITY:
-        {
-            int id;
-            for (id = 0; id < parser->def_num; id++)
-            {
-                if (parser->defs[id].identity.str == expr->identity.str) break;
-            }
-            Expr definition = parser->defs[id];
-            *expr = definition;
-            expr->kind = E_IDENTITY;
+            for (int id = 0; id < parser->def_num; id++)
+                if (parser->defs[id].identity.str == expr->identity.str)
+                {
+                    *expr = parser->defs[id];
+                    expr->kind = E_IDENTITY;
+                    break;
+                }
             break;
-        }
         case E_STRING:
-        {
             break;
-        }
         case E_DEFINE:
         default:
-        {
             printf("error while resolving\n");
             exit(1);
-        }
     }
 }
 
@@ -216,8 +199,10 @@ Expr *parse_alter(Parser *parser)
             string == S_END ||
             string == S_RPAREN ||
             string == S_RBRACE ||
-            string == S_RBRAKET) && ttype == T_OPERATOR
-        ) break;
+            string == S_RBRAKET) &&
+            ttype == T_OPERATOR
+        )
+            break;
         else if (ttype == T_OPERATOR && string == S_ALTER)
         {
             advance_parser(parser);
@@ -266,8 +251,10 @@ Expr *parse_concat(Parser *parser)
             string == S_END ||
             string == S_RPAREN ||
             string == S_RBRACE ||
-            string == S_RBRAKET) && ttype == T_OPERATOR
-        ) break;
+            string == S_RBRAKET)&&
+            ttype == T_OPERATOR
+        )
+            break;
         else if (ttype == T_OPERATOR && string == S_CONCAT)
         {
             advance_parser(parser);
@@ -303,27 +290,23 @@ Expr *parse_primary(Parser *parser)
     Token *token = advance_parser(parser);
     TType ttype = token->ttype;
     char *string = token->string;
+    Expr *expr;
 
     switch (ttype)
     {
         case T_STRING:
-        {
-            Expr *expr = alloc_expr(parser);
+            expr = alloc_expr(parser);
             expr->kind = E_STRING;
             expr->string.str = string;
             return expr;
-        }
         case T_IDENTITY:
-        {
-            Expr *expr = alloc_expr(parser);
+            expr = alloc_expr(parser);
             expr->kind = E_IDENTITY;
             expr->identity.id = 0;
             expr->identity.str = string;
             expr->identity.expr = p_null;
             return expr;
-        }
         case T_OPERATOR:
-        {
             if (
                 string == S_LPAREN ||
                 string == S_LBRACE ||
@@ -335,9 +318,7 @@ Expr *parse_primary(Parser *parser)
                 char *next_string = next_token->string;
 
                 if (string == S_LPAREN && next_string == S_RPAREN)
-                {
                     return body_expr;
-                }
                 else if (
                     (string == S_LBRACE && next_string == S_RBRACE) ||
                     (string == S_LBRAKET && next_string == S_RBRAKET)
@@ -359,11 +340,8 @@ Expr *parse_primary(Parser *parser)
 
             printf("unexpected parsing: parse primary, %s %s\n", string, peek_tok(parser)->string);
             exit(1);
-        }
         default:
-        {
             printf("unexpected parsing: parse primary\n");
             exit(1);
-        }
     }
 }

@@ -33,11 +33,11 @@ returnStatement = "return" , [ expression ] ;
 statement = assignment | subroutineCall | ifStatement | whileStatement | returnStatement ;
 statSequence = [ statement , { ";" , statement } ] ;
 
-constDeclaration = [ "const" , constDeclSequence ] ;
+constDeclaration = "const" , constDeclSequence ;
 constDeclSequence = constDecl , ";" , { constDecl , ";" } ;
 constDecl = varDecl , "=" , expression ;
 
-varDeclaration = [ "var" , varDeclSequence , ";" ] ;
+varDeclaration = "var" , varDeclSequence , ";" ;
 varDeclSequence = varDecl , { ";" , varDecl } ;
 varDecl = ident , { "," , ident } , ":" , type ;
 

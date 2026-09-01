@@ -1,5 +1,5 @@
 #include "common.h"
 #include "struct.h"
 
-int expr_nulltest(Expr *expr, int *cur_sol, Parser *parser);
-int parser_nulltest(Parser *parser);
+int null_test(Parser *parser);
+Boolean expr_null_test(Expr *expr, Boolean *results, Parser *parser);

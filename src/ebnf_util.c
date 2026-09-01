@@ -62,7 +62,6 @@ void print_expr(Expr *expr)
     switch (kind)
     {
         case E_ALTER:
-        {
             printf("(");
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
@@ -72,9 +71,7 @@ void print_expr(Expr *expr)
             }
             printf(")");
             break;
-        }
         case E_CONCAT:
-        {
             printf("(");
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
@@ -84,44 +81,31 @@ void print_expr(Expr *expr)
             }
             printf(")");
             break;
-        }
         case E_OPTION:
-        {
             printf("[");
             print_expr(expr->nary.exprs[0]);
             printf("]");
             break;
-        }
         case E_REPEAT:
-        {
             printf("{");
             print_expr(expr->nary.exprs[0]);
             printf("}");
             break;
-        }
         case E_STRING:
-        {
             printf("\"%s\"", expr->string.str);
             break;
-        }
         case E_IDENTITY:
-        {
             printf("%s[%d]", expr->identity.str, expr->identity.id);
             break;
-        }
         case E_DEFINE:
-        {
             printf("%s := ", expr->identity.str);
             print_expr(expr->identity.expr);
             printf("\n");
             break;
-        }
         default:
-        {
             printf("error on print expr: %d\n", kind);
             exit(1);
             break;
-        }
     }
 }
 
