@@ -43,13 +43,14 @@ Expr *alloc_expr(Parser *parser)
     return expr;
 }
 
+
 void print_expr(Expr *expr)
 {
     ExprKind kind = expr->kind;
 
     switch (kind)
     {
-        case E_ALT:
+        case E_ALTER:
         {
             printf("<");
             print_expr(expr->binary.l);
@@ -58,7 +59,7 @@ void print_expr(Expr *expr)
             printf(">");
             break;
         }
-        case E_CON:
+        case E_CONCAT:
         {
             printf("<");
             print_expr(expr->binary.l);
@@ -135,4 +136,79 @@ void print_parser(Parser *parser)
         printf("%d %s\n", parser->tokens[i].ttype, parser->tokens[i].string);
     }
     printf("<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+}
+
+void print_fexpr(fExpr *expr)
+{
+    ExprKind kind = expr->kind;
+
+    switch (kind)
+    {
+        case E_ALTER:
+        {
+            printf("(");
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            {
+                print_fexpr(expr->nary.exprs[i]);
+                if (i < expr->nary.expr_num - 1)
+                    printf(" | ");
+            }
+            printf(")");
+            break;
+        }
+        case E_CONCAT:
+        {
+            printf("(");
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            {
+                print_fexpr(expr->nary.exprs[i]);
+                if (i < expr->nary.expr_num - 1)
+                    printf(" , ");
+            }
+            printf(")");
+            break;
+        }
+        case E_OPT:
+        {
+            printf("[");
+            print_fexpr(expr->nary.exprs[0]);
+            printf("]");
+            break;
+        }
+        case E_REP:
+        {
+            printf("{");
+            print_fexpr(expr->nary.exprs[0]);
+            printf("}");
+            break;
+        }
+        case E_LETS:
+        {
+            printf("\"%s\"", expr->identity.string);
+            break;
+        }
+        case E_IDENT:
+        {
+            printf("%s", expr->identity.string);
+            break;
+        }
+        case E_END:
+        {
+            printf("\n");
+            break;
+        }
+        case E_DEF:
+        {
+            printf("%s := ", expr->definition.string);
+            print_fexpr(expr->definition.expr);
+            printf("\n");
+            break;
+        }
+        default:
+        {
+            printf("error on print expr: %d\n", kind);
+            exit(1);
+            break;
+        }
+    }
 }

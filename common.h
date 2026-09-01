@@ -1,6 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H 1
 
+#define true 1
+#define false 0
+
 #define p_null NULL
 #define c_null ('\0')
 #define is_char(c) (('a' <= (c) && (c) <= 'z') || ('A' <= (c) && (c) <= 'Z'))

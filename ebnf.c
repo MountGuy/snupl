@@ -164,7 +164,7 @@ Expr *parse_alter(Parser *parser)
             advance_parser(parser);
             Expr *next_expr = parse_alter(parser);
             Expr *new_expr = alloc_expr(parser);
-            new_expr->kind = E_ALT;
+            new_expr->kind = E_ALTER;
             new_expr->binary.l = curr_expr;
             new_expr->binary.r = next_expr;
             return new_expr;
@@ -191,7 +191,7 @@ Expr *parse_concat(Parser *parser)
             advance_parser(parser);
             Expr *next_expr = parse_concat(parser);
             Expr *new_expr = alloc_expr(parser);
-            new_expr->kind = E_CON;
+            new_expr->kind = E_CONCAT;
             new_expr->binary.l = curr_expr;
             new_expr->binary.r = next_expr;
             return new_expr;
@@ -254,3 +254,4 @@ Expr *parse_primary(Parser *parser)
         }
     }
 }
+

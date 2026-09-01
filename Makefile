@@ -1,14 +1,14 @@
 all: scanner
-	./scanner snupl1.gm
-# 	./scanner testcase.gm
+	./scanner snupl2.gm
 
 test: scanner testcase.gm
 	./scanner testcase.gm
 
-scanner: main.c ebnf_util.c ebnf.c
-	gcc ebnf_util.c ebnf.c main.c -o scanner -Wall
+scanner: main.c ebnf_util.c ebnf.c febnf.c
+	gcc ebnf_util.c ebnf.c febnf.c main.c -o scanner -Wall
 
 clean:
 	rm scanner
+
 count:
 	@./count.sh
