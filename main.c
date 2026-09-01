@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "ebnf.h"
+// #include "ebnf.h"
 #include "febnf.h"
 #include "ebnf_util.h"
 
@@ -35,6 +35,6 @@ int main(int argv, char *argc[])
     Lexer lexer;
     ebnf_lexer(buf, &lexer, tokens);
 
-    febnf_parser(&lexer, tokens);
+    ebnf_parser(&lexer, tokens);
     return 0;
 }

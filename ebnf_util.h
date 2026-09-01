@@ -7,13 +7,13 @@
 #define N_GROUPS 3
 
 
-void advance_parser(Parser *parser);
-Token *peek_tok(Parser *parser);
-Expr *alloc_expr(Parser *parser);
+// void advance_parser(Parser *parser);
+// Token *peek_tok(Parser *parser);
+// Expr *alloc_expr(Parser *parser);
 
-void print_tokens(int tok_num, Token *tokens);
-void print_expr(Expr *expr);
-void print_parser(Parser *parser);
+// void print_tokens(int tok_num, Token *tokens);
+// void print_expr(Expr *expr);
+// void print_parser(Parser *parser);
 void print_fexpr(fExpr *expr);
 
 #define C_LPAREN  '('
