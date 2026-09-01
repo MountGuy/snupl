@@ -24,12 +24,6 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
             *c = c_null;
             continue;
         }
-        if (*c == ';')
-        {
-            tokens[tok_num].string = S_END;
-            tokens[tok_num].ttype = T_END;
-            *c = c_null;
-        }
         else if (is_char(*c))
         {
             tokens[tok_num].string = c;
@@ -75,6 +69,9 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
                 break;
                 case C_CONCAT:
                 tokens[tok_num].string = S_CONCAT;
+                break;
+                case C_END:
+                tokens[tok_num].string = S_END;
                 break;
             }
             *c = c_null;
@@ -178,7 +175,11 @@ Expr *parse_define(Parser *parser)
 
         Expr *expr = parse_alter(parser);
         Token *tok_end = advance_parser(parser);
-        if (tok_end->string != S_END)
+
+        if (!(
+            tok_end->ttype == T_OPERATOR &&
+            tok_end->string == S_END
+        ))
         {
             printf("definition format error\n");
             exit(1);
@@ -204,23 +205,27 @@ Expr *parse_alter(Parser *parser)
     while (B_TRUE)
     {
         buffer[expr_num] = parse_concat(parser);
-        char *token_string = peek_tok(parser)->string;
+        Token *token = peek_tok(parser);
+        char *string = peek_tok(parser)->string;
+        TType ttype = token->ttype;
         expr_num++;
         
-        if (
-            token_string == S_END ||
-            token_string == S_RPAREN ||
-            token_string == S_RBRACE ||
-            token_string == S_RBRAKET
+        if ((
+            string == S_END ||
+            string == S_RPAREN ||
+            string == S_RBRACE ||
+            string == S_RBRAKET) && ttype == T_OPERATOR
         ) break;
-
-        if (token_string == S_ALTER)
+        else if (ttype == T_OPERATOR && string == S_ALTER)
         {
             advance_parser(parser);
             continue;
         }
-        printf("error\n");
-        exit(1);
+        else
+        {
+            printf("error\n");
+            exit(1);
+        }
     }
     if (expr_num == 1)
     {
@@ -249,24 +254,28 @@ Expr *parse_concat(Parser *parser)
     while (B_TRUE)
     {
         buffer[expr_num] = parse_primary(parser);
-        char *token_string = peek_tok(parser)->string;
+        Token *token = peek_tok(parser);
+        char *string = peek_tok(parser)->string;
+        TType ttype = token->ttype;
         expr_num++;
 
-        if (
-            token_string == S_ALTER ||
-            token_string == S_END ||
-            token_string == S_RPAREN ||
-            token_string == S_RBRACE ||
-            token_string == S_RBRAKET
+        if ((
+            string == S_ALTER ||
+            string == S_END ||
+            string == S_RPAREN ||
+            string == S_RBRACE ||
+            string == S_RBRAKET) && ttype == T_OPERATOR
         ) break;
-
-        if (token_string == S_CONCAT)
+        else if (ttype == T_OPERATOR && string == S_CONCAT)
         {
             advance_parser(parser);
             continue;
         }
-        printf("error\n");
-        exit(1);
+        else
+        {
+            printf("error\n");
+            exit(1);
+        }
     }
     if (expr_num == 1)
     {
@@ -289,9 +298,9 @@ Expr *parse_concat(Parser *parser)
 
 Expr *parse_primary(Parser *parser)
 {
-    Token *curr_token = advance_parser(parser);
-    TType ttype = curr_token->ttype;
-    char *string = curr_token->string;
+    Token *token = advance_parser(parser);
+    TType ttype = token->ttype;
+    char *string = token->string;
 
     switch (ttype)
     {
@@ -319,26 +328,26 @@ Expr *parse_primary(Parser *parser)
                 string == S_LBRAKET
             )
             {
-                Expr *curr_expr = parse_alter(parser);
+                Expr *body_expr = parse_alter(parser);
                 Token *next_token = advance_parser(parser);
                 char *next_string = next_token->string;
 
                 if (string == S_LPAREN && next_string == S_RPAREN)
                 {
-                    return curr_expr;
+                    return body_expr;
                 }
                 else if (
                     (string == S_LBRACE && next_string == S_RBRACE) ||
                     (string == S_LBRAKET && next_string == S_RBRAKET)
                 )
                 {
-                    Expr *new_expr = alloc_expr(parser);
-                    new_expr->kind = (string == S_LBRACE? E_REPEAT: E_OPTION);
-                    new_expr->nary.expr_num = 1;
-                    new_expr->nary.exprs = (Expr**) malloc(sizeof(Expr*));
-                    new_expr->nary.exprs[0] = curr_expr;
+                    Expr *expr = alloc_expr(parser);
+                    expr->kind = (string == S_LBRACE? E_REPEAT: E_OPTION);
+                    expr->nary.expr_num = 1;
+                    expr->nary.exprs = (Expr**) malloc(sizeof(Expr*));
+                    expr->nary.exprs[0] = body_expr;
 
-                    return new_expr;                    
+                    return expr;                    
                 }
                 else {   
                     printf("unexpected parsing: parse primary, %s %s\n", string, peek_tok(parser)->string);
