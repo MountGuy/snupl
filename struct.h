@@ -9,21 +9,11 @@ typedef struct { char *string; TType ttype; } Token;
 typedef struct Expr {
     ExprKind kind;
     union {
-        struct { struct Expr *l, *r; } binary;
-        struct { struct Expr *expr; } unary;
+        struct { int expr_num; struct Expr **exprs; } nary;
         struct { char *string; } identity;
         struct { char *string; struct Expr *expr; } definition;
     };
 } Expr;
-
-typedef struct fExpr {
-    ExprKind kind;
-    union {
-        struct { int expr_num; struct fExpr **exprs; } nary;
-        struct { char *string; } identity;
-        struct { char *string; struct fExpr *expr; } definition;
-    };
-} fExpr;
 
 
 typedef struct {
@@ -36,11 +26,5 @@ typedef struct {
     Expr *exprs;
     int pos, tok_num, expr_num;
 } Parser;
-
-typedef struct {
-    Token *tokens;
-    fExpr *exprs;
-    int pos, tok_num, expr_num;
-} fParser;
 
 #endif

@@ -14,16 +14,48 @@ char *S_LPAREN = "(", *S_RPAREN = ")",
      *S_END = ";", *S_DEFINE = "=",
      *S_ALTER = "|", *S_CONCAT = ",";
 
+char *search_asset(Lexer *lexer, char *target)
+{
+    for (int i = 0; i < lexer->asset_num; i++)
+        if (strcmp(lexer->starts[i], target) == 0)
+            return lexer->starts[i];
+
+    strcpy(lexer->top, target);
+    
+    lexer->starts[lexer->asset_num] = lexer->top;
+    lexer->top += strlen(target) + 1;
+    lexer->asset_num += 1;
+
+    return lexer->starts[lexer->asset_num - 1];
+}
+
+void advance_parser(Parser *parser)
+{
+    parser->pos++;
+}
+
+Token *peek_tok(Parser *parser)
+{
+    return parser->tokens + parser->pos;
+}
+
+Expr *alloc_expr(Parser *parser)
+{
+    Expr *expr = parser->exprs + parser->expr_num;
+    parser->expr_num++;
+
+    return expr;
+}
 
 void print_tokens(int tok_num, Token *tokens)
 {
     for (int i = 0; i < tok_num; i++)
     {
-        // printf("%p %s\n", tokens[i].string, tokens[i].string);
+        printf("%p %s\n", tokens[i].string, tokens[i].string);
     }
 }
 
-void print_fexpr(fExpr *expr)
+void print_fexpr(Expr *expr)
 {
     ExprKind kind = expr->kind;
 

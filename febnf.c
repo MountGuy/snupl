@@ -5,20 +5,6 @@
 #include "ebnf_util.h"
 #include "febnf.h"
 
-char *search_asset(Lexer *lexer, char *target)
-{
-    for (int i = 0; i < lexer->asset_num; i++)
-        if (strcmp(lexer->starts[i], target) == 0)
-            return lexer->starts[i];
-
-    strcpy(lexer->top, target);
-    
-    lexer->starts[lexer->asset_num] = lexer->top;
-    lexer->top += strlen(target) + 1;
-    lexer->asset_num += 1;
-
-    return lexer->starts[lexer->asset_num - 1];
-}
 
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
 {
@@ -108,32 +94,13 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
     lexer->tok_num = tok_num;
 }
 
-
-void advance_parser(fParser *parser)
-{
-    parser->pos++;
-}
-
-Token *peek_tok(fParser *parser)
-{
-    return parser->tokens + parser->pos;
-}
-
-fExpr *alloc_expr(fParser *parser)
-{
-    fExpr *expr = parser->exprs + parser->expr_num;
-    parser->expr_num++;
-
-    return expr;
-}
-
 int ebnf_parser(Lexer *lexer, Token *tokens)
 {
-    fParser parser = {
+    Parser parser = {
         .tokens = tokens,
         .pos = 0,
         .tok_num = lexer->tok_num,
-        .exprs = (fExpr*) malloc(sizeof(fExpr) * (lexer->tok_num + 10)),
+        .exprs = (Expr*) malloc(sizeof(Expr) * (lexer->tok_num + 10)),
         .expr_num = 0,
     };
 
@@ -142,7 +109,7 @@ int ebnf_parser(Lexer *lexer, Token *tokens)
     return 0;
 }
 
-fExpr *parse_define(fParser *parser)
+Expr *parse_define(Parser *parser)
 {
     Token *tok1 = peek_tok(parser); advance_parser(parser);
     Token *tok2 = peek_tok(parser); advance_parser(parser);
@@ -153,7 +120,7 @@ fExpr *parse_define(fParser *parser)
         exit(1);
     }
 
-    fExpr *curr_expr = parse_alter(parser);
+    Expr *curr_expr = parse_alter(parser);
     Token *tok3 = peek_tok(parser);
     if (tok3->string != S_END)
     {
@@ -161,7 +128,7 @@ fExpr *parse_define(fParser *parser)
         exit(1);
     }
     advance_parser(parser);
-    fExpr *new_expr = alloc_expr(parser);
+    Expr *new_expr = alloc_expr(parser);
     new_expr->kind = E_DEF;
     new_expr->definition.string = tok1->string;
     new_expr->definition.expr = curr_expr;
@@ -170,11 +137,10 @@ fExpr *parse_define(fParser *parser)
     return new_expr;
 }
 
-
-fExpr *parse_alter(fParser *parser)
+Expr *parse_alter(Parser *parser)
 {
     int expr_num = 0, last_tok = parser->tok_num - parser->pos + 10;
-    fExpr **exprs = (fExpr**) malloc(sizeof(exprs) * last_tok);
+    Expr **exprs = (Expr**) malloc(sizeof(exprs) * last_tok);
 
     while (true)
     {
@@ -195,27 +161,26 @@ fExpr *parse_alter(fParser *parser)
     }
     if (expr_num == 1)
     {
-        fExpr *expr = exprs[0];
+        Expr *expr = exprs[0];
         free(exprs);
         return expr;
     }
     else
     {
-        fExpr *expr = alloc_expr(parser);
+        Expr *expr = alloc_expr(parser);
         expr->kind = E_ALTER;
-        expr->nary.exprs = (fExpr**) malloc(sizeof(fExpr*) * expr_num);
+        expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
         expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, exprs, sizeof(fExpr*) * expr_num);
+        memcpy(expr->nary.exprs, exprs, sizeof(Expr*) * expr_num);
         free(exprs);
         return expr;
     }
 }
 
-
-fExpr *parse_concat(fParser *parser)
+Expr *parse_concat(Parser *parser)
 {
     int expr_num = 0, last_tok = parser->tok_num - parser->pos + 10;
-    fExpr **exprs = (fExpr**) malloc(sizeof(exprs) * last_tok);
+    Expr **exprs = (Expr**) malloc(sizeof(exprs) * last_tok);
 
     while (true)
     {
@@ -232,26 +197,27 @@ fExpr *parse_concat(fParser *parser)
             continue;
         }
         printf("error\n");
+        exit(1);
     }
     if (expr_num == 1)
     {
-        fExpr *expr = exprs[0];
+        Expr *expr = exprs[0];
         free(exprs);
         return expr;
     }
     else
     {
-        fExpr *expr = alloc_expr(parser);
+        Expr *expr = alloc_expr(parser);
         expr->kind = E_CONCAT;
-        expr->nary.exprs = (fExpr**) malloc(sizeof(fExpr*) * expr_num);
+        expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
         expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, exprs, sizeof(fExpr*) * expr_num);
+        memcpy(expr->nary.exprs, exprs, sizeof(Expr*) * expr_num);
         free(exprs);
         return expr;
     }
 }
 
-fExpr *parse_primary(fParser *parser)
+Expr *parse_primary(Parser *parser)
 {
     Token *curr_token = peek_tok(parser);
     TType ttype = curr_token->ttype;
@@ -263,7 +229,7 @@ fExpr *parse_primary(fParser *parser)
         case T_IDENTITY:
         {
             advance_parser(parser);
-            fExpr *expr = alloc_expr(parser);
+            Expr *expr = alloc_expr(parser);
             expr->kind = (ttype == T_STRING? E_LETS: E_IDENT);
             expr->identity.string = string;
             return expr;
@@ -273,7 +239,7 @@ fExpr *parse_primary(fParser *parser)
             if (string == S_LPAREN || string == S_LBRACE || string == S_LBRAKET)
             {
                 advance_parser(parser);
-                fExpr *curr_expr = parse_alter(parser);
+                Expr *curr_expr = parse_alter(parser);
                 Token *next_token = peek_tok(parser);
                 char *next_string = next_token->string;
 
@@ -287,10 +253,10 @@ fExpr *parse_primary(fParser *parser)
                       || (string == S_LBRAKET && next_string == S_RBRAKET) )
                 {
                     advance_parser(parser);
-                    fExpr *new_expr = alloc_expr(parser);
+                    Expr *new_expr = alloc_expr(parser);
                     new_expr->kind = (string == S_LBRACE? E_REP: E_OPT);
                     new_expr->nary.expr_num = 1;
-                    new_expr->nary.exprs = (fExpr**) malloc(sizeof(fExpr*));
+                    new_expr->nary.exprs = (Expr**) malloc(sizeof(Expr*));
                     new_expr->nary.exprs[0] = curr_expr;
 
                     return new_expr;                    
