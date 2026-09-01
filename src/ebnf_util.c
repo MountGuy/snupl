@@ -26,17 +26,12 @@ char *search_asset(Lexer *lexer, char *target)
     return lexer->starts[lexer->asset_num - 1];
 }
 
-void advance_parser(Parser *parser)
-{
-    parser->pos++;
-}
-
 Token *peek_tok(Parser *parser)
 {
     return parser->tokens + parser->pos;
 }
 
-Token *pop_tok(Parser *parser)
+Token *advance_parser(Parser *parser)
 {
     Token *tok = parser->tokens + parser->pos;
     parser->pos++;

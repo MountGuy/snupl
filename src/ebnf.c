@@ -163,8 +163,8 @@ Expr *parse_define(Parser *parser)
 
     while (parser->pos < parser->tok_num)
     {
-        Token *tok_id = pop_tok(parser);
-        Token *tok_def = pop_tok(parser);
+        Token *tok_id = advance_parser(parser);
+        Token *tok_def = advance_parser(parser);
 
         if (!(
             tok_id->ttype == T_IDENTITY &&
@@ -177,7 +177,7 @@ Expr *parse_define(Parser *parser)
         }
 
         Expr *expr = parse_alter(parser);
-        Token *tok_end = pop_tok(parser);
+        Token *tok_end = advance_parser(parser);
         if (tok_end->string != S_END)
         {
             printf("definition format error\n");
@@ -207,9 +207,13 @@ Expr *parse_alter(Parser *parser)
         char *token_string = peek_tok(parser)->string;
         expr_num++;
         
-        if (token_string == S_END ||
-            token_string == S_RPAREN || token_string == S_RBRACE || token_string == S_RBRAKET)
-            break;
+        if (
+            token_string == S_END ||
+            token_string == S_RPAREN ||
+            token_string == S_RBRACE ||
+            token_string == S_RBRAKET
+        ) break;
+
         if (token_string == S_ALTER)
         {
             advance_parser(parser);
@@ -248,9 +252,14 @@ Expr *parse_concat(Parser *parser)
         char *token_string = peek_tok(parser)->string;
         expr_num++;
 
-        if (token_string == S_ALTER || token_string == S_END ||
-            token_string == S_RPAREN || token_string == S_RBRACE || token_string == S_RBRAKET)
-            break;
+        if (
+            token_string == S_ALTER ||
+            token_string == S_END ||
+            token_string == S_RPAREN ||
+            token_string == S_RBRACE ||
+            token_string == S_RBRAKET
+        ) break;
+
         if (token_string == S_CONCAT)
         {
             advance_parser(parser);
@@ -280,7 +289,7 @@ Expr *parse_concat(Parser *parser)
 
 Expr *parse_primary(Parser *parser)
 {
-    Token *curr_token = peek_tok(parser);
+    Token *curr_token = advance_parser(parser);
     TType ttype = curr_token->ttype;
     char *string = curr_token->string;
 
@@ -288,7 +297,6 @@ Expr *parse_primary(Parser *parser)
     {
         case T_STRING:
         {
-            advance_parser(parser);
             Expr *expr = alloc_expr(parser);
             expr->kind = E_STRING;
             expr->string.str = string;
@@ -296,7 +304,6 @@ Expr *parse_primary(Parser *parser)
         }
         case T_IDENTITY:
         {
-            advance_parser(parser);
             Expr *expr = alloc_expr(parser);
             expr->kind = E_IDENTITY;
             expr->identity.id = 0;
@@ -306,23 +313,25 @@ Expr *parse_primary(Parser *parser)
         }
         case T_OPERATOR:
         {
-            if (string == S_LPAREN || string == S_LBRACE || string == S_LBRAKET)
+            if (
+                string == S_LPAREN ||
+                string == S_LBRACE ||
+                string == S_LBRAKET
+            )
             {
-                advance_parser(parser);
                 Expr *curr_expr = parse_alter(parser);
-                Token *next_token = peek_tok(parser);
+                Token *next_token = advance_parser(parser);
                 char *next_string = next_token->string;
 
                 if (string == S_LPAREN && next_string == S_RPAREN)
                 {
-                    advance_parser(parser);
-
                     return curr_expr;
                 }
-                else if ((string == S_LBRACE && next_string == S_RBRACE)
-                      || (string == S_LBRAKET && next_string == S_RBRAKET) )
+                else if (
+                    (string == S_LBRACE && next_string == S_RBRACE) ||
+                    (string == S_LBRAKET && next_string == S_RBRAKET)
+                )
                 {
-                    advance_parser(parser);
                     Expr *new_expr = alloc_expr(parser);
                     new_expr->kind = (string == S_LBRACE? E_REPEAT: E_OPTION);
                     new_expr->nary.expr_num = 1;
@@ -331,14 +340,18 @@ Expr *parse_primary(Parser *parser)
 
                     return new_expr;                    
                 }
+                else {   
+                    printf("unexpected parsing: parse primary, %s %s\n", string, peek_tok(parser)->string);
+                    exit(1);
+                }
             }
 
-            printf("1. unexpected parsing: parse primary, %s %s\n", string, peek_tok(parser)->string);
+            printf("unexpected parsing: parse primary, %s %s\n", string, peek_tok(parser)->string);
             exit(1);
         }
         default:
         {
-            printf("2. unexpected parsing: parse primary\n");
+            printf("unexpected parsing: parse primary\n");
             exit(1);
         }
     }

@@ -19,9 +19,8 @@
 
 char *search_asset(Lexer *lexer, char *target);
 
-void advance_parser(Parser *parser);
 Token *peek_tok(Parser *parser);
-Token *pop_tok(Parser *parser);
+Token *advance_parser(Parser *parser);
 Expr *alloc_expr(Parser *parser);
 
 void print_tokens(int tok_num, Token *tokens);
