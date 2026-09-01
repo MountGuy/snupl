@@ -41,6 +41,7 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
             *c = c_null;
             tokens[tok_num].string = c + 1;
             tokens[tok_num].ttype = T_STRING;
+            c += 2;
             while (*c != '\"') c++;
             *c = c_null;
         }
@@ -141,10 +142,11 @@ Expr *parse_define(Parser *parser)
 Expr *parse_alter(Parser *parser)
 {
     int expr_num = 0;
+    Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->tok_num);
 
     while (true)
     {
-        parser->buffer[expr_num] = parse_concat(parser);
+        buffer[expr_num] = parse_concat(parser);
         char *token_string = peek_tok(parser)->string;
         expr_num++;
         
@@ -160,14 +162,20 @@ Expr *parse_alter(Parser *parser)
         exit(1);
     }
     if (expr_num == 1)
-        return parser->buffer[0];
+    {
+        Expr *expr = buffer[0];
+        free(buffer);
+        return expr;
+    }
     else
     {
         Expr *expr = alloc_expr(parser);
         expr->kind = E_ALTER;
         expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
         expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, parser->buffer, sizeof(Expr*) * expr_num);
+        memcpy(expr->nary.exprs, buffer, sizeof(Expr*) * expr_num);
+        free(buffer);
+        
         return expr;
     }
 }
@@ -175,10 +183,11 @@ Expr *parse_alter(Parser *parser)
 Expr *parse_concat(Parser *parser)
 {
     int expr_num = 0;
+    Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->tok_num);
 
     while (true)
     {
-        parser->buffer[expr_num] = parse_primary(parser);
+        buffer[expr_num] = parse_primary(parser);
         char *token_string = peek_tok(parser)->string;
         expr_num++;
 
@@ -194,14 +203,20 @@ Expr *parse_concat(Parser *parser)
         exit(1);
     }
     if (expr_num == 1)
-        return parser->buffer[0];
+    {
+        Expr *expr = buffer[0];
+        free(buffer);
+        return expr;
+    }
     else
     {
         Expr *expr = alloc_expr(parser);
         expr->kind = E_CONCAT;
         expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
         expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, parser->buffer, sizeof(Expr*) * expr_num);
+        memcpy(expr->nary.exprs, buffer, sizeof(Expr*) * expr_num);
+        free(buffer);
+
         return expr;
     }
 }
