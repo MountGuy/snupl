@@ -98,9 +98,10 @@ int ebnf_parser(Lexer *lexer, Token *tokens)
 {
     Parser parser = {
         .tokens = tokens,
+        .exprs = (Expr*) malloc(sizeof(Expr) * (lexer->tok_num + 10)),
+        .buffer = (Expr**) malloc(sizeof(Expr*) * (lexer->tok_num + 10)),
         .pos = 0,
         .tok_num = lexer->tok_num,
-        .exprs = (Expr*) malloc(sizeof(Expr) * (lexer->tok_num + 10)),
         .expr_num = 0,
     };
 
@@ -139,19 +140,18 @@ Expr *parse_define(Parser *parser)
 
 Expr *parse_alter(Parser *parser)
 {
-    int expr_num = 0, last_tok = parser->tok_num - parser->pos + 10;
-    Expr **exprs = (Expr**) malloc(sizeof(exprs) * last_tok);
+    int expr_num = 0;
 
     while (true)
     {
-        exprs[expr_num] = parse_concat(parser);
-        char tok_char = peek_tok(parser)->string[0];
+        parser->buffer[expr_num] = parse_concat(parser);
+        char *token_string = peek_tok(parser)->string;
         expr_num++;
         
-        if (tok_char == C_END ||
-            tok_char == C_RPAREN || tok_char == C_RBRACE || tok_char == C_RBRAKET)
+        if (token_string == S_END ||
+            token_string == S_RPAREN || token_string == S_RBRACE || token_string == S_RBRAKET)
             break;
-        if (tok_char == C_ALTER)
+        if (token_string == S_ALTER)
         {
             advance_parser(parser);
             continue;
@@ -160,38 +160,32 @@ Expr *parse_alter(Parser *parser)
         exit(1);
     }
     if (expr_num == 1)
-    {
-        Expr *expr = exprs[0];
-        free(exprs);
-        return expr;
-    }
+        return parser->buffer[0];
     else
     {
         Expr *expr = alloc_expr(parser);
         expr->kind = E_ALTER;
         expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
         expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, exprs, sizeof(Expr*) * expr_num);
-        free(exprs);
+        memcpy(expr->nary.exprs, parser->buffer, sizeof(Expr*) * expr_num);
         return expr;
     }
 }
 
 Expr *parse_concat(Parser *parser)
 {
-    int expr_num = 0, last_tok = parser->tok_num - parser->pos + 10;
-    Expr **exprs = (Expr**) malloc(sizeof(exprs) * last_tok);
+    int expr_num = 0;
 
     while (true)
     {
-        exprs[expr_num] = parse_primary(parser);
-        char tok_char = peek_tok(parser)->string[0];
+        parser->buffer[expr_num] = parse_primary(parser);
+        char *token_string = peek_tok(parser)->string;
         expr_num++;
 
-        if (tok_char == C_ALTER || tok_char == C_END ||
-            tok_char == C_RPAREN || tok_char == C_RBRACE || tok_char == C_RBRAKET)
+        if (token_string == S_ALTER || token_string == S_END ||
+            token_string == S_RPAREN || token_string == S_RBRACE || token_string == S_RBRAKET)
             break;
-        if (tok_char == C_CONCAT)
+        if (token_string == S_CONCAT)
         {
             advance_parser(parser);
             continue;
@@ -200,19 +194,14 @@ Expr *parse_concat(Parser *parser)
         exit(1);
     }
     if (expr_num == 1)
-    {
-        Expr *expr = exprs[0];
-        free(exprs);
-        return expr;
-    }
+        return parser->buffer[0];
     else
     {
         Expr *expr = alloc_expr(parser);
         expr->kind = E_CONCAT;
         expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
         expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, exprs, sizeof(Expr*) * expr_num);
-        free(exprs);
+        memcpy(expr->nary.exprs, parser->buffer, sizeof(Expr*) * expr_num);
         return expr;
     }
 }

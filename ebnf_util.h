@@ -1,7 +1,6 @@
 #ifndef EBNF_UTIL
 #define EBNF_UTIL 1
 
-#include <string.h>
 #include "common.h"
 #include "struct.h"
 
@@ -26,7 +25,6 @@ Expr *alloc_expr(Parser *parser);
 void print_tokens(int tok_num, Token *tokens);
 void print_fexpr(Expr *expr);
 
-extern char groups[N_GROUPS][3];
 extern char *S_LPAREN, *S_RPAREN, *S_LBRACE, *S_RBRACE, *S_LBRAKET, *S_RBRAKET, *S_END, *S_DEFINE, *S_ALTER, *S_CONCAT;
 
 #endif

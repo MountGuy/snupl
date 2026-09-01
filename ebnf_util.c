@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ebnf_util.h"
 
-char groups[N_GROUPS][3] = {
-    {C_LPAREN, C_RPAREN, E_GRP},
-    {C_LBRACE, C_RBRACE, E_REP},
-    {C_LBRAKET, C_RBRAKET, E_OPT}
-};
+
 char *S_LPAREN = "(", *S_RPAREN = ")",
      *S_LBRACE = "{", *S_RBRACE = "}",
      *S_LBRAKET = "[", *S_RBRAKET = "]",

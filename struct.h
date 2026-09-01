@@ -23,7 +23,7 @@ typedef struct {
 
 typedef struct {
     Token *tokens;
-    Expr *exprs;
+    Expr *exprs, **buffer;
     int pos, tok_num, expr_num;
 } Parser;
 
