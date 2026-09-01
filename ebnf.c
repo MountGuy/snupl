@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "ebnf_util.h"
-#include "febnf.h"
+#include "ebnf.h"
 
 
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)

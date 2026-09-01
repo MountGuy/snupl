@@ -3,9 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
-// #include "ebnf.h"
-#include "febnf.h"
 #include "ebnf_util.h"
+#include "ebnf.h"
 
 
 int main(int argv, char *argc[])
