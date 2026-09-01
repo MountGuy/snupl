@@ -1,14 +1,6 @@
-all: scanner
-	./scanner snupl2.gm
-
-test: scanner testcase.gm
-	./scanner testcase.gm
-
-scanner: main.c ebnf_util.c ebnf.c
-	gcc ebnf_util.c ebnf.c main.c -o scanner -Wall
+scanner: src
+	$(MAKE) -C src scanner
 
 clean:
-	rm -f scanner
-
-count:
-	@./count.sh
+	$(MAKE) -C src clean
+	rm -rf scanner
