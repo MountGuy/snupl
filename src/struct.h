@@ -2,7 +2,7 @@
 #define STRUCT_H 1
 
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR, T_END } TType;
-typedef enum { E_ALTER, E_CONCAT, E_OPT, E_REP, E_GRP, E_LETS, E_IDENT, E_TMP, E_END, E_DEF } ExprKind;
+typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_IDENTITY, E_DEFINE, E_END } ExprKind;
 
 typedef struct { char *string; TType ttype; } Token;
 

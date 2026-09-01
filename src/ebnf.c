@@ -131,7 +131,7 @@ Expr *parse_define(Parser *parser)
     }
     advance_parser(parser);
     Expr *new_expr = alloc_expr(parser);
-    new_expr->kind = E_DEF;
+    new_expr->kind = E_DEFINE;
     new_expr->definition.string = tok1->string;
     new_expr->definition.expr = curr_expr;
 
@@ -234,7 +234,7 @@ Expr *parse_primary(Parser *parser)
         {
             advance_parser(parser);
             Expr *expr = alloc_expr(parser);
-            expr->kind = (ttype == T_STRING? E_LETS: E_IDENT);
+            expr->kind = (ttype == T_STRING? E_STRING: E_IDENTITY);
             expr->identity.string = string;
             return expr;
         }
@@ -258,7 +258,7 @@ Expr *parse_primary(Parser *parser)
                 {
                     advance_parser(parser);
                     Expr *new_expr = alloc_expr(parser);
-                    new_expr->kind = (string == S_LBRACE? E_REP: E_OPT);
+                    new_expr->kind = (string == S_LBRACE? E_REPEAT: E_OPTION);
                     new_expr->nary.expr_num = 1;
                     new_expr->nary.exprs = (Expr**) malloc(sizeof(Expr*));
                     new_expr->nary.exprs[0] = curr_expr;

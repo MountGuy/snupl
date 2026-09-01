@@ -82,26 +82,26 @@ void print_fexpr(Expr *expr)
             printf(")");
             break;
         }
-        case E_OPT:
+        case E_OPTION:
         {
             printf("[");
             print_fexpr(expr->nary.exprs[0]);
             printf("]");
             break;
         }
-        case E_REP:
+        case E_REPEAT:
         {
             printf("{");
             print_fexpr(expr->nary.exprs[0]);
             printf("}");
             break;
         }
-        case E_LETS:
+        case E_STRING:
         {
             printf("\"%s\"", expr->identity.string);
             break;
         }
-        case E_IDENT:
+        case E_IDENTITY:
         {
             printf("%s", expr->identity.string);
             break;
@@ -111,7 +111,7 @@ void print_fexpr(Expr *expr)
             printf("\n");
             break;
         }
-        case E_DEF:
+        case E_DEFINE:
         {
             printf("%s := ", expr->definition.string);
             print_fexpr(expr->definition.expr);
