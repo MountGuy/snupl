@@ -25,11 +25,11 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
             *c = c_null;
             continue;
         }
-        else if (is_char(*c))
+        else if (is_char(*c) || *c == '_')
         {
             tokens[tok_num].string = c;
             tokens[tok_num].ttype = T_IDENTITY;
-            while (is_char(*(c + 1)) || is_digit(*(c + 1))) c++;
+            while (is_char(*(c + 1)) || is_digit(*(c + 1)) || *(c + 1) == '_') c++;
         }
         else if (*c == '\"')
         {

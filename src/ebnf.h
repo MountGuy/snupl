@@ -2,7 +2,6 @@
 #define FEBNF_H 1
 
 #include "common.h"
-#include "struct.h"
 #include "ebnf_util.h"
 
 void ebnf_lexer(char *input, Lexer *lexer, Token *tokens);

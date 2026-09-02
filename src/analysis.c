@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "common.h"
-#include "struct.h"
 #include "analysis.h"
 
 int null_test(Parser *parser)

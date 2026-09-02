@@ -2,7 +2,6 @@
 #define EBNF_UTIL 1
 
 #include "common.h"
-#include "struct.h"
 
 #define N_GROUPS 3
 
