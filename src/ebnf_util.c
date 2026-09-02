@@ -11,19 +11,34 @@ char *S_LPAREN = "(", *S_RPAREN = ")",
      *S_END = ";", *S_DEFINE = "=",
      *S_ALTER = "|", *S_CONCAT = ",";
 
-char *search_asset(Lexer *lexer, char *target)
+char *search_asset(Lexer *lexer, char *string, TType ttype)
 {
     for (int i = 0; i < lexer->asset_num; i++)
-        if (strcmp(lexer->starts[i], target) == 0)
+        if (strcmp(lexer->starts[i], string) == 0 && lexer->asset_types[i] == ttype)
             return lexer->starts[i];
 
-    strcpy(lexer->top, target);
+    strcpy(lexer->top, string);
     
     lexer->starts[lexer->asset_num] = lexer->top;
-    lexer->top += strlen(target) + 1;
+    lexer->asset_types[lexer->asset_num] = ttype;
+    lexer->top += strlen(string) + 1;
     lexer->asset_num += 1;
 
     return lexer->starts[lexer->asset_num - 1];
+}
+
+void print_asset(Lexer *lexer)
+{
+    for (int i = 0; i < lexer->asset_num; i++)
+    {
+        if (lexer->asset_types[i] == T_STRING)
+            printf("[%2d] string %s\n", i, lexer->starts[i]);
+        else if (lexer->asset_types[i] == T_IDENTITY)
+            continue;
+            // printf("[%2d] identi %s\n", i, lexer->starts[i]);
+        else
+            printf("wtf?");
+    }
 }
 
 Token *peek_tok(Parser *parser)

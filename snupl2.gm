@@ -1,32 +1,32 @@
-module = "module" , ident , ";" , { constDeclaration | varDeclaration | subroutineDecl } , [ "begin" , statSequence ] , "end" , ident , "." ;
+module = "module" , _ident , ";" , { constDeclaration | varDeclaration | subroutineDecl } , [ "begin" , statSequence ] , "end" , _ident , "." ;
 
-_letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "_" ;
-_digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
-_hexdigit = _digit | "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f" ;
-_character = _letter | _digit | "\n" | "\t" | """ | "\'" | "\\" | _hexencoded ;
-_hexencoded = "\x" , _hexdigit , _hexdigit ;
+__letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "_" ;
+__digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+__hexdigit = __digit | "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f" ;
+__hexencoded = "\x" , __hexdigit , __hexdigit ;
+__character = __letter | __digit | "\n" | "\t" | """ | "\'" | "\\" | __hexencoded ;
 
-char = "'" , ( _character | "\0" ) , "'" ;
-string = """ , { _character } , """ ;
+_char = "'" , ( __character | "\0" ) , "'" ;
+_string = """ , { __character } , """ ;
 
-ident = _letter , { _letter | _digit } ;
-number = _digit , { _digit } , [ "L" ] ;
+_ident = __letter , { __letter | __digit } ;
+_number = __digit , { __digit } , [ "L" ] ;
 boolean = "true" | "false" ;
 type = basetype | type , "[" , [ simpleexpr ] , "]" ;
 basetype = "boolean" | "char" | "integer" | "longint" ;
 
-qualident = ident , { "[" , simpleexpr , "]" } ;
+qualident = _ident , { "[" , simpleexpr , "]" } ;
 factOp = "*" | "/" | "&&" ;
 termOp = "+" | "-" | "||" ;
 relOp = "=" | "#" | "<" | "<=" | ">" | ">=" ;
 
-factor = qualident | number | boolean | char | string | "(" , expression , ")" | subroutineCall | "!" , factor ;
+factor = qualident | _number | boolean | _char | _string | "(" , expression , ")" | subroutineCall | "!" , factor ;
 term = factor , { factOp , factor } ;
 simpleexpr = [ "+" | "-" ] , term , { termOp , term } ;
 expression = simpleexpr , [ relOp , simpleexpr ] ;
 
 assignment = qualident , ":=" , expression ;
-subroutineCall = ident , "(" , [ expression , { "," , expression } ] , ")" ;
+subroutineCall = _ident , "(" , [ expression , { "," , expression } ] , ")" ;
 ifStatement = "if" , "(" , expression , ")" , "then" , [ statSequence ] , [ "else" , [ statSequence ] ] , "end" ;
 whileStatement = "while" , "(" , expression , ")" , "do" , [ statSequence ] , "end" ;
 returnStatement = "return" , [ expression ] ;
@@ -40,13 +40,12 @@ constDecl = varDecl , "=" , expression ;
 
 varDeclaration = "var" , varDeclSequence , ";" ;
 varDeclSequence = varDecl , { ";" , varDecl } ;
-varDecl = ident , { "," , ident } , ":" , type ;
+varDecl = _ident , { "," , _ident } , ":" , type ;
 
-subroutineDecl = ( procedureDecl | functionDecl ) , ( "extern" | subroutineBody , ident ) , ";" ;
-procedureDecl = "procedure" , ident , [ formalParam ] , ";" ;
-functionDecl = "function" , ident , [ formalParam ] , ":" , type , ";" ;
+subroutineDecl = ( procedureDecl | functionDecl ) , ( "extern" | subroutineBody , _ident ) , ";" ;
+procedureDecl = "procedure" , _ident , [ formalParam ] , ";" ;
+functionDecl = "function" , _ident , [ formalParam ] , ":" , type , ";" ;
 formalParam = "(" , [ varDeclSequence ] , ")" ;
 subroutineBody = { constDeclaration | varDeclaration } , "begin" , [ statSequence ] , "end" ;
 
-comment = "//" , { notnewline } , "\n" ;
 whitespace = { " " | "\t" | "\n" } ;

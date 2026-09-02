@@ -13,6 +13,4 @@ Expr *parse_alter(Parser *parser);
 Expr *parse_concat(Parser *parser);
 Expr *parse_primary(Parser *parser);
 
-
-
 #endif

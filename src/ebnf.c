@@ -17,6 +17,7 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
     lexer->starts = (char**) malloc(sizeof(char*) * (char_num + 10));
     lexer->top = lexer->asset;
     lexer->asset_num = 0;    
+    lexer->asset_types = (TType*) malloc(sizeof(TType) * (char_num + 10));
 
     for (char *c = lexer->input; *c; c++)
     {
@@ -84,10 +85,11 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
     for (int i = 0; i < tok_num; i++)
     {
         if (tokens[i].ttype == T_IDENTITY || tokens[i].ttype == T_STRING)
-            tokens[i].string = search_asset(lexer, tokens[i].string);
+            tokens[i].string = search_asset(lexer, tokens[i].string, tokens[i].ttype);
     }
 
     lexer->tok_num = tok_num;
+    print_asset(lexer);
 }
 
 void ebnf_parser(Lexer *lexer, Token *tokens)

@@ -6,15 +6,19 @@
 #define is_char(c) (('a' <= (c) && (c) <= 'z') || ('A' <= (c) && (c) <= 'Z'))
 #define is_digit(c) ('0' <= c && c <= '9')
 
-typedef enum {B_FALSE, B_TRUE, B_VAR} Boolean;
+typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_IDENTITY, E_DEFINE } ExprKind;
+typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
+
+#define C_EPS 0
 
 typedef struct { char *string; TType ttype; } Token;
 
 typedef struct Expr {
     ExprKind kind;
-    union {
+    union
+    {
         struct { int expr_num; struct Expr **exprs; } nary;
         struct { int id; char *str; struct Expr *expr; } identity;
         struct { char *str; } string;
@@ -24,6 +28,7 @@ typedef struct Expr {
 typedef struct {
     int char_num, asset_num, tok_num;
     char *input, *asset, *top, **starts;
+    TType *asset_types;
 } Lexer;
 
 typedef struct {
@@ -31,5 +36,10 @@ typedef struct {
     Expr *exprs, *defs, **buffer;
     int pos, tok_num, expr_num, def_num;
 } Parser;
+
+typedef struct {
+    int state_num, top_state, char_num;
+    int ***trans;
+} NFA_builder;
 
 #endif
