@@ -8,6 +8,7 @@
 
 typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;
+typedef enum { D_CHAR, D_LEX, D_DEF } DType;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_IDENTITY, E_DEFINE } ExprKind;
 typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 
@@ -26,15 +27,17 @@ typedef struct Expr {
 } Expr;
 
 typedef struct {
-    int char_num, asset_num, tok_num;
-    char *input, *asset, *top, **starts;
-    TType *asset_types;
-} Lexer;
+    char *input;
 
-typedef struct {
+    int char_num, asset_num;
+    char *assets, *top, **starts;
+    TType *asset_types;
+    
+    int tok_num;
     Token *tokens;
-    Expr *exprs, *defs, **buffer;
-    int pos, tok_num, expr_num, def_num;
+    
+    int pos, expr_num, def_num;
+    Expr *exprs, *defs;
 } Parser;
 
 typedef struct {

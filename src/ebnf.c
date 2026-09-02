@@ -7,19 +7,21 @@
 #include "analysis.h"
 
 
-void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
+void ebnf_lexer(Parser *parser)
 {
-    int char_num = strlen(input);
+    int char_num = strlen(parser->input);
     int tok_num = 0;
 
-    lexer->input = input;
-    lexer->asset = (char*) malloc(sizeof(char) * (char_num + 10));
-    lexer->starts = (char**) malloc(sizeof(char*) * (char_num + 10));
-    lexer->top = lexer->asset;
-    lexer->asset_num = 0;    
-    lexer->asset_types = (TType*) malloc(sizeof(TType) * (char_num + 10));
+    parser->char_num = char_num;
+    parser->assets = (char*) malloc(sizeof(char) * (char_num + 10));
+    parser->starts = (char**) malloc(sizeof(char*) * (char_num + 10));
+    parser->top = parser->assets;
+    parser->asset_num = 0;
+    parser->asset_types = (TType*) malloc(sizeof(TType) * (char_num + 10));
 
-    for (char *c = lexer->input; *c; c++)
+    Token *tokens = (Token*) malloc(sizeof(Token) * (char_num + 10));
+    
+    for (char *c = parser->input; *c; c++)
     {
         if (*c == ' ' || *c == '\n')
         {
@@ -85,31 +87,30 @@ void ebnf_lexer(char *input, Lexer *lexer, Token *tokens)
     for (int i = 0; i < tok_num; i++)
     {
         if (tokens[i].ttype == T_IDENTITY || tokens[i].ttype == T_STRING)
-            tokens[i].string = search_asset(lexer, tokens[i].string, tokens[i].ttype);
+            tokens[i].string = search_asset(tokens[i].string, tokens[i].ttype, parser);
     }
 
-    lexer->tok_num = tok_num;
-    print_asset(lexer);
+    parser->tok_num = tok_num;
+    parser->tokens = tokens;
+    print_asset(parser);
 }
 
-void ebnf_parser(Lexer *lexer, Token *tokens)
+void ebnf_parser(Parser *parser)
 {
-    Parser parser = {
-        .tokens = tokens,
-        .exprs = (Expr*) malloc(sizeof(Expr) * (lexer->tok_num + 10)),
-        .defs = (Expr*) malloc(sizeof(Expr) * (lexer->tok_num + 10)),
-        .buffer = (Expr**) malloc(sizeof(Expr*) * (lexer->tok_num + 10)),
-        .pos = 0,
-        .tok_num = lexer->tok_num,
-        .expr_num = 0,
-        .def_num = 0,
-    };
+    int tok_num = parser->tok_num;
 
-    parse_define(&parser);
-    for (int i = 0; i < parser.def_num; i++)
-        resolve_refer(parser.defs[i].identity.expr, &parser);
+    parser->exprs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
+    parser->defs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
+    parser->pos = 0;
+    parser->expr_num = 0;
+    parser->def_num = 0;
 
-    null_test(&parser);
+    parse_define(parser);
+    for (int i = 0; i < parser->def_num; i++)
+        resolve_refer(parser->defs[i].identity.expr, parser);
+    
+    print_parser(parser);fflush(stdout);
+    null_test(parser);
 }
 
 void resolve_refer(Expr *expr, Parser *parser)

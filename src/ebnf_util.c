@@ -11,31 +11,31 @@ char *S_LPAREN = "(", *S_RPAREN = ")",
      *S_END = ";", *S_DEFINE = "=",
      *S_ALTER = "|", *S_CONCAT = ",";
 
-char *search_asset(Lexer *lexer, char *string, TType ttype)
+char *search_asset(char *string, TType ttype, Parser *parser)
 {
-    for (int i = 0; i < lexer->asset_num; i++)
-        if (strcmp(lexer->starts[i], string) == 0 && lexer->asset_types[i] == ttype)
-            return lexer->starts[i];
+    for (int i = 0; i < parser->asset_num; i++)
+        if (strcmp(parser->starts[i], string) == 0 && parser->asset_types[i] == ttype)
+            return parser->starts[i];
 
-    strcpy(lexer->top, string);
+    strcpy(parser->top, string);
     
-    lexer->starts[lexer->asset_num] = lexer->top;
-    lexer->asset_types[lexer->asset_num] = ttype;
-    lexer->top += strlen(string) + 1;
-    lexer->asset_num += 1;
+    parser->starts[parser->asset_num] = parser->top;
+    parser->asset_types[parser->asset_num] = ttype;
+    parser->top += strlen(string) + 1;
+    parser->asset_num += 1;
 
-    return lexer->starts[lexer->asset_num - 1];
+    return parser->starts[parser->asset_num - 1];
 }
 
-void print_asset(Lexer *lexer)
+void print_asset(Parser *parser)
 {
-    for (int i = 0; i < lexer->asset_num; i++)
+    for (int i = 0; i < parser->asset_num; i++)
     {
-        if (lexer->asset_types[i] == T_STRING)
-            printf("[%2d] string %s\n", i, lexer->starts[i]);
-        else if (lexer->asset_types[i] == T_IDENTITY)
+        if (parser->asset_types[i] == T_STRING)
+            printf("[%2d] string %s\n", i, parser->starts[i]);
+        else if (parser->asset_types[i] == T_IDENTITY)
             continue;
-            // printf("[%2d] identi %s\n", i, lexer->starts[i]);
+            // printf("[%2d] identi %s\n", i, parser->starts[i]);
         else
             printf("wtf?");
     }

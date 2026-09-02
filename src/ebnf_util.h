@@ -16,13 +16,13 @@
 #define C_ALTER   '|'
 #define C_CONCAT  ','
 
-char *search_asset(Lexer *lexer, char *string, TType ttype);
+char *search_asset(char *string, TType ttype, Parser *parser);
 
 Token *peek_tok(Parser *parser);
 Token *advance_parser(Parser *parser);
 Expr *alloc_expr(Parser *parser);
 
-void print_asset(Lexer *lexer);
+void print_asset(Parser *parser);
 void print_tokens(int tok_num, Token *tokens);
 void print_expr(Expr *expr);
 void print_parser(Parser *parser);
