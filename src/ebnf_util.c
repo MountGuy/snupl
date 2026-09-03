@@ -11,7 +11,7 @@ char *S_LPAREN = "(", *S_RPAREN = ")",
      *S_END = ";", *S_DEFINE = "=",
      *S_ALTER = "|", *S_CONCAT = ",";
 
-char *search_asset(char *string, TType ttype, Parser *parser)
+char *search_asset(char *string, TType ttype, GParser *parser)
 {
     for (int i = 0; i < parser->asset_num; i++)
         if (strcmp(parser->starts[i], string) == 0 && parser->asset_types[i] == ttype)
@@ -27,32 +27,32 @@ char *search_asset(char *string, TType ttype, Parser *parser)
     return parser->starts[parser->asset_num - 1];
 }
 
-void set_nary_expr(Expr *expr, ExprKind kind, Expr **exprs, int expr_num)
+void set_nary_expr(GExpr *expr, ExprKind kind, GExpr **exprs, int expr_num)
 {
     expr->kind = kind;
-    expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
+    expr->nary.exprs = (GExpr**) malloc(sizeof(GExpr*) * expr_num);
     expr->nary.expr_num = expr_num;
-    memcpy(expr->nary.exprs, exprs, sizeof(Expr*) * expr_num);
+    memcpy(expr->nary.exprs, exprs, sizeof(GExpr*) * expr_num);
 }
 
 
 
-Token *peek_tok(Parser *parser)
+GToken *peek_tok(GParser *parser)
 {
     return parser->tokens + parser->pos;
 }
 
-Token *advance_parser(Parser *parser)
+GToken *advance_parser(GParser *parser)
 {
-    Token *tok = parser->tokens + parser->pos;
+    GToken *tok = parser->tokens + parser->pos;
     parser->pos++;
 
     return tok; 
 }
 
-Expr *alloc_expr(Parser *parser)
+GExpr *alloc_expr(GParser *parser)
 {
-    Expr *expr = parser->exprs + parser->expr_num;
+    GExpr *expr = parser->exprs + parser->expr_num;
     parser->expr_num++;
 
     return expr;
@@ -60,7 +60,7 @@ Expr *alloc_expr(Parser *parser)
 
 
 
-void print_asset(Parser *parser)
+void print_asset(GParser *parser)
 {
     for (int i = 0; i < parser->asset_num; i++)
     {
@@ -74,7 +74,7 @@ void print_asset(Parser *parser)
     }
 }
 
-void print_tokens(int tok_num, Token *tokens)
+void print_tokens(int tok_num, GToken *tokens)
 {
     for (int i = 0; i < tok_num; i++)
     {
@@ -82,7 +82,7 @@ void print_tokens(int tok_num, Token *tokens)
     }
 }
 
-void print_expr(Expr *expr)
+void print_expr(GExpr *expr)
 {
     ExprKind kind = expr->kind;
 
@@ -136,11 +136,11 @@ void print_expr(Expr *expr)
     }
 }
 
-void print_parser(Parser *parser)
+void print_parser(GParser *parser)
 {
     for (int i = 0; i < parser->def_num; i++)
     {
-        Expr def = parser->defs[i];
+        GExpr def = parser->defs[i];
         printf("[%3d] %s := ", i, def.identity.str);
         print_expr(def.identity.expr);
         printf("\n");
@@ -149,7 +149,7 @@ void print_parser(Parser *parser)
 
 
 
-void index_identity(Expr *expr, Parser *parser)
+void index_identity(GExpr *expr, GParser *parser)
 {
     switch (expr->kind)
     {
@@ -178,19 +178,19 @@ void index_identity(Expr *expr, Parser *parser)
     }
 }
 
-void unroll_identity(Expr *expr, Parser *parser)
+void unroll_identity(GExpr *expr, GParser *parser)
 {
     switch (expr->kind)
     {
         case E_IDENTITY:
         {
             int idx = expr->identity.idx;
-            Expr *def_body = parser->defs[idx].identity.expr;
+            GExpr *def_body = parser->defs[idx].identity.expr;
             *expr = *def_body;
             if (expr->kind != E_STRING)
             {
-                expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr->nary.expr_num);
-                memcpy(expr->nary.exprs, def_body->nary.exprs, sizeof(Expr*) * expr->nary.expr_num);
+                expr->nary.exprs = (GExpr**) malloc(sizeof(GExpr*) * expr->nary.expr_num);
+                memcpy(expr->nary.exprs, def_body->nary.exprs, sizeof(GExpr*) * expr->nary.expr_num);
             }
             unroll_identity(expr, parser);
             return;
@@ -212,7 +212,7 @@ void unroll_identity(Expr *expr, Parser *parser)
     }
 }
 
-void flatten_expr(Expr *expr, Parser *parser)
+void flatten_expr(GExpr *expr, GParser *parser)
 {
     ExprKind kind = expr->kind;
     switch (kind)
@@ -228,16 +228,16 @@ void flatten_expr(Expr *expr, Parser *parser)
         case E_ALTER:
         case E_CONCAT:
         {
-            Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->expr_num);
+            GExpr **buffer = (GExpr**) malloc(sizeof(GExpr*) * parser->expr_num);
             int expr_num = 0;
 
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                Expr *tmp = expr->nary.exprs[i];
+                GExpr *tmp = expr->nary.exprs[i];
                 flatten_expr(tmp, parser);
                 if (tmp->kind == kind)
                 {
-                    memcpy(buffer + expr_num, tmp->nary.exprs, sizeof(Expr*) * tmp->nary.expr_num);
+                    memcpy(buffer + expr_num, tmp->nary.exprs, sizeof(GExpr*) * tmp->nary.expr_num);
                     expr_num += tmp->nary.expr_num;
                 }
                 else
@@ -247,7 +247,7 @@ void flatten_expr(Expr *expr, Parser *parser)
                 }
             }
 
-            Expr **old = expr->nary.exprs;
+            GExpr **old = expr->nary.exprs;
             set_nary_expr(expr, kind, buffer, expr_num);
             free(old);
             free(buffer);

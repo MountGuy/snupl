@@ -4,7 +4,7 @@
 #include "common.h"
 #include "analysis.h"
 
-int null_test(Parser *parser)
+int null_test(GParser *parser)
 {
     int def_num = parser->def_num;
     Boolean *results = (Boolean*) malloc(sizeof(Boolean) * def_num);
@@ -20,7 +20,7 @@ int null_test(Parser *parser)
         curr_var_num = 0;
         for (int i = 0; i < def_num; i++)
         {
-            Expr def = parser->defs[i];
+            GExpr def = parser->defs[i];
             results[i] = expr_null_test(def.identity.expr, results, parser);        
             
             if (results[i] == B_VAR)
@@ -52,7 +52,7 @@ int null_test(Parser *parser)
     return 0;
 }
 
-Boolean expr_null_test(Expr *expr, Boolean *results, Parser *parser)
+Boolean expr_null_test(GExpr *expr, Boolean *results, GParser *parser)
 {
     switch (expr->kind)
     {

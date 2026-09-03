@@ -15,17 +15,17 @@ typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 
 #define C_EPS 0
 
-typedef struct { char *string; TType ttype; } Token;
+typedef struct { char *string; TType ttype; } GToken;
 
-typedef struct Expr {
+typedef struct GExpr {
     ExprKind kind;
     union
     {
-        struct { int expr_num; struct Expr **exprs; } nary;
-        struct { int idx; char *str; struct Expr *expr; } identity;
+        struct { int expr_num; struct GExpr **exprs; } nary;
+        struct { int idx; char *str; struct GExpr *expr; } identity;
         struct { char *str; } string;
     };
-} Expr;
+} GExpr;
 
 typedef struct {
     char *input;
@@ -35,16 +35,16 @@ typedef struct {
     TType *asset_types;
     
     int tok_num;
-    Token *tokens;
+    GToken *tokens;
     
     int pos, expr_num, def_num;
-    Expr *exprs, *defs;
-} Parser;
+    GExpr *exprs, *defs;
+} GParser;
 
 typedef struct {
     char *input;
     char *chars, **strings;
     int char_num, string_num;
-} CodeParser;
+} CParser;
 
 #endif

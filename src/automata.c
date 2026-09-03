@@ -6,7 +6,7 @@
 #include "automata.h"
 #include "ebnf_util.h"
 
-void add_resource(char *string, SType stype, CodeParser *c_parser)
+void add_resource(char *string, SType stype, CParser *c_parser)
 {
     int i;
     for (char *c = string; *c; c++)
@@ -33,7 +33,50 @@ void add_resource(char *string, SType stype, CodeParser *c_parser)
     }
 }
 
-void gather_strings(Parser *parser, CodeParser *c_parser)
+void sort_resource(CParser *c_parser)
+{
+    char *chars = c_parser->chars;
+    for (int i = 0; i < c_parser->char_num; i++)
+    {
+        int min_idx = i;
+        for (int j = i; j < c_parser->char_num; j++)
+        {
+            if (chars[j] < chars[min_idx])
+                min_idx = j;
+        }
+        char tmp = chars[i];
+        chars[i] = chars[min_idx];
+        chars[min_idx] = tmp;
+    }
+
+    char **strings = c_parser->strings;
+    for (int i = 0; i < c_parser->string_num; i++)
+    {
+        int min_idx = i;
+        for (int j = i; j < c_parser->string_num; j++)
+        {
+            if (strcmp(strings[j], strings[min_idx]) < 0)
+                min_idx = j;
+        }
+        char *tmp = strings[i];
+        strings[i] = strings[min_idx];
+        strings[min_idx] = tmp;
+    }
+    for (int i = 0; i < c_parser->string_num; i++)
+    {
+        int min_idx = i;
+        for (int j = i; j < c_parser->string_num; j++)
+        {
+            if (strlen(strings[j]) > strlen(strings[min_idx]))
+                min_idx = j;
+        }
+        char *tmp = strings[i];
+        strings[i] = strings[min_idx];
+        strings[min_idx] = tmp;
+    }
+}
+
+void gather_strings(GParser *parser, CParser *c_parser)
 {
     c_parser->char_num = 0;
     c_parser->chars = (char*) malloc(sizeof(char) * parser->char_num);
@@ -52,13 +95,14 @@ void gather_strings(Parser *parser, CodeParser *c_parser)
     }
 
     c_parser->chars[c_parser->char_num] = c_null;
+    sort_resource(c_parser);
     printf("characters: %s\n", c_parser->chars);
 
     for (int i = 0; i < c_parser->string_num; i++)
         printf("[%2d] %s\n", i, c_parser->strings[i]);
 }
 
-void _gather_strings(Expr *expr, SType stype, CodeParser *c_parser)
+void _gather_strings(GExpr *expr, SType stype, CParser *c_parser)
 {
     switch (expr->kind)
     {
@@ -85,6 +129,5 @@ void _gather_strings(Expr *expr, SType stype, CodeParser *c_parser)
             printf("wtf %d\n", expr->kind);
             exit(1);
         }
-        
     }
 }

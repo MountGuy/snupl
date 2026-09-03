@@ -7,14 +7,14 @@
 #include "analysis.h"
 #include "automata.h"
 
-Expr *parse_define(Parser *parser)
+GExpr *parse_define(GParser *parser)
 {
     int def_num = 0;
 
     while (parser->pos < parser->tok_num)
     {
-        Token *tok_id = advance_parser(parser);
-        Token *tok_def = advance_parser(parser);
+        GToken *tok_id = advance_parser(parser);
+        GToken *tok_def = advance_parser(parser);
 
         if (!(
             tok_id->ttype == T_IDENTITY &&
@@ -26,8 +26,8 @@ Expr *parse_define(Parser *parser)
             exit(1);
         }
 
-        Expr *expr = parse_alter(parser);
-        Token *tok_end = advance_parser(parser);
+        GExpr *expr = parse_alter(parser);
+        GToken *tok_end = advance_parser(parser);
 
         if (!(
             tok_end->ttype == T_OPERATOR &&
@@ -50,15 +50,15 @@ Expr *parse_define(Parser *parser)
     return parser->defs;
 }
 
-Expr *parse_alter(Parser *parser)
+GExpr *parse_alter(GParser *parser)
 {
     int expr_num = 0;
-    Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->tok_num);
+    GExpr **buffer = (GExpr**) malloc(sizeof(GExpr*) * parser->tok_num);
 
     while (B_TRUE)
     {
         buffer[expr_num] = parse_concat(parser);
-        Token *token = peek_tok(parser);
+        GToken *token = peek_tok(parser);
         char *string = peek_tok(parser)->string;
         TType ttype = token->ttype;
         expr_num++;
@@ -84,28 +84,28 @@ Expr *parse_alter(Parser *parser)
     }
     if (expr_num == 1)
     {
-        Expr *expr = buffer[0];
+        GExpr *expr = buffer[0];
         free(buffer);
         return expr;
     }
     else
     {
-        Expr *expr = alloc_expr(parser);
+        GExpr *expr = alloc_expr(parser);
         set_nary_expr(expr, E_ALTER, buffer, expr_num);
         free(buffer);
         return expr;
     }
 }
 
-Expr *parse_concat(Parser *parser)
+GExpr *parse_concat(GParser *parser)
 {
     int expr_num = 0;
-    Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->tok_num);
+    GExpr **buffer = (GExpr**) malloc(sizeof(GExpr*) * parser->tok_num);
 
     while (B_TRUE)
     {
         buffer[expr_num] = parse_primary(parser);
-        Token *token = peek_tok(parser);
+        GToken *token = peek_tok(parser);
         char *string = peek_tok(parser)->string;
         TType ttype = token->ttype;
         expr_num++;
@@ -132,25 +132,25 @@ Expr *parse_concat(Parser *parser)
     }
     if (expr_num == 1)
     {
-        Expr *expr = buffer[0];
+        GExpr *expr = buffer[0];
         free(buffer);
         return expr;
     }
     else
     {
-        Expr *expr = alloc_expr(parser);
+        GExpr *expr = alloc_expr(parser);
         set_nary_expr(expr, E_CONCAT, buffer, expr_num);
         free(buffer);
         return expr;
     }
 }
 
-Expr *parse_primary(Parser *parser)
+GExpr *parse_primary(GParser *parser)
 {
-    Token *token = advance_parser(parser);
+    GToken *token = advance_parser(parser);
     TType ttype = token->ttype;
     char *string = token->string;
-    Expr *expr;
+    GExpr *expr;
 
     switch (ttype)
     {
@@ -173,8 +173,8 @@ Expr *parse_primary(Parser *parser)
                 string == S_LBRAKET
             )
             {
-                Expr *body_expr = parse_alter(parser);
-                Token *next_token = advance_parser(parser);
+                GExpr *body_expr = parse_alter(parser);
+                GToken *next_token = advance_parser(parser);
                 char *next_string = next_token->string;
 
                 if (string == S_LPAREN && next_string == S_RPAREN)
@@ -184,7 +184,7 @@ Expr *parse_primary(Parser *parser)
                     (string == S_LBRAKET && next_string == S_RBRAKET)
                 )
                 {
-                    Expr *expr = alloc_expr(parser);
+                    GExpr *expr = alloc_expr(parser);
                     set_nary_expr(expr, (string == S_LBRACE? E_REPEAT: E_OPTION), &body_expr, 1);
 
                     return expr;                    
@@ -203,7 +203,7 @@ Expr *parse_primary(Parser *parser)
     }
 }
 
-void ebnf_lexer(Parser *parser)
+void ebnf_lexer(GParser *parser)
 {
     int char_num = strlen(parser->input);
     int tok_num = 0;
@@ -215,7 +215,7 @@ void ebnf_lexer(Parser *parser)
     parser->asset_num = 0;
     parser->asset_types = (TType*) malloc(sizeof(TType) * (char_num + 10));
 
-    Token *tokens = (Token*) malloc(sizeof(Token) * (char_num + 10));
+    GToken *tokens = (GToken*) malloc(sizeof(GToken) * (char_num + 10));
     
     for (char *c = parser->input; *c; c++)
     {
@@ -290,12 +290,12 @@ void ebnf_lexer(Parser *parser)
     parser->tokens = tokens;
 }
 
-void ebnf_parser(Parser *parser)
+void ebnf_parser(GParser *parser)
 {
     int tok_num = parser->tok_num;
 
-    parser->exprs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
-    parser->defs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
+    parser->exprs = (GExpr*) malloc(sizeof(GExpr) * (tok_num + 10));
+    parser->defs = (GExpr*) malloc(sizeof(GExpr) * (tok_num + 10));
     parser->pos = 0;
     parser->expr_num = 0;
     parser->def_num = 0;

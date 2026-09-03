@@ -16,21 +16,21 @@
 #define C_ALTER   '|'
 #define C_CONCAT  ','
 
-char *search_asset(char *string, TType ttype, Parser *parser);
-void set_nary_expr(Expr *expr, ExprKind kind, Expr **exprs, int expr_num);
+char *search_asset(char *string, TType ttype, GParser *parser);
+void set_nary_expr(GExpr *expr, ExprKind kind, GExpr **exprs, int expr_num);
 
-Token *peek_tok(Parser *parser);
-Token *advance_parser(Parser *parser);
-Expr *alloc_expr(Parser *parser);
+GToken *peek_tok(GParser *parser);
+GToken *advance_parser(GParser *parser);
+GExpr *alloc_expr(GParser *parser);
 
-void print_asset(Parser *parser);
-void print_tokens(int tok_num, Token *tokens);
-void print_expr(Expr *expr);
-void print_parser(Parser *parser);
+void print_asset(GParser *parser);
+void print_tokens(int tok_num, GToken *tokens);
+void print_expr(GExpr *expr);
+void print_parser(GParser *parser);
 
-void index_identity(Expr *target, Parser *parser);
-void unroll_identity(Expr *expr, Parser *parser);
-void flatten_expr(Expr *expr, Parser *parser);
+void index_identity(GExpr *target, GParser *parser);
+void unroll_identity(GExpr *expr, GParser *parser);
+void flatten_expr(GExpr *expr, GParser *parser);
 
 
 extern char *S_LPAREN, *S_RPAREN, *S_LBRACE, *S_RBRACE, *S_LBRAKET, *S_RBRAKET, *S_END, *S_DEFINE, *S_ALTER, *S_CONCAT;

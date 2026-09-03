@@ -5,14 +5,14 @@
 #include "ebnf_util.h"
 
 
-Expr *parse_define(Parser *parser);
-Expr *parse_alter(Parser *parser);
-Expr *parse_concat(Parser *parser);
-Expr *parse_primary(Parser *parser);
+GExpr *parse_define(GParser *parser);
+GExpr *parse_alter(GParser *parser);
+GExpr *parse_concat(GParser *parser);
+GExpr *parse_primary(GParser *parser);
 
 
-void ebnf_lexer(Parser *parser);
-void ebnf_parser(Parser *parser);
-void index_identity(Expr *expr, Parser *parser);
+void ebnf_lexer(GParser *parser);
+void ebnf_parser(GParser *parser);
+void index_identity(GExpr *expr, GParser *parser);
 
 #endif

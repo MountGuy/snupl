@@ -1,4 +1,4 @@
 #include "common.h"
 
-int null_test(Parser *parser);
-Boolean expr_null_test(Expr *expr, Boolean *results, Parser *parser);
+int null_test(GParser *parser);
+Boolean expr_null_test(GExpr *expr, Boolean *results, GParser *parser);

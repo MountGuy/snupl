@@ -31,12 +31,12 @@ int main(int argv, char *argc[])
     fread(buf, 1, char_num, fp);
     buf[char_num] = c_null;
     
-    Parser parser;
+    GParser parser;
     parser.input = buf;
     ebnf_lexer(&parser);
     ebnf_parser(&parser);
 
-    CodeParser c_parser;
+    CParser c_parser;
     gather_strings(&parser, &c_parser);
     return 0;
 }
