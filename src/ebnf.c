@@ -78,7 +78,7 @@ GExpr *parse_alter(GParser *parser)
         }
         else
         {
-            printf("error\n");
+            printf("error 1\n");
             exit(1);
         }
     }
@@ -126,7 +126,7 @@ GExpr *parse_concat(GParser *parser)
         }
         else
         {
-            printf("error\n");
+            printf("error 2\n");
             exit(1);
         }
     }

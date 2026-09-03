@@ -13,7 +13,7 @@ typedef enum { S_BASIC, S_GRAMMAR } SType;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_IDENTITY, E_DEFINE } ExprKind;
 typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 
-#define C_EPS 0
+#define C_EPS ('\0')
 
 typedef struct { char *string; TType ttype; } GToken;
 
@@ -46,5 +46,12 @@ typedef struct {
     char *chars, **strings;
     int char_num, string_num;
 } CParser;
+
+typedef struct {
+    char *chars, **strings;
+    int char_to_idx[300];
+    int char_num, string_num, state_num, used_state_num;
+    int *trans;
+} NFA;
 
 #endif

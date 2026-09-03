@@ -42,7 +42,7 @@ int null_test(GParser *parser)
                 printf("[%2d] %30s not verified \n", i, parser->defs[i].identity.str);
                 break;
             default:
-                printf("wtf?\n");
+                printf("wtf 1\n");
                 exit(1);
         }
     }
@@ -101,7 +101,7 @@ Boolean expr_null_test(GExpr *expr, Boolean *results, GParser *parser)
             return results[expr->identity.idx];
         case E_DEFINE:
         default:
-            printf("wtf??\n");
+            printf("wtf 2\n");
             exit(1);
     }
 }

@@ -31,12 +31,15 @@ int main(int argv, char *argc[])
     fread(buf, 1, char_num, fp);
     buf[char_num] = c_null;
     
-    GParser parser;
-    parser.input = buf;
-    ebnf_lexer(&parser);
-    ebnf_parser(&parser);
+    GParser gparser;
+    gparser.input = buf;
+    ebnf_lexer(&gparser);
+    ebnf_parser(&gparser);
 
-    CParser c_parser;
-    gather_strings(&parser, &c_parser);
+    NFA nfa;
+    for (int i = 0; i < gparser.def_num; i++)
+        if (gparser.defs[i].identity.str[1] == '_')
+            build_NFA(gparser.defs[i].identity.expr, &nfa);
+
     return 0;
 }

@@ -70,7 +70,7 @@ void print_asset(GParser *parser)
             continue;
             // printf("[%2d] identi %s\n", i, parser->starts[i]);
         else
-            printf("wtf?");
+            printf("wtf 5");
     }
 }
 
@@ -207,7 +207,7 @@ void unroll_identity(GExpr *expr, GParser *parser)
         case E_STRING:
             return;
         default:
-            printf("wtf? %d\n", expr->kind);
+            printf("wtf 6 %d\n", expr->kind);
             return;
     }
 }
