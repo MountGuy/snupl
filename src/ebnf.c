@@ -7,142 +7,6 @@
 #include "analysis.h"
 #include "automata.h"
 
-
-void ebnf_lexer(Parser *parser)
-{
-    int char_num = strlen(parser->input);
-    int tok_num = 0;
-
-    parser->char_num = char_num;
-    parser->assets = (char*) malloc(sizeof(char) * (char_num + 10));
-    parser->starts = (char**) malloc(sizeof(char*) * (char_num + 10));
-    parser->top = parser->assets;
-    parser->asset_num = 0;
-    parser->asset_types = (TType*) malloc(sizeof(TType) * (char_num + 10));
-
-    Token *tokens = (Token*) malloc(sizeof(Token) * (char_num + 10));
-    
-    for (char *c = parser->input; *c; c++)
-    {
-        if (*c == ' ' || *c == '\n')
-        {
-            *c = c_null;
-            continue;
-        }
-        else if (is_char(*c) || *c == '_')
-        {
-            tokens[tok_num].string = c;
-            tokens[tok_num].ttype = T_IDENTITY;
-            while (is_char(*(c + 1)) || is_digit(*(c + 1)) || *(c + 1) == '_') c++;
-        }
-        else if (*c == '\"')
-        {
-            *c = c_null;
-            tokens[tok_num].string = c + 1;
-            tokens[tok_num].ttype = T_STRING;
-            c += 2;
-            while (*c != '\"') c++;
-            *c = c_null;
-        }
-        else 
-        {
-            switch (*c)
-            {
-                case C_LPAREN:
-                    tokens[tok_num].string = S_LPAREN;
-                    break;
-                case C_RPAREN:
-                    tokens[tok_num].string = S_RPAREN;
-                    break;
-                case C_LBRACE:
-                    tokens[tok_num].string = S_LBRACE;
-                    break;
-                case C_RBRACE:
-                    tokens[tok_num].string = S_RBRACE;
-                    break;
-                case C_LBRAKET:
-                    tokens[tok_num].string = S_LBRAKET;
-                    break;
-                case C_RBRAKET:
-                    tokens[tok_num].string = S_RBRAKET;
-                    break;
-                case C_DEFINE:
-                    tokens[tok_num].string = S_DEFINE;
-                    break;
-                case C_ALTER:
-                    tokens[tok_num].string = S_ALTER;
-                    break;
-                case C_CONCAT:
-                    tokens[tok_num].string = S_CONCAT;
-                    break;
-                case C_END:
-                    tokens[tok_num].string = S_END;
-                    break;
-            }
-            *c = c_null;
-            tokens[tok_num].ttype = T_OPERATOR;
-        }
-        tok_num++;
-    }
-
-    for (int i = 0; i < tok_num; i++)
-    {
-        if (tokens[i].ttype == T_IDENTITY || tokens[i].ttype == T_STRING)
-            tokens[i].string = search_asset(tokens[i].string, tokens[i].ttype, parser);
-    }
-
-    parser->tok_num = tok_num;
-    parser->tokens = tokens;
-}
-
-void ebnf_parser(Parser *parser)
-{
-    int tok_num = parser->tok_num;
-
-    parser->exprs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
-    parser->defs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
-    parser->pos = 0;
-    parser->expr_num = 0;
-    parser->def_num = 0;
-
-    parse_define(parser);
-    for (int i = 0; i < parser->def_num; i++)
-        resolve_refer(parser->defs[i].identity.expr, parser);
-    
-    resolve_parser(parser);
-
-    // null_test(parser);
-}
-
-void resolve_refer(Expr *expr, Parser *parser)
-{
-    switch (expr->kind)
-    {
-        case E_ALTER:
-        case E_CONCAT:
-        case E_OPTION:
-        case E_REPEAT:
-            for (int i = 0; i < expr->nary.expr_num; i++)
-                resolve_refer(expr->nary.exprs[i], parser);
-            break;
-        case E_IDENTITY:
-            for (int i = 0; i < parser->def_num; i++)
-                if (parser->defs[i].identity.str == expr->identity.str)
-                {
-                    *expr = parser->defs[i];
-                    expr->kind = E_IDENTITY;
-                    break;
-                }
-            break;
-        case E_STRING:
-            break;
-        case E_DEFINE:
-        default:
-            printf("error while resolving\n");
-            exit(1);
-    }
-}
-
 Expr *parse_define(Parser *parser)
 {
     int def_num = 0;
@@ -337,4 +201,119 @@ Expr *parse_primary(Parser *parser)
             printf("unexpected parsing: parse primary\n");
             exit(1);
     }
+}
+
+void ebnf_lexer(Parser *parser)
+{
+    int char_num = strlen(parser->input);
+    int tok_num = 0;
+
+    parser->char_num = char_num;
+    parser->assets = (char*) malloc(sizeof(char) * (char_num + 10));
+    parser->starts = (char**) malloc(sizeof(char*) * (char_num + 10));
+    parser->top = parser->assets;
+    parser->asset_num = 0;
+    parser->asset_types = (TType*) malloc(sizeof(TType) * (char_num + 10));
+
+    Token *tokens = (Token*) malloc(sizeof(Token) * (char_num + 10));
+    
+    for (char *c = parser->input; *c; c++)
+    {
+        if (*c == ' ' || *c == '\n')
+        {
+            *c = c_null;
+            continue;
+        }
+        else if (is_char(*c) || *c == '_')
+        {
+            tokens[tok_num].string = c;
+            tokens[tok_num].ttype = T_IDENTITY;
+            while (is_char(*(c + 1)) || is_digit(*(c + 1)) || *(c + 1) == '_') c++;
+        }
+        else if (*c == '\"')
+        {
+            *c = c_null;
+            tokens[tok_num].string = c + 1;
+            tokens[tok_num].ttype = T_STRING;
+            c += 2;
+            while (*c != '\"') c++;
+            *c = c_null;
+        }
+        else 
+        {
+            switch (*c)
+            {
+                case C_LPAREN:
+                    tokens[tok_num].string = S_LPAREN;
+                    break;
+                case C_RPAREN:
+                    tokens[tok_num].string = S_RPAREN;
+                    break;
+                case C_LBRACE:
+                    tokens[tok_num].string = S_LBRACE;
+                    break;
+                case C_RBRACE:
+                    tokens[tok_num].string = S_RBRACE;
+                    break;
+                case C_LBRAKET:
+                    tokens[tok_num].string = S_LBRAKET;
+                    break;
+                case C_RBRAKET:
+                    tokens[tok_num].string = S_RBRAKET;
+                    break;
+                case C_DEFINE:
+                    tokens[tok_num].string = S_DEFINE;
+                    break;
+                case C_ALTER:
+                    tokens[tok_num].string = S_ALTER;
+                    break;
+                case C_CONCAT:
+                    tokens[tok_num].string = S_CONCAT;
+                    break;
+                case C_END:
+                    tokens[tok_num].string = S_END;
+                    break;
+            }
+            *c = c_null;
+            tokens[tok_num].ttype = T_OPERATOR;
+        }
+        tok_num++;
+    }
+
+    for (int i = 0; i < tok_num; i++)
+    {
+        if (tokens[i].ttype == T_IDENTITY || tokens[i].ttype == T_STRING)
+            tokens[i].string = search_asset(tokens[i].string, tokens[i].ttype, parser);
+    }
+
+    parser->tok_num = tok_num;
+    parser->tokens = tokens;
+}
+
+void ebnf_parser(Parser *parser)
+{
+    int tok_num = parser->tok_num;
+
+    parser->exprs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
+    parser->defs = (Expr*) malloc(sizeof(Expr) * (tok_num + 10));
+    parser->pos = 0;
+    parser->expr_num = 0;
+    parser->def_num = 0;
+
+    parse_define(parser);
+    for (int i = 0; i < parser->def_num; i++)
+        index_identity(parser->defs[i].identity.expr, parser);
+
+    for (int i = 0; i < parser->def_num; i++)
+    {
+        char *str = parser->defs[i].identity.str;
+
+        if (str[0] == '_')
+        {
+            unroll_identity(parser->defs[i].identity.expr, parser);
+            flatten_expr(parser->defs[i].identity.expr, parser);
+        }
+    }
+
+    print_parser(parser);
 }

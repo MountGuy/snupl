@@ -28,6 +28,11 @@ void print_tokens(int tok_num, Token *tokens);
 void print_expr(Expr *expr);
 void print_parser(Parser *parser);
 
+void index_identity(Expr *target, Parser *parser);
+void unroll_identity(Expr *expr, Parser *parser);
+void flatten_expr(Expr *expr, Parser *parser);
+
+
 extern char *S_LPAREN, *S_RPAREN, *S_LBRACE, *S_RBRACE, *S_LBRAKET, *S_RBRAKET, *S_END, *S_DEFINE, *S_ALTER, *S_CONCAT;
 
 #endif
