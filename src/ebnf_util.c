@@ -27,18 +27,12 @@ char *search_asset(char *string, TType ttype, Parser *parser)
     return parser->starts[parser->asset_num - 1];
 }
 
-void print_asset(Parser *parser)
+void set_nary_expr(Expr *expr, ExprKind kind, Expr **exprs, int expr_num)
 {
-    for (int i = 0; i < parser->asset_num; i++)
-    {
-        if (parser->asset_types[i] == T_STRING)
-            printf("[%2d] string %s\n", i, parser->starts[i]);
-        else if (parser->asset_types[i] == T_IDENTITY)
-            continue;
-            // printf("[%2d] identi %s\n", i, parser->starts[i]);
-        else
-            printf("wtf?");
-    }
+    expr->kind = kind;
+    expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
+    expr->nary.expr_num = expr_num;
+    memcpy(expr->nary.exprs, exprs, sizeof(Expr*) * expr_num);
 }
 
 Token *peek_tok(Parser *parser)
@@ -60,6 +54,20 @@ Expr *alloc_expr(Parser *parser)
     parser->expr_num++;
 
     return expr;
+}
+
+void print_asset(Parser *parser)
+{
+    for (int i = 0; i < parser->asset_num; i++)
+    {
+        if (parser->asset_types[i] == T_STRING)
+            printf("[%2d] string %s\n", i, parser->starts[i]);
+        else if (parser->asset_types[i] == T_IDENTITY)
+            continue;
+            // printf("[%2d] identi %s\n", i, parser->starts[i]);
+        else
+            printf("wtf?");
+    }
 }
 
 void print_tokens(int tok_num, Token *tokens)

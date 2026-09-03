@@ -227,12 +227,8 @@ Expr *parse_alter(Parser *parser)
     else
     {
         Expr *expr = alloc_expr(parser);
-        expr->kind = E_ALTER;
-        expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
-        expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, buffer, sizeof(Expr*) * expr_num);
+        set_nary_expr(expr, E_ALTER, buffer, expr_num);
         free(buffer);
-        
         return expr;
     }
 }
@@ -255,7 +251,7 @@ Expr *parse_concat(Parser *parser)
             string == S_END ||
             string == S_RPAREN ||
             string == S_RBRACE ||
-            string == S_RBRAKET)&&
+            string == S_RBRAKET) &&
             ttype == T_OPERATOR
         )
             break;
@@ -279,12 +275,8 @@ Expr *parse_concat(Parser *parser)
     else
     {
         Expr *expr = alloc_expr(parser);
-        expr->kind = E_CONCAT;
-        expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
-        expr->nary.expr_num = expr_num;
-        memcpy(expr->nary.exprs, buffer, sizeof(Expr*) * expr_num);
+        set_nary_expr(expr, E_CONCAT, buffer, expr_num);
         free(buffer);
-
         return expr;
     }
 }
@@ -329,10 +321,7 @@ Expr *parse_primary(Parser *parser)
                 )
                 {
                     Expr *expr = alloc_expr(parser);
-                    expr->kind = (string == S_LBRACE? E_REPEAT: E_OPTION);
-                    expr->nary.expr_num = 1;
-                    expr->nary.exprs = (Expr**) malloc(sizeof(Expr*));
-                    expr->nary.exprs[0] = body_expr;
+                    set_nary_expr(expr, (string == S_LBRACE? E_REPEAT: E_OPTION), &body_expr, 1);
 
                     return expr;                    
                 }

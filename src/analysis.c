@@ -47,6 +47,8 @@ int null_test(Parser *parser)
         }
     }
 
+    free(results);
+
     return 0;
 }
 

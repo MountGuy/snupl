@@ -17,6 +17,7 @@
 #define C_CONCAT  ','
 
 char *search_asset(char *string, TType ttype, Parser *parser);
+void set_nary_expr(Expr *expr, ExprKind kind, Expr **exprs, int expr_num);
 
 Token *peek_tok(Parser *parser);
 Token *advance_parser(Parser *parser);

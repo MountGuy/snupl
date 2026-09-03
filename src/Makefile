@@ -10,7 +10,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o ../$@ $^
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -g -O0 -o $@ $<
 
 clean:
 	rm -f $(OBJS) $(TARGET)
