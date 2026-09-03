@@ -110,7 +110,7 @@ void print_expr(Expr *expr)
             printf("\"%s\"", expr->string.str);
             break;
         case E_IDENTITY:
-            printf("%s[%d]", expr->identity.str, expr->identity.id);
+            printf("%s[%d]", expr->identity.str, expr->identity.idx);
             break;
         case E_DEFINE:
             printf("%s := ", expr->identity.str);

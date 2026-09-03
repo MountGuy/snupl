@@ -8,7 +8,7 @@
 
 typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;
-typedef enum { D_CHAR, D_LEX, D_DEF } DType;
+typedef enum { S_KEYWORD, S_STR } SType;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_IDENTITY, E_DEFINE } ExprKind;
 typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 
@@ -21,7 +21,7 @@ typedef struct Expr {
     union
     {
         struct { int expr_num; struct Expr **exprs; } nary;
-        struct { int id; char *str; struct Expr *expr; } identity;
+        struct { int idx; char *str; struct Expr *expr; } identity;
         struct { char *str; } string;
     };
 } Expr;

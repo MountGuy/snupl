@@ -96,7 +96,7 @@ Boolean expr_null_test(Expr *expr, Boolean *results, Parser *parser)
         case E_STRING:
             return B_FALSE;
         case E_IDENTITY:
-            return results[expr->identity.id];
+            return results[expr->identity.idx];
         case E_DEFINE:
         default:
             printf("wtf??\n");

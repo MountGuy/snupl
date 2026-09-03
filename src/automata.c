@@ -1,47 +1,56 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "common.h"
+#include "automata.h"
 
-int advance_NFA_state(NFA_builder *builder)
+void lower_parser(Parser *parser)
 {
-    int top_state = builder->top_state;
-    builder->top_state++;
-    return top_state;
+    int def_num = parser->def_num;
+
+    for (int i = 0; i < def_num; i++)
+    {
+        if (parser->defs[i].kind != E_DEFINE)
+        {
+            printf("wtf?\n");
+            exit(1);
+        }
+        char *str = parser->defs[i].identity.str;
+
+        if (str[0] != '_')
+            continue;
+
+        Expr *expr = parser->defs[i].identity.expr;
+        expr = lower_expr(expr, parser);
+        parser->defs[i].identity.expr = expr;
+    }
 }
 
-void build_NFA_expr(int start, int end, Expr *expr, NFA_builder *builder)
+Expr *lower_expr(Expr *expr, Parser *parser)
 {
     switch (expr->kind)
     {
-        case E_ALTER:
-        {
-            for (int i = 0; i < expr->nary.expr_num; i++)
-            {
-                int _start = advance_NFA_state(builder), _end = advance_NFA_state(builder);
-                build_NFA_expr(_start, _end, expr->nary.exprs[i], builder);
-                builder->trans[start][_start][C_EPS] = 1;
-                builder->trans[_end][end][C_EPS] = 1;
-            }
-            break;
-        }
-        case E_CONCAT:
-        {
-            int _start, _end = start;
-            for (int i = 0; i < expr->nary.expr_num; i++)
-            {
-                _start = _end;
-                if (i < expr->nary.expr_num - 1)
-                    _end = advance_NFA_state(builder);
-                else
-                    _end = end;
-                build_NFA_expr(_start, _end, expr->nary.exprs[i], builder);
-            }
-            break;
-        }
         case E_IDENTITY:
+        {
+            int idx = expr->identity.idx;
+            Expr *_expr = parser->defs[idx].identity.expr;
+            Expr *lowered = lower_expr(_expr, parser);
+            return lowered;
+        }
+        case E_ALTER:
+        case E_CONCAT:
         case E_OPTION:
         case E_REPEAT:
-        case E_STRING:
-            break;
+        {
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            {
+                Expr *_expr = expr->nary.exprs[i];
+                Expr *lowered = lower_expr(_expr, parser);
+                expr->nary.exprs[i] = lowered;
+            }
+            return expr;
+        }
+        default:
+            return expr;
     }
 }

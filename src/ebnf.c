@@ -5,6 +5,7 @@
 #include "ebnf_util.h"
 #include "ebnf.h"
 #include "analysis.h"
+#include "automata.h"
 
 
 void ebnf_lexer(Parser *parser)
@@ -92,7 +93,6 @@ void ebnf_lexer(Parser *parser)
 
     parser->tok_num = tok_num;
     parser->tokens = tokens;
-    print_asset(parser);
 }
 
 void ebnf_parser(Parser *parser)
@@ -109,8 +109,11 @@ void ebnf_parser(Parser *parser)
     for (int i = 0; i < parser->def_num; i++)
         resolve_refer(parser->defs[i].identity.expr, parser);
     
-    print_parser(parser);fflush(stdout);
-    null_test(parser);
+    print_parser(parser);
+    lower_parser(parser);
+    print_parser(parser);
+
+    // null_test(parser);
 }
 
 void resolve_refer(Expr *expr, Parser *parser)
@@ -125,10 +128,10 @@ void resolve_refer(Expr *expr, Parser *parser)
                 resolve_refer(expr->nary.exprs[i], parser);
             break;
         case E_IDENTITY:
-            for (int id = 0; id < parser->def_num; id++)
-                if (parser->defs[id].identity.str == expr->identity.str)
+            for (int i = 0; i < parser->def_num; i++)
+                if (parser->defs[i].identity.str == expr->identity.str)
                 {
-                    *expr = parser->defs[id];
+                    *expr = parser->defs[i];
                     expr->kind = E_IDENTITY;
                     break;
                 }
@@ -174,7 +177,7 @@ Expr *parse_define(Parser *parser)
         }
 
         parser->defs[def_num].kind = E_DEFINE;
-        parser->defs[def_num].identity.id = def_num;
+        parser->defs[def_num].identity.idx = def_num;
         parser->defs[def_num].identity.str = tok_id->string;
         parser->defs[def_num].identity.expr = expr;
         def_num++;
@@ -305,7 +308,7 @@ Expr *parse_primary(Parser *parser)
         case T_IDENTITY:
             expr = alloc_expr(parser);
             expr->kind = E_IDENTITY;
-            expr->identity.id = 0;
+            expr->identity.idx = 0;
             expr->identity.str = string;
             expr->identity.expr = p_null;
             return expr;
