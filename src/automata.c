@@ -1,18 +1,18 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "common.h"
 #include "automata.h"
+#include "ebnf_util.h"
 
-void lower_parser(Parser *parser)
+void resolve_parser(Parser *parser)
 {
     int def_num = parser->def_num;
-
     for (int i = 0; i < def_num; i++)
     {
         if (parser->defs[i].kind != E_DEFINE)
         {
-            printf("wtf?\n");
             exit(1);
         }
         char *str = parser->defs[i].identity.str;
@@ -21,12 +21,14 @@ void lower_parser(Parser *parser)
             continue;
 
         Expr *expr = parser->defs[i].identity.expr;
-        expr = lower_expr(expr, parser);
+        expr = resolve_expr(expr, parser);
+        expr = unroll_expr(expr, parser);
         parser->defs[i].identity.expr = expr;
     }
+    print_parser(parser);
 }
 
-Expr *lower_expr(Expr *expr, Parser *parser)
+Expr *resolve_expr(Expr *expr, Parser *parser)
 {
     switch (expr->kind)
     {
@@ -34,8 +36,7 @@ Expr *lower_expr(Expr *expr, Parser *parser)
         {
             int idx = expr->identity.idx;
             Expr *_expr = parser->defs[idx].identity.expr;
-            Expr *lowered = lower_expr(_expr, parser);
-            return lowered;
+            return resolve_expr(_expr, parser);
         }
         case E_ALTER:
         case E_CONCAT:
@@ -45,12 +46,87 @@ Expr *lower_expr(Expr *expr, Parser *parser)
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
                 Expr *_expr = expr->nary.exprs[i];
-                Expr *lowered = lower_expr(_expr, parser);
-                expr->nary.exprs[i] = lowered;
+                expr->nary.exprs[i] = resolve_expr(_expr, parser);
             }
             return expr;
         }
         default:
             return expr;
     }
+}
+
+Expr *unroll_expr(Expr *expr, Parser *parser)
+{
+    switch (expr->kind)
+    {
+        case E_STRING:
+            return expr;
+        case E_REPEAT:
+        case E_OPTION:
+        {
+            Expr *body = expr->nary.exprs[0];
+            body = unroll_expr(body, parser);
+            expr->nary.exprs[0] = body;
+            return expr;
+        }
+        case E_CONCAT:
+        {
+            Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->expr_num);
+            int expr_num = 0;
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            {
+                Expr *tmp = expr->nary.exprs[i];
+                tmp = unroll_expr(tmp, parser);
+                if (tmp->kind == E_CONCAT)
+                {
+                    memcpy(buffer + expr_num, tmp->nary.exprs, sizeof(Expr*) * tmp->nary.expr_num);
+                    expr_num += tmp->nary.expr_num;
+                }
+                else
+                {
+                    buffer[expr_num] = tmp;
+                    expr_num++;
+                }
+            }
+            free(expr->nary.exprs);
+            expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
+            memcpy(expr->nary.exprs, buffer, sizeof(Expr*) * expr_num);
+            free(buffer);
+            expr->nary.expr_num = expr_num;
+            return expr;
+        }
+        case E_ALTER:
+        {
+            Expr **buffer = (Expr**) malloc(sizeof(Expr*) * parser->expr_num);
+            int expr_num = 0;
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            {
+                Expr *tmp = expr->nary.exprs[i];
+                tmp = unroll_expr(tmp, parser);
+                if (tmp->kind == E_ALTER)
+                {
+                    memcpy(buffer + expr_num, tmp->nary.exprs, sizeof(Expr*) * tmp->nary.expr_num);
+                    expr_num += tmp->nary.expr_num;
+                }
+                else
+                {
+                    buffer[expr_num] = tmp;
+                    expr_num++;
+                }
+            }
+            free(expr->nary.exprs);
+            expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr_num);
+            memcpy(expr->nary.exprs, buffer, sizeof(Expr*) * expr_num);
+            free(buffer);
+            expr->nary.expr_num = expr_num;
+            return expr;
+        }
+        default:
+            exit(1);
+    }
+}
+
+void build_nfa(Expr *expr)
+{
+
 }

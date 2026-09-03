@@ -1,5 +1,6 @@
 #include "common.h"
 
 
-void lower_parser(Parser *parser);
-Expr *lower_expr(Expr *expr, Parser *parser);
+void resolve_parser(Parser *parser);
+Expr *resolve_expr(Expr *expr, Parser *parser);
+Expr *unroll_expr(Expr *expr, Parser *parser);

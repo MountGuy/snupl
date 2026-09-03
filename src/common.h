@@ -5,6 +5,7 @@
 #define c_null ('\0')
 #define is_char(c) (('a' <= (c) && (c) <= 'z') || ('A' <= (c) && (c) <= 'Z'))
 #define is_digit(c) ('0' <= c && c <= '9')
+#define flush (fflush(stdout))
 
 typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;

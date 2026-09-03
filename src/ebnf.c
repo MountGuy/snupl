@@ -109,9 +109,7 @@ void ebnf_parser(Parser *parser)
     for (int i = 0; i < parser->def_num; i++)
         resolve_refer(parser->defs[i].identity.expr, parser);
     
-    print_parser(parser);
-    lower_parser(parser);
-    print_parser(parser);
+    resolve_parser(parser);
 
     // null_test(parser);
 }
