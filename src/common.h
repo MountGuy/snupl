@@ -9,7 +9,7 @@
 
 typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;
-typedef enum { S_KEYWORD, S_STR } SType;
+typedef enum { S_BASIC, S_GRAMMAR } SType;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_IDENTITY, E_DEFINE } ExprKind;
 typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 
@@ -42,8 +42,9 @@ typedef struct {
 } Parser;
 
 typedef struct {
-    int state_num, top_state, char_num;
-    int ***trans;
-} NFA_builder;
+    char *input;
+    char *chars, **strings;
+    int char_num, string_num;
+} CodeParser;
 
 #endif

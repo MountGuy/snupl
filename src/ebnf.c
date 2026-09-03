@@ -301,19 +301,16 @@ void ebnf_parser(Parser *parser)
     parser->def_num = 0;
 
     parse_define(parser);
+
     for (int i = 0; i < parser->def_num; i++)
         index_identity(parser->defs[i].identity.expr, parser);
 
     for (int i = 0; i < parser->def_num; i++)
     {
-        char *str = parser->defs[i].identity.str;
-
-        if (str[0] == '_')
+        if (parser->defs[i].identity.str[0] == '_')
         {
             unroll_identity(parser->defs[i].identity.expr, parser);
             flatten_expr(parser->defs[i].identity.expr, parser);
         }
     }
-
-    print_parser(parser);
 }

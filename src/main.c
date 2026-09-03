@@ -5,6 +5,7 @@
 
 #include "ebnf_util.h"
 #include "ebnf.h"
+#include "automata.h"
 
 
 int main(int argv, char *argc[])
@@ -33,7 +34,9 @@ int main(int argv, char *argc[])
     Parser parser;
     parser.input = buf;
     ebnf_lexer(&parser);
-
     ebnf_parser(&parser);
+
+    CodeParser c_parser;
+    gather_strings(&parser, &c_parser);
     return 0;
 }
