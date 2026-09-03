@@ -20,20 +20,26 @@ void resolve_parser(Parser *parser)
         if (str[0] != '_')
             continue;
 
-        resolve_expr(&(parser->defs[i].identity.expr), parser);
+        resolve_expr(parser->defs[i].identity.expr, parser);
         unroll_expr(parser->defs[i].identity.expr, parser);
     }
     print_parser(parser);
 }
 
-void resolve_expr(Expr **expr, Parser *parser)
+void resolve_expr(Expr *expr, Parser *parser)
 {
-    switch ((*expr)->kind)
+    switch (expr->kind)
     {
         case E_IDENTITY:
         {
-            int idx = (*expr)->identity.idx;
-            *expr = parser->defs[idx].identity.expr;
+            int idx = expr->identity.idx;
+            Expr *def_body = parser->defs[idx].identity.expr;
+            *expr = *def_body;
+            if (expr->kind != E_STRING)
+            {
+                expr->nary.exprs = (Expr**) malloc(sizeof(Expr*) * expr->nary.expr_num);
+                memcpy(expr->nary.exprs, def_body->nary.exprs, sizeof(Expr*) * expr->nary.expr_num);
+            }
             resolve_expr(expr, parser);
             return;
         }
@@ -42,14 +48,14 @@ void resolve_expr(Expr **expr, Parser *parser)
         case E_OPTION:
         case E_REPEAT:
         {
-            for (int i = 0; i < (*expr)->nary.expr_num; i++)
-                resolve_expr((*expr)->nary.exprs + i, parser);
+            for (int i = 0; i < expr->nary.expr_num; i++)
+                resolve_expr(expr->nary.exprs[i], parser);
             return;
         }
         case E_STRING:
             return;
         default:
-            printf("wtf? %d\n", (*expr)->kind);
+            printf("wtf? %d\n", expr->kind);
             return;
     }
 }
