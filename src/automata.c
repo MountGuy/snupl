@@ -21,37 +21,35 @@ void resolve_parser(Parser *parser)
             continue;
 
         Expr *expr = parser->defs[i].identity.expr;
-        expr = resolve_expr(expr, parser);
+        resolve_expr(&(parser->defs[i].identity.expr), parser);
         expr = unroll_expr(expr, parser);
         parser->defs[i].identity.expr = expr;
     }
     print_parser(parser);
 }
 
-Expr *resolve_expr(Expr *expr, Parser *parser)
+void resolve_expr(Expr **expr, Parser *parser)
 {
-    switch (expr->kind)
+    switch ((*expr)->kind)
     {
         case E_IDENTITY:
         {
-            int idx = expr->identity.idx;
-            Expr *_expr = parser->defs[idx].identity.expr;
-            return resolve_expr(_expr, parser);
+            int idx = (*expr)->identity.idx;
+            *expr = parser->defs[idx].identity.expr;
+            resolve_expr(expr, parser);
+            return;
         }
         case E_ALTER:
         case E_CONCAT:
         case E_OPTION:
         case E_REPEAT:
         {
-            for (int i = 0; i < expr->nary.expr_num; i++)
-            {
-                Expr *_expr = expr->nary.exprs[i];
-                expr->nary.exprs[i] = resolve_expr(_expr, parser);
-            }
-            return expr;
+            for (int i = 0; i < (*expr)->nary.expr_num; i++)
+                resolve_expr((*expr)->nary.exprs + i, parser);
+            return;
         }
         default:
-            return expr;
+            return;
     }
 }
 
