@@ -6,6 +6,8 @@
 #define is_char(c) (('a' <= (c) && (c) <= 'z') || ('A' <= (c) && (c) <= 'Z'))
 #define is_digit(c) ('0' <= c && c <= '9')
 #define flush (fflush(stdout))
+#define newline printf("\n")
+#define sepline printf("==============================================\n")
 
 typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;
@@ -14,6 +16,7 @@ typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_IDENTITY, E_DE
 typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 
 #define C_EPS ('\0')
+#define CMAP_SIZE 300
 
 typedef struct { char *string; TType ttype; } GToken;
 
@@ -49,9 +52,10 @@ typedef struct {
 
 typedef struct {
     char *chars, **strings;
-    int char_to_idx[300];
+    int char_to_idx[CMAP_SIZE];
     int char_num, string_num, state_num, used_state_num;
     int *trans;
+    int start, end;
 } NFA;
 
 #endif

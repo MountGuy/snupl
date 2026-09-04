@@ -6,6 +6,8 @@
 #include "automata.h"
 #include "ebnf_util.h"
 
+#define NFA_has_c(nfa, c) ((nfa)->char_to_idx[(int) (c)] != -1)
+
 void sort_resource(CParser *parser)
 {
     char *chars = parser->chars;
@@ -108,7 +110,7 @@ void add_trans(int start, int end, char c, NFA *nfa)
 {
     int char_num = nfa->char_num, state_num = nfa->state_num;
     int idx = nfa->char_to_idx[(int) c];
-    nfa->trans[(start * state_num  + end) * char_num + idx] = 1;
+    nfa->trans[(start * state_num  + end) * char_num + idx] |= B_TRUE;
 }
 
 int can_trans(int start, int end, char c, NFA *nfa)
@@ -156,14 +158,21 @@ int count_state(GExpr *expr)
 int build_NFA(GExpr *expr, NFA *nfa)
 {
     nfa->char_num = 1;
-    nfa->chars = (char*) malloc(sizeof(char) * 300);
+    nfa->chars = (char*) malloc(sizeof(char) * CMAP_SIZE);
     nfa->chars[0] = c_null;
     gather_chars(expr, nfa);
+
+    char *trimed = (char*) malloc(sizeof(char) * nfa->char_num);
+    memcpy(trimed, nfa->chars, nfa->char_num);
+    free(nfa->chars);
+    nfa->chars = trimed;
 
     nfa->state_num = count_state(expr) + 1;
     nfa->used_state_num = 0;
     nfa->char_to_idx[C_EPS] = 0;
 
+    for (int i = 0; i < CMAP_SIZE; i++)
+        nfa->char_to_idx[i] = -1;
 
     for (int i = 0; i < nfa->char_num; i++)
     {
@@ -171,13 +180,12 @@ int build_NFA(GExpr *expr, NFA *nfa)
         nfa->char_to_idx[(int) c] = i;
     }
     
-    nfa->trans = (int*) malloc(sizeof(int) * nfa->state_num * nfa->state_num * nfa->char_num);
-
-    alloc_NFA_state(nfa);
-    _build_NFA(expr, 0, nfa);
+    nfa->trans = (int*) calloc(nfa->state_num * nfa->state_num * nfa->char_num, sizeof(int));
+    nfa->start = alloc_NFA_state(nfa);
+    nfa->end = _build_NFA(expr, nfa->start, nfa);
     find_reachable(nfa);
+    absurb_eps(nfa);
 
-    printf("%d %d %d %d\n", nfa->state_num, nfa->used_state_num, nfa->char_num, sizeof(int) * nfa->state_num * nfa->state_num * nfa->char_num / 1024);
     return 0;
 }
 
@@ -302,6 +310,29 @@ void find_reachable(NFA *nfa)
     }
 }
 
+void absurb_eps(NFA *nfa)
+{
+    int state_num = nfa->state_num;
+    
+    for (int i = 0; i < state_num; i++)
+    {
+        for (int j = 0; j < state_num; j++)
+        {
+            for (char *c = nfa->chars; c - nfa->chars < nfa->char_num; c++)
+            {
+                if (can_trans(i, j, *c, nfa) == B_TRUE)
+                {
+                    for (int l = 0; l < state_num; l++)
+                    {
+                        if (can_trans(j, l, C_EPS, nfa))
+                            add_trans(i, l, *c, nfa);
+                    }
+                }
+            }
+        }
+    }
+}
+
 //-----------------------------------------------------------------
 
 void print_reachable(NFA *nfa)
@@ -322,7 +353,67 @@ void print_reachable(NFA *nfa)
     printf("\n");
 }
 
+void print_NFA(NFA *nfa)
+{
+    printf("state num: %d\n", nfa->state_num);
+    printf("chars: \n");
+    for (int i = 0; i < nfa->char_num; i++)
+    {
+        printf("%d [\"%c\"]\n", i, nfa->chars[i]);
+    }
+    printf("trans:\n");
+    for (int c = 0; c < nfa->char_num; c++)
+    {
+        for (int i = 0; i < nfa->state_num; i++)
+        {
+            for (int j = 0; j < nfa->state_num; j++)
+            {
+                printf("%d ", can_trans(i, j, nfa->chars[c], nfa));
+            }
+            newline;
+        }
+        newline;
+    }
+    newline;
+}
+
 int run_NFA(char *string, NFA *nfa)
 {
-    return 0;
+    int state_num = nfa->used_state_num;
+    int *visiting = (int*) malloc(sizeof(int) * state_num);
+    int *visiting_new = (int*) malloc(sizeof(int) * state_num);
+
+    for (int i = 0; i < state_num; i++)
+    {
+        if (can_trans(nfa->start, i, C_EPS, nfa))
+            visiting[i] = B_TRUE;
+        else
+            visiting[i] = B_FALSE;
+    }
+
+    for (char *c = string; *c; c++)
+    {
+        if (NFA_has_c(nfa, *c) == B_FALSE)
+            return 0;
+        for (int i = 0; i < state_num; i++)
+            visiting_new[i] = 0;
+        for (int i = 0; i < state_num; i++)
+        {
+            if (visiting[i] == B_FALSE)
+                continue;
+            for (int j = 0; j < state_num; j++)
+                if (can_trans(i, j, *c, nfa) == B_TRUE)
+                    visiting_new[j] = B_TRUE;
+        }
+        int *tmp = visiting;
+        visiting = visiting_new;
+        visiting_new = tmp;
+    }
+
+    int success = visiting[nfa->end];
+
+    free(visiting);
+    free(visiting_new);
+
+    return success;
 }

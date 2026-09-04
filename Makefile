@@ -7,7 +7,10 @@ scanner:
 
 clean:
 	$(MAKE) -C src clean
-	rm -rf scanner
+	@rm -rf scanner
 
 test: scanner
-	./scanner snupl2.gm
+	@echo
+	./scanner snupl2.gm generated.tc
+	@echo
+	./scanner snupl2.gm invalid.tc
