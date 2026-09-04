@@ -2,3 +2,5 @@
 *.txt
 *.o
 scanner
+*.tc
+*.gm
