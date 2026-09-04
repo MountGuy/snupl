@@ -126,7 +126,7 @@ GExpr *parse_concat(GParser *parser)
         }
         else
         {
-            printf("error 2\n");
+            printf("error 2 %s %d\n", string, ttype);
             exit(1);
         }
     }
@@ -155,10 +155,26 @@ GExpr *parse_primary(GParser *parser)
     switch (ttype)
     {
         case T_STRING:
-            expr = alloc_expr(parser);
-            expr->kind = E_STRING;
-            expr->string.str = string;
-            return expr;
+        {
+            GToken *next_token = peek_tok(parser);
+            if (next_token->ttype == T_OPERATOR && next_token->string == S_CRANGE)
+            {
+                advance_parser(parser);
+                GToken *end_token = advance_parser(parser);
+                expr = alloc_expr(parser);
+                expr->kind = E_CRANGE;
+                expr->crange.start = token->string[0];
+                expr->crange.end = end_token->string[0];
+                return expr;
+            }
+            else
+            {
+                expr = alloc_expr(parser);
+                expr->kind = E_STRING;
+                expr->string.str = string;
+                return expr;
+            }
+        }
         case T_IDENTITY:
             expr = alloc_expr(parser);
             expr->kind = E_IDENTITY;
@@ -224,6 +240,29 @@ void ebnf_lexer(GParser *parser)
             *c = c_null;
             continue;
         }
+        else if (*c == '0' && *(c + 1) == 'x')
+        {
+            char hexchar[2] = {*(c + 2), *(c + 3)};
+            int hexdigit[2];
+
+            for (int i = 0; i < 2; i++)
+            {
+                if ('0' <= hexchar[i] && hexchar[i] <= '9')
+                    hexdigit[i] = hexchar[i] - '0';
+                if ('A' <= hexchar[i] && hexchar[i] <= 'F')
+                    hexdigit[i] = hexchar[i] - 'A' + 10;
+                if ('a' <= hexchar[i] && hexchar[i] <= 'f')
+                    hexdigit[i] = hexchar[i] - 'a' + 10;
+            }
+            char hex = (char) (16 * hexdigit[0] + hexdigit[1]);
+            *c = hex;
+            *(c + 1) = c_null;
+            *(c + 2) = c_null;
+            *(c + 3) = c_null;
+            tokens[tok_num].string = c;
+            tokens[tok_num].ttype = T_STRING;
+            c += 3;
+        }
         else if (is_char(*c) || *c == '_')
         {
             tokens[tok_num].string = c;
@@ -269,6 +308,9 @@ void ebnf_lexer(GParser *parser)
                     break;
                 case C_CONCAT:
                     tokens[tok_num].string = S_CONCAT;
+                    break;
+                case C_CRANGE:
+                    tokens[tok_num].string = S_CRANGE;
                     break;
                 case C_END:
                     tokens[tok_num].string = S_END;

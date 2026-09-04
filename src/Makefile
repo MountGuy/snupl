@@ -1,15 +1,16 @@
 CC = gcc
-CFLAGS = "-Wall"
+CFLAGS = -Wall
 TARGET = scanner
 SRCS = main.c ebnf.c ebnf_util.c analysis.c automata.c
 OBJS = $(SRCS:.c=.o)
+COMMON = common.h
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) $(COMMON)
 	$(CC) $(CFLAGS) -o ../$@ $^
 
-%.o: %.c
+%.o: %.c %.h $(COMMON)
 	$(CC) $(CFLAGS) -c -g -O0 -o $@ $<
 
 clean:

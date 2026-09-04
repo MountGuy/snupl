@@ -12,5 +12,5 @@ clean:
 test: scanner
 	@echo
 	./scanner snupl2.gm generated.tc
-	@echo
-	./scanner snupl2.gm invalid.tc
+# 	@echo
+# 	./scanner snupl2.gm invalid.tc

@@ -9,7 +9,8 @@ char *S_LPAREN = "(", *S_RPAREN = ")",
      *S_LBRACE = "{", *S_RBRACE = "}",
      *S_LBRAKET = "[", *S_RBRAKET = "]",
      *S_END = ";", *S_DEFINE = "=",
-     *S_ALTER = "|", *S_CONCAT = ",";
+     *S_ALTER = "|", *S_CONCAT = ",",
+     *S_CRANGE = "~";
 
 char *search_asset(char *string, TType ttype, GParser *parser)
 {
@@ -40,6 +41,11 @@ void set_nary_expr(GExpr *expr, ExprKind kind, GExpr **exprs, int expr_num)
 GToken *peek_tok(GParser *parser)
 {
     return parser->tokens + parser->pos;
+}
+
+GToken *peek_next(GParser *parser)
+{
+    return parser->tokens + parser->pos + 1;
 }
 
 GToken *advance_parser(GParser *parser)
@@ -78,8 +84,11 @@ void print_tokens(int tok_num, GToken *tokens)
 {
     for (int i = 0; i < tok_num; i++)
     {
-        printf("%p %s\n", tokens[i].string, tokens[i].string);
+        printf("%s ", tokens[i].string);
+        if (tokens[i].string == S_END)
+        newline;
     }
+    newline;
 }
 
 void print_expr(GExpr *expr)
@@ -120,6 +129,9 @@ void print_expr(GExpr *expr)
             break;
         case E_STRING:
             printf("\"%s\"", expr->string.str);
+            break;
+        case E_CRANGE:
+            printf("\'%c\'~\'%c\'", expr->crange.start, expr->crange.end);
             break;
         case E_IDENTITY:
             printf("%s[%d]", expr->identity.str, expr->identity.idx);
@@ -170,6 +182,7 @@ void index_identity(GExpr *expr, GParser *parser)
                 }
             break;
         case E_STRING:
+        case E_CRANGE:
             break;
         case E_DEFINE:
         default:
@@ -187,7 +200,7 @@ void unroll_identity(GExpr *expr, GParser *parser)
             int idx = expr->identity.idx;
             GExpr *def_body = parser->defs[idx].identity.expr;
             *expr = *def_body;
-            if (expr->kind != E_STRING)
+            if (expr->kind != E_STRING && expr->kind != E_CRANGE)
             {
                 expr->nary.exprs = (GExpr**) malloc(sizeof(GExpr*) * expr->nary.expr_num);
                 memcpy(expr->nary.exprs, def_body->nary.exprs, sizeof(GExpr*) * expr->nary.expr_num);
@@ -205,6 +218,7 @@ void unroll_identity(GExpr *expr, GParser *parser)
             return;
         }
         case E_STRING:
+        case E_CRANGE:
             return;
         default:
             printf("wtf 6 %d\n", expr->kind);
@@ -218,6 +232,7 @@ void flatten_expr(GExpr *expr, GParser *parser)
     switch (kind)
     {
         case E_STRING:
+        case E_CRANGE:
             break;
         case E_REPEAT:
         case E_OPTION:
@@ -255,6 +270,7 @@ void flatten_expr(GExpr *expr, GParser *parser)
             break;
         }
         default:
+            printf("wtf flatten\n");
             exit(1);
     }
 }

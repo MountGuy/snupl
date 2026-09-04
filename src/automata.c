@@ -87,6 +87,10 @@ void gather_chars(GExpr *expr, NFA *nfa)
             add_resource(expr->string.str, nfa);
             break;
         }
+        case E_CRANGE:
+        {
+            
+        }
         case E_IDENTITY:
             break;
         default:

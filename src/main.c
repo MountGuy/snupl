@@ -35,6 +35,9 @@ int main(int argv, char *argc[])
     gparser.input = buf;
     ebnf_lexer(&gparser);
     ebnf_parser(&gparser);
+    print_parser(&gparser);
+
+    exit(0);
 
     NFA *nfa = (NFA*) malloc(sizeof(NFA) * 100);
     GExpr exprs[10];
