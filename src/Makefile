@@ -13,6 +13,9 @@ $(TARGET): $(OBJS) $(COMMON)
 %.o: %.c %.h $(COMMON)
 	$(CC) $(CFLAGS) -c -g -O0 -o $@ $<
 
+main.h:
+	@echo
+
 clean:
 	rm -f $(OBJS) $(TARGET)
 

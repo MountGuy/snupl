@@ -1,11 +1,13 @@
 #include "common.h"
 
-void add_resource(char *string, NFA *nfa);
+#define NFA_TRANS(s, e, i, n) (n->trans[((s) * (n->state_num)  + (e)) * (n->char_num) + (i)])
+
+void regist_char(char left, char right, NFA *nfa);
 void gather_chars(GExpr *expr, NFA *nfa);
 
 int alloc_NFA_state(NFA *nfa);
-void add_trans(int start, int end, char c, NFA *nfa);
-int can_trans(int start, int end, char c, NFA *nfa);
+void add_trans(int start, int end, int c, NFA *nfa);
+int can_trans(int start, int end, int c, NFA *nfa);
 
 int count_state(GExpr *expr);
 int build_NFA(GExpr *expr, NFA *nfa);

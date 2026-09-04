@@ -35,9 +35,6 @@ int main(int argv, char *argc[])
     gparser.input = buf;
     ebnf_lexer(&gparser);
     ebnf_parser(&gparser);
-    print_parser(&gparser);
-
-    exit(0);
 
     NFA *nfa = (NFA*) malloc(sizeof(NFA) * 100);
     GExpr exprs[10];
@@ -50,11 +47,11 @@ int main(int argv, char *argc[])
             nfa_num++;
         }
 
+    char problem[100], answer[100];
+    int correct = 0, incorrect = 0;
+    
     fp = fopen(argc[2], "r");
-    char problem[100];
-    char answer[100];
-    int correct = 0;
-    int incorrect = 0;
+
     while(B_TRUE)
     {
         int i = 0;
@@ -76,7 +73,6 @@ int main(int argv, char *argc[])
                 {
                     printf("incorrect! %s is a %s, not %s\n", problem, answer, exprs[i].identity.str);
                     incorrect++;
-                    break;
                 }
             }
         }

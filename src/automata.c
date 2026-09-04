@@ -8,63 +8,16 @@
 
 #define NFA_has_c(nfa, c) ((nfa)->char_to_idx[(int) (c)] != -1)
 
-void sort_resource(CParser *parser)
+void regist_char(char left, char right, NFA *nfa)
 {
-    char *chars = parser->chars;
-    for (int i = 0; i < parser->char_num; i++)
-    {
-        int min_idx = i;
-        for (int j = i; j < parser->char_num; j++)
-        {
-            if (chars[j] < chars[min_idx])
-                min_idx = j;
-        }
-        char tmp = chars[i];
-        chars[i] = chars[min_idx];
-        chars[min_idx] = tmp;
-    }
+    int char_num = nfa->char_num;
+    for (int i = 0; i < char_num; i++)
+        if (left == nfa->l_chars[i] && right == nfa->r_chars[i])
+            return;
 
-    char **strings = parser->strings;
-    for (int i = 0; i < parser->string_num; i++)
-    {
-        int min_idx = i;
-        for (int j = i; j < parser->string_num; j++)
-        {
-            if (strcmp(strings[j], strings[min_idx]) < 0)
-                min_idx = j;
-        }
-        char *tmp = strings[i];
-        strings[i] = strings[min_idx];
-        strings[min_idx] = tmp;
-    }
-    for (int i = 0; i < parser->string_num; i++)
-    {
-        int min_idx = i;
-        for (int j = i; j < parser->string_num; j++)
-        {
-            if (strlen(strings[j]) > strlen(strings[min_idx]))
-                min_idx = j;
-        }
-        char *tmp = strings[i];
-        strings[i] = strings[min_idx];
-        strings[min_idx] = tmp;
-    }
-}
-
-void add_resource(char *string, NFA *nfa)
-{
-    int i;
-    for (char *c = string; *c; c++)
-    {
-        for (i = 0; i < nfa->char_num; i++)
-            if (nfa->chars[i] == *c)
-                break;
-        if (i == nfa->char_num)
-        {
-            nfa->chars[i] = *c;
-            nfa->char_num++;
-        }
-    }
+    nfa->l_chars[char_num] = left;
+    nfa->r_chars[char_num] = right;
+    nfa->char_num++;
 }
 
 void gather_chars(GExpr *expr, NFA *nfa)
@@ -77,19 +30,19 @@ void gather_chars(GExpr *expr, NFA *nfa)
         case E_REPEAT:
         {
             for (int i = 0; i < expr->nary.expr_num; i++)
-            {
                 gather_chars(expr->nary.exprs[i], nfa);
-            }
             break;
         }
         case E_STRING:
         {
-            add_resource(expr->string.str, nfa);
+            for (char *c = expr->string.str; *c; c++)
+                regist_char(*c, *c, nfa);
             break;
         }
         case E_CRANGE:
         {
-            
+            regist_char(expr->crange.start, expr->crange.end, nfa);
+            break;            
         }
         case E_IDENTITY:
             break;
@@ -101,6 +54,15 @@ void gather_chars(GExpr *expr, NFA *nfa)
     }
 }
 
+int find_char(char left, char right, NFA *nfa)
+{
+    for (int i = 0; i < nfa->char_num; i++)
+        if (left == nfa->l_chars[i] && right == nfa->r_chars[i])
+            return i;
+    printf("wtf findchar\n");
+    exit(1);
+}
+
 //-----------------------------------------------------------------
 
 int alloc_NFA_state(NFA *nfa)
@@ -110,22 +72,6 @@ int alloc_NFA_state(NFA *nfa)
     return state;
 }
 
-void add_trans(int start, int end, char c, NFA *nfa)
-{
-    int char_num = nfa->char_num, state_num = nfa->state_num;
-    int idx = nfa->char_to_idx[(int) c];
-    nfa->trans[(start * state_num  + end) * char_num + idx] |= B_TRUE;
-}
-
-int can_trans(int start, int end, char c, NFA *nfa)
-{
-    int char_num = nfa->char_num, state_num = nfa->state_num;
-    int idx = nfa->char_to_idx[(int) c];
-    return nfa->trans[(start * state_num  + end) * char_num + idx];
-}
-
-//-----------------------------------------------------------------
-
 int count_state(GExpr *expr)
 {
     switch (expr->kind)
@@ -134,25 +80,23 @@ int count_state(GExpr *expr)
         {
             int count = 1;
             for (int i = 0; i < expr->nary.expr_num; i++)
-            {
-                count += count_state(expr->nary.exprs[i]) + 1;
-            }
+            count += count_state(expr->nary.exprs[i]) + 1;
             return count;
         }
         case E_CONCAT:
         {
             int count = 0;
             for (int i = 0; i < expr->nary.expr_num; i++)
-            {
-                count += count_state(expr->nary.exprs[i]) + 1;
-            }
+            count += count_state(expr->nary.exprs[i]) + 1;
             return count;
-        }
+        }   
         case E_OPTION:
         case E_REPEAT:
             return count_state(expr->nary.exprs[0]) + 2;
         case E_STRING:
             return strlen(expr->string.str);
+        case E_CRANGE:
+            return 1;
         default:
             printf("wtf 4 %d\n", expr->kind);
             exit(1);
@@ -161,35 +105,31 @@ int count_state(GExpr *expr)
 
 int build_NFA(GExpr *expr, NFA *nfa)
 {
+    nfa->l_chars = (char*) malloc(sizeof(char) * CMAP_SIZE);
+    nfa->r_chars = (char*) malloc(sizeof(char) * CMAP_SIZE);
+    nfa->l_chars[0] = c_null;
+    nfa->r_chars[0] = c_null;
     nfa->char_num = 1;
-    nfa->chars = (char*) malloc(sizeof(char) * CMAP_SIZE);
-    nfa->chars[0] = c_null;
     gather_chars(expr, nfa);
 
-    char *trimed = (char*) malloc(sizeof(char) * nfa->char_num);
-    memcpy(trimed, nfa->chars, nfa->char_num);
-    free(nfa->chars);
-    nfa->chars = trimed;
+    char *l_trimed = (char*) malloc(sizeof(char) * nfa->char_num);
+    char *r_trimed = (char*) malloc(sizeof(char) * nfa->char_num);
+    memcpy(l_trimed, nfa->l_chars, nfa->char_num);
+    memcpy(r_trimed, nfa->r_chars, nfa->char_num);
+    free(nfa->l_chars);
+    free(nfa->r_chars);
+    nfa->l_chars = l_trimed;
+    nfa->r_chars = r_trimed;
 
     nfa->state_num = count_state(expr) + 1;
     nfa->used_state_num = 0;
-    nfa->char_to_idx[C_EPS] = 0;
 
-    for (int i = 0; i < CMAP_SIZE; i++)
-        nfa->char_to_idx[i] = -1;
-
-    for (int i = 0; i < nfa->char_num; i++)
-    {
-        char c = nfa->chars[i];
-        nfa->char_to_idx[(int) c] = i;
-    }
-    
     nfa->trans = (int*) calloc(nfa->state_num * nfa->state_num * nfa->char_num, sizeof(int));
     nfa->start = alloc_NFA_state(nfa);
     nfa->end = _build_NFA(expr, nfa->start, nfa);
     find_reachable(nfa);
     absurb_eps(nfa);
-
+    
     return 0;
 }
 
@@ -204,8 +144,8 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa)
             {
                 int _start = alloc_NFA_state(nfa);
                 int _end = _build_NFA(expr->nary.exprs[i], _start, nfa);
-                add_trans(start, _start, C_EPS, nfa);
-                add_trans(_end, end, C_EPS, nfa);
+                NFA_TRANS(start, _start, I_EPS, nfa) = B_TRUE;
+                NFA_TRANS(_end, end, I_EPS, nfa) = B_TRUE;
             }
             return end;
         }
@@ -216,7 +156,7 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa)
             {
                 prev_end = _build_NFA(expr->nary.exprs[i], prev_start, nfa);
                 prev_start = alloc_NFA_state(nfa);
-                add_trans(prev_end, prev_start, C_EPS, nfa);
+                NFA_TRANS(prev_end, prev_start, I_EPS, nfa) = B_TRUE;
             }
             return prev_end;
         }
@@ -225,9 +165,9 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa)
             int body_start = alloc_NFA_state(nfa);
             int body_end = _build_NFA(expr->nary.exprs[0], body_start, nfa);
             int end = alloc_NFA_state(nfa);
-            add_trans(start, body_start, C_EPS, nfa);
-            add_trans(body_end, end, C_EPS, nfa);
-            add_trans(start, end, C_EPS, nfa);
+            NFA_TRANS(start, body_start, I_EPS, nfa) = B_TRUE;
+            NFA_TRANS(body_end, end, I_EPS, nfa) = B_TRUE;
+            NFA_TRANS(start, end, I_EPS, nfa) = B_TRUE;
             return end;
         }
         case E_REPEAT:
@@ -235,10 +175,10 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa)
             int body_start = alloc_NFA_state(nfa);
             int body_end = _build_NFA(expr->nary.exprs[0], body_start, nfa);
             int end = alloc_NFA_state(nfa);
-            add_trans(start, body_start, C_EPS, nfa);
-            add_trans(body_end, body_start, C_EPS, nfa);
-            add_trans(body_end, end, C_EPS, nfa);
-            add_trans(start, end, C_EPS, nfa);
+            NFA_TRANS(start, body_start, I_EPS, nfa) = B_TRUE;
+            NFA_TRANS(body_end, body_start, I_EPS, nfa) = B_TRUE;
+            NFA_TRANS(body_end, end, I_EPS, nfa) = B_TRUE;
+            NFA_TRANS(start, end, I_EPS, nfa) = B_TRUE;
             return end;
         }
         case E_STRING:
@@ -246,11 +186,20 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa)
             int prev_end, prev_start = start;
             for (char *c = expr->string.str; *c; c++)
             {
+                int i = find_char(*c, *c, nfa);
                 prev_end = alloc_NFA_state(nfa);
-                add_trans(prev_start, prev_end, *c, nfa);
+                NFA_TRANS(prev_start, prev_end, i, nfa) = B_TRUE;
                 prev_start = prev_end;
             }
             return prev_end;
+        }
+        case E_CRANGE:
+        {
+            char left = expr->crange.start, right = expr->crange.end;
+            int i = find_char(left, right, nfa);
+            int end = alloc_NFA_state(nfa);
+            NFA_TRANS(start, end, i, nfa) = B_TRUE;
+            return end;
         }
         default:
             printf("wtf 4 %d\n", expr->kind);
@@ -276,7 +225,6 @@ void find_reachable(NFA *nfa)
 
         while (top >= 0)
         {
-            if (top > 100) exit(1);
             curr_state = stack[top];
             if (backed_state == -1)
                 next_state = 0;
@@ -285,7 +233,7 @@ void find_reachable(NFA *nfa)
             while
             (
                 next_state < state_num && (
-                can_trans(curr_state, next_state, C_EPS, nfa) == 0 ||
+                !NFA_TRANS(curr_state, next_state, I_EPS, nfa) ||
                 visited[next_state] == 1
             ))
             next_state++;
@@ -308,34 +256,21 @@ void find_reachable(NFA *nfa)
         }
 
         for (int i = 0; i < state_num; i++)
-            if (visited[i])
-                add_trans(state, i, C_EPS, nfa);
-        
+            NFA_TRANS(state, i, I_EPS, nfa) |= visited[i];
     }
 }
 
 void absurb_eps(NFA *nfa)
 {
-    int state_num = nfa->state_num;
+    int state_num = nfa->state_num, char_num = nfa->char_num;
     
     for (int i = 0; i < state_num; i++)
-    {
         for (int j = 0; j < state_num; j++)
-        {
-            for (char *c = nfa->chars; c - nfa->chars < nfa->char_num; c++)
-            {
-                if (can_trans(i, j, *c, nfa) == B_TRUE)
-                {
+            for (int k = 0; k < char_num; k++)
+                if (NFA_TRANS(i, j, k, nfa))
                     for (int l = 0; l < state_num; l++)
-                    {
-                        if (can_trans(j, l, C_EPS, nfa))
-                            add_trans(i, l, *c, nfa);
-                    }
-                }
-            }
-        }
-    }
-}
+                        NFA_TRANS(i, l, k, nfa) |= NFA_TRANS(j, l, I_EPS, nfa);
+ }
 
 //-----------------------------------------------------------------
 
@@ -348,9 +283,9 @@ void print_reachable(NFA *nfa)
         for (int j = 0; j < nfa->used_state_num; j++)
         {
             if (i == j)
-                printf("x ");
+                printf("x");
             else
-                printf("%d ", nfa->trans[(i * state_num  + j) * nfa->char_num]);
+                printf("%d", nfa->trans[(i * state_num  + j) * nfa->char_num]);
         }
         printf("\n");
     }
@@ -359,55 +294,42 @@ void print_reachable(NFA *nfa)
 
 void print_NFA(NFA *nfa)
 {
-    printf("state num: %d\n", nfa->state_num);
+    printf("state num: %d/%d\n", nfa->used_state_num, nfa->state_num);
     printf("chars: \n");
     for (int i = 0; i < nfa->char_num; i++)
     {
-        printf("%d [\"%c\"]\n", i, nfa->chars[i]);
+        printf("%d [\"%c\" ~ \"%c\"]\n", i, nfa->l_chars[i], nfa->r_chars[i]);
     }
-    printf("trans:\n");
-    for (int c = 0; c < nfa->char_num; c++)
-    {
-        for (int i = 0; i < nfa->state_num; i++)
-        {
-            for (int j = 0; j < nfa->state_num; j++)
-            {
-                printf("%d ", can_trans(i, j, nfa->chars[c], nfa));
-            }
-            newline;
-        }
-        newline;
-    }
-    newline;
+    printf("start: %d, end: %d\n", nfa->start, nfa->end);
 }
+
 
 int run_NFA(char *string, NFA *nfa)
 {
     int state_num = nfa->used_state_num;
+    int char_num = nfa->char_num;
     int *visiting = (int*) malloc(sizeof(int) * state_num);
     int *visiting_new = (int*) malloc(sizeof(int) * state_num);
+    int *valid_char = (int*) malloc(sizeof(int) * char_num);
 
     for (int i = 0; i < state_num; i++)
-    {
-        if (can_trans(nfa->start, i, C_EPS, nfa))
-            visiting[i] = B_TRUE;
-        else
-            visiting[i] = B_FALSE;
-    }
+        visiting[i] = NFA_TRANS(nfa->start, i, I_EPS, nfa);
 
     for (char *c = string; *c; c++)
     {
-        if (NFA_has_c(nfa, *c) == B_FALSE)
-            return 0;
+        for (int i = 0; i < char_num; i++)
+            valid_char[i] = nfa->l_chars[i] <= *c && *c <= nfa->r_chars[i];
+
         for (int i = 0; i < state_num; i++)
             visiting_new[i] = 0;
+
         for (int i = 0; i < state_num; i++)
         {
-            if (visiting[i] == B_FALSE)
+            if (!visiting[i])
                 continue;
             for (int j = 0; j < state_num; j++)
-                if (can_trans(i, j, *c, nfa) == B_TRUE)
-                    visiting_new[j] = B_TRUE;
+                for (int k = 0; k < char_num; k++)
+                    visiting_new[j] |= NFA_TRANS(i, j, k, nfa) && valid_char[k];
         }
         int *tmp = visiting;
         visiting = visiting_new;
@@ -418,6 +340,7 @@ int run_NFA(char *string, NFA *nfa)
 
     free(visiting);
     free(visiting_new);
+    free(valid_char);
 
     return success;
 }
