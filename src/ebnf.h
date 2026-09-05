@@ -13,6 +13,5 @@ GExpr *parse_primary(GParser *parser);
 
 void ebnf_lexer(GParser *parser);
 void ebnf_parser(GParser *parser);
-void index_identity(GExpr *expr, GParser *parser);
 
 #endif

@@ -36,7 +36,7 @@ void set_nary_expr(GExpr *expr, ExprKind kind, GExpr **exprs, int expr_num)
     memcpy(expr->nary.exprs, exprs, sizeof(GExpr*) * expr_num);
 }
 
-
+//-----------------------------------------------------------------
 
 GToken *peek_tok(GParser *parser)
 {
@@ -64,7 +64,7 @@ GExpr *alloc_expr(GParser *parser)
     return expr;
 }
 
-
+//-----------------------------------------------------------------
 
 void print_asset(GParser *parser)
 {
@@ -159,7 +159,7 @@ void print_parser(GParser *parser)
     }
 }
 
-
+//-----------------------------------------------------------------
 
 void index_identity(GExpr *expr, GParser *parser)
 {

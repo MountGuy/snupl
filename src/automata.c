@@ -103,23 +103,46 @@ int count_state(GExpr *expr)
     }
 }
 
-int build_NFA(GExpr *expr, NFA *nfa)
+int count_char(GExpr *expr)
 {
-    nfa->l_chars = (char*) malloc(sizeof(char) * CMAP_SIZE);
-    nfa->r_chars = (char*) malloc(sizeof(char) * CMAP_SIZE);
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        {
+            int count = 0;
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            count += count_char(expr->nary.exprs[i]);
+            return count;
+        }
+        case E_CONCAT:
+        {
+            int count = 0;
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            count += count_char(expr->nary.exprs[i]);
+            return count;
+        }   
+        case E_OPTION:
+        case E_REPEAT:
+            return count_char(expr->nary.exprs[0]);
+        case E_STRING:
+            return strlen(expr->string.str);
+        case E_CRANGE:
+            return 1;
+        default:
+            printf("wtf 4 %d\n", expr->kind);
+            exit(1);
+    }
+}
+
+void build_NFA(GExpr *expr, NFA *nfa)
+{
+    int char_num = count_char(expr) + 1;
+    nfa->l_chars = (char*) malloc(sizeof(char) * char_num);
+    nfa->r_chars = (char*) malloc(sizeof(char) * char_num);
     nfa->l_chars[0] = c_null;
     nfa->r_chars[0] = c_null;
     nfa->char_num = 1;
     gather_chars(expr, nfa);
-
-    char *l_trimed = (char*) malloc(sizeof(char) * nfa->char_num);
-    char *r_trimed = (char*) malloc(sizeof(char) * nfa->char_num);
-    memcpy(l_trimed, nfa->l_chars, nfa->char_num);
-    memcpy(r_trimed, nfa->r_chars, nfa->char_num);
-    free(nfa->l_chars);
-    free(nfa->r_chars);
-    nfa->l_chars = l_trimed;
-    nfa->r_chars = r_trimed;
 
     nfa->state_num = count_state(expr) + 1;
     nfa->used_state_num = 0;
@@ -130,7 +153,6 @@ int build_NFA(GExpr *expr, NFA *nfa)
     find_reachable(nfa);
     absurb_eps(nfa);
     
-    return 0;
 }
 
 int _build_NFA(GExpr *expr, int start, NFA *nfa)
@@ -207,12 +229,14 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa)
     }
 }
 
+//-----------------------------------------------------------------
+
 void find_reachable(NFA *nfa)
 {
     int state_num = nfa->used_state_num;
-    int *stack = (int*) malloc(sizeof(int) * state_num), top;
+    int *stack = (int*) malloc(sizeof(int) * state_num);
     int *visited = (int*) malloc(sizeof(int) * state_num);
-    int curr_state, backed_state = -1, next_state;
+    int curr_state, backed_state = -1, next_state, top;
 
     for (int state = 0; state < state_num; state++)
     {
@@ -272,38 +296,6 @@ void absurb_eps(NFA *nfa)
                         NFA_TRANS(i, l, k, nfa) |= NFA_TRANS(j, l, I_EPS, nfa);
  }
 
-//-----------------------------------------------------------------
-
-void print_reachable(NFA *nfa)
-{
-    int state_num = nfa->state_num;
-
-    for (int i = 0; i < nfa->used_state_num; i++)
-    {
-        for (int j = 0; j < nfa->used_state_num; j++)
-        {
-            if (i == j)
-                printf("x");
-            else
-                printf("%d", nfa->trans[(i * state_num  + j) * nfa->char_num]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
-void print_NFA(NFA *nfa)
-{
-    printf("state num: %d/%d\n", nfa->used_state_num, nfa->state_num);
-    printf("chars: \n");
-    for (int i = 0; i < nfa->char_num; i++)
-    {
-        printf("%d [\"%c\" ~ \"%c\"]\n", i, nfa->l_chars[i], nfa->r_chars[i]);
-    }
-    printf("start: %d, end: %d\n", nfa->start, nfa->end);
-}
-
-
 int run_NFA(char *string, NFA *nfa)
 {
     int state_num = nfa->used_state_num;
@@ -344,3 +336,36 @@ int run_NFA(char *string, NFA *nfa)
 
     return success;
 }
+
+//-----------------------------------------------------------------
+
+void print_reachable(NFA *nfa)
+{
+    int state_num = nfa->state_num;
+
+    for (int i = 0; i < nfa->used_state_num; i++)
+    {
+        for (int j = 0; j < nfa->used_state_num; j++)
+        {
+            if (i == j)
+                printf("x");
+            else
+                printf("%d", nfa->trans[(i * state_num  + j) * nfa->char_num]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void print_NFA(NFA *nfa)
+{
+    printf("state num: %d/%d\n", nfa->used_state_num, nfa->state_num);
+    printf("chars: \n");
+    for (int i = 0; i < nfa->char_num; i++)
+    {
+        printf("%d [\"%c\" ~ \"%c\"]\n", i, nfa->l_chars[i], nfa->r_chars[i]);
+    }
+    printf("start: %d, end: %d\n", nfa->start, nfa->end);
+}
+
+
