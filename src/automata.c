@@ -150,6 +150,10 @@ void build_NFA(GExpr *expr, NFA *nfa)
     nfa->trans = (int*) calloc(nfa->state_num * nfa->state_num * nfa->char_num, sizeof(int));
     nfa->start = alloc_NFA_state(nfa);
     nfa->end = _build_NFA(expr, nfa->start, nfa);
+
+    nfa->visiting = (int*) malloc(sizeof(int) * nfa->state_num);
+    nfa->visiting_new = (int*) malloc(sizeof(int) * nfa->state_num);
+
     find_reachable(nfa);
     absurb_eps(nfa);
     
@@ -337,6 +341,42 @@ int run_NFA(char *string, NFA *nfa)
     return success;
 }
 
+void init_NFA_run(NFA *nfa)
+{
+    for (int i = 0; i < nfa->state_num; i++)
+        nfa->visiting[i] = NFA_TRANS(nfa->start, i, I_EPS, nfa);
+}
+
+int step_NFA(char c, NFA *nfa)
+{
+    int state_num = nfa->state_num, char_num = nfa->char_num;
+    for (int i = 0; i < state_num; i++)
+        nfa->visiting_new[i] = 0;
+
+    for (int k = 0; k < char_num; k++)
+    {
+        if (!(nfa->l_chars[k] <= c && c <= nfa->r_chars[k]))
+            continue;
+        for (int i = 0; i < state_num; i++)
+        {
+            if (!nfa->visiting[i])
+                continue;
+            for (int j = 0; j < state_num; j++)
+                nfa->visiting_new[j] |= NFA_TRANS(i, j, k, nfa);
+        }
+    }
+    
+    int *tmp = nfa->visiting;
+    nfa->visiting = nfa->visiting_new;
+    nfa->visiting_new = tmp;
+    
+    int total = 0;
+    for (int i = 0; i < state_num; i++)
+        total += nfa->visiting[i];
+
+    return total > 0;
+
+}
 //-----------------------------------------------------------------
 
 void print_reachable(NFA *nfa)
