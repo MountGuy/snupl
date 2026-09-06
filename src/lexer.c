@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "common.h"
-#include "automata.h"
+#include "lexer.h"
 #include "ebnf_util.h"
 
 #define NFA_has_c(nfa, c) ((nfa)->char_to_idx[(int) (c)] != -1)
@@ -18,6 +18,16 @@ void regist_char(char left, char right, NFA *nfa)
     nfa->l_chars[char_num] = left;
     nfa->r_chars[char_num] = right;
     nfa->char_num++;
+}
+
+void regist_string(char *string, Lexer *lexer)
+{
+    for (int i = 0; i < lexer->string_num; i++)
+        if (string == lexer->strings[i])
+            return;
+
+    lexer->strings[lexer->string_num] = string;
+    lexer->string_num++;
 }
 
 void gather_chars(GExpr *expr, NFA *nfa)
@@ -44,6 +54,35 @@ void gather_chars(GExpr *expr, NFA *nfa)
             regist_char(expr->crange.start, expr->crange.end, nfa);
             break;            
         }
+        case E_IDENTITY:
+            break;
+        default:
+        {
+            printf("wtf 3 %d\n", expr->kind);
+            exit(1);
+        }
+    }
+}
+
+void gather_strings(GExpr *expr, Lexer *lexer)
+{
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        case E_CONCAT:
+        case E_OPTION:
+        case E_REPEAT:
+        {
+            for (int i = 0; i < expr->nary.expr_num; i++)
+                gather_strings(expr->nary.exprs[i], lexer);
+            break;
+        }
+        case E_STRING:
+        {
+            regist_string(expr->string.str, lexer);
+            break;
+        }
+        case E_CRANGE:
         case E_IDENTITY:
             break;
         default:
@@ -156,7 +195,6 @@ void build_NFA(GExpr *expr, NFA *nfa)
 
     find_reachable(nfa);
     absurb_eps(nfa);
-    
 }
 
 int _build_NFA(GExpr *expr, int start, NFA *nfa)
@@ -302,41 +340,10 @@ void absurb_eps(NFA *nfa)
 
 int run_NFA(char *string, NFA *nfa)
 {
-    int state_num = nfa->used_state_num;
-    int char_num = nfa->char_num;
-    int *visiting = (int*) malloc(sizeof(int) * state_num);
-    int *visiting_new = (int*) malloc(sizeof(int) * state_num);
-    int *valid_char = (int*) malloc(sizeof(int) * char_num);
-
-    for (int i = 0; i < state_num; i++)
-        visiting[i] = NFA_TRANS(nfa->start, i, I_EPS, nfa);
-
+    int success;
+    init_NFA_run(nfa);
     for (char *c = string; *c; c++)
-    {
-        for (int i = 0; i < char_num; i++)
-            valid_char[i] = nfa->l_chars[i] <= *c && *c <= nfa->r_chars[i];
-
-        for (int i = 0; i < state_num; i++)
-            visiting_new[i] = 0;
-
-        for (int i = 0; i < state_num; i++)
-        {
-            if (!visiting[i])
-                continue;
-            for (int j = 0; j < state_num; j++)
-                for (int k = 0; k < char_num; k++)
-                    visiting_new[j] |= NFA_TRANS(i, j, k, nfa) && valid_char[k];
-        }
-        int *tmp = visiting;
-        visiting = visiting_new;
-        visiting_new = tmp;
-    }
-
-    int success = visiting[nfa->end];
-
-    free(visiting);
-    free(visiting_new);
-    free(valid_char);
+        success = step_NFA(*c, nfa);
 
     return success;
 }
@@ -377,6 +384,7 @@ int step_NFA(char c, NFA *nfa)
     return total > 0;
 
 }
+
 //-----------------------------------------------------------------
 
 void print_reachable(NFA *nfa)
@@ -408,4 +416,84 @@ void print_NFA(NFA *nfa)
     printf("start: %d, end: %d\n", nfa->start, nfa->end);
 }
 
+//-----------------------------------------------------------------
 
+void lexing(GParser *gparser, Lexer *lexer)
+{
+    int lex_num = 0;
+
+    GExpr defs[gparser->def_num];
+
+    for (int i = 0; i < gparser->def_num; i++)
+    {
+        char *string = gparser->defs[i].identity.str;
+
+        if (string[0] == '_' && string[1] != '_')
+        {
+            defs[lex_num] = gparser->defs[i];
+            lex_num++;
+        }
+        else if (string[0] != '_')
+            gather_strings(gparser->defs[i].identity.expr, lexer);
+    }
+
+    lexer->nfa = (NFA*) malloc(sizeof(NFA) * lex_num);
+    memcpy(lexer->nfa, defs, sizeof(NFA) * lex_num);
+    lexer->nfa_num = lex_num;
+
+    for (int i = 0; i < lex_num; i++)
+    {
+        build_NFA(defs[i].identity.expr, lexer->nfa + i);
+        lexer->nfa[i].name = defs[i].identity.str;
+    }
+
+    char *c = lexer->input;
+
+    while (*c)
+    {
+        int left_string[lexer->string_num];
+        for (int i = 0; i < lexer->nfa_num; i++)
+        {
+            init_NFA_run(lexer->nfa + i);
+        }
+        for (int i = 0; i < lexer->string_num; i++)
+            left_string[i] = B_TRUE;
+
+        int string_len = 0;
+        while (B_TRUE)
+        {
+            int left_count = 0;
+            for (int i = 0; i < lexer->nfa_num; i++)
+                left_count += step_NFA(*(c + string_len), lexer->nfa + i);
+            for (int i = 0; i < lexer->string_num; i++)
+            {
+                if (!left_string[i])
+                    continue;
+                else if ((lexer->strings[i][string_len] == c_null) ||
+                    (lexer->strings[i][string_len] != *(c + string_len)))
+                {
+                    left_string[i] = B_FALSE;
+                    continue;
+                }
+                else
+                    left_count++;
+            }
+            if (left_count == 0)
+            {
+                // printf("%d %d", string_len, c - lexer->input);
+                for (int i =0; i < string_len; i++)
+                {
+                    printf("%c",*(c + i));
+                }
+                newline;
+                c += string_len;
+                while (*c == ' ' || *c == '\t' || *c == '\n') c++;
+                break;
+            }
+            else
+            {
+                string_len++;
+            }
+        }
+    }
+}

@@ -47,10 +47,19 @@ typedef struct {
 } GParser;
 
 typedef struct {
-    char *l_chars, *r_chars;
+    char *name, *l_chars, *r_chars;
     int char_num, state_num, used_state_num;
     int *trans;
     int start, end, *visiting, *visiting_new;
 } NFA;
+
+typedef struct {
+    char *input;
+    NFA *nfa;
+    int nfa_num;
+
+    char **strings;
+    int string_num;
+} Lexer;
 
 #endif

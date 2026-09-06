@@ -5,7 +5,7 @@
 #include "ebnf_util.h"
 #include "ebnf.h"
 #include "analysis.h"
-#include "automata.h"
+#include "lexer.h"
 
 GExpr *parse_define(GParser *parser)
 {

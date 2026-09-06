@@ -15,6 +15,10 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa);
 void find_reachable(NFA *nfa);
 void absurb_eps(NFA *nfa);
 int run_NFA(char *string, NFA *nfa);
+void init_NFA_run(NFA *nfa);
+int step_NFA(char c, NFA *nfa);
 
 void print_reachable(NFA *nfa);
 void print_NFA(NFA *nfa);
+
+void lexing(GParser *gparser, Lexer *lexer);
