@@ -9,7 +9,7 @@
 
 GExpr *parse_define(GParser *parser)
 {
-    int def_num = 0;
+    int def_num = 0, lexterm_num = 0;
 
     while (parser->pos < parser->tok_num)
     {
@@ -43,9 +43,12 @@ GExpr *parse_define(GParser *parser)
         parser->defs[def_num].identity.str = tok_id->string;
         parser->defs[def_num].identity.expr = expr;
         def_num++;
+        if (tok_id->string[0] == '_' && tok_id->string[1] != '_')
+            lexterm_num++;
     }
 
     parser->def_num = def_num;
+    parser->lexterm_num = lexterm_num;
 
     return parser->defs;
 }
@@ -225,7 +228,7 @@ void init_asset(int char_num, int tok_num, Asset *asset)
     asset->starts = (char**) malloc(sizeof(char*) * (tok_num + 10));
     asset->top = asset->assets;
     asset->asset_num = 0;
-    asset->asset_types = (SType*) malloc(sizeof(SType) * (tok_num + 10));
+    asset->stypes = (SType*) malloc(sizeof(SType) * (tok_num + 10));
 }
 
 void ebnf_lexer(GParser *parser)
@@ -338,6 +341,7 @@ void ebnf_parser(GParser *parser)
     parser->pos = 0;
     parser->expr_num = 0;
     parser->def_num = 0;
+    parser->lexterm_num = 0;
 
     parse_define(parser);
 

@@ -27,6 +27,10 @@ void resolve_asset(GExpr *expr, SType stype, Asset *asset)
             expr->string.str = add_asset(expr->string.str, stype, asset);
             return;
         case E_CRANGE:
+            char crange[3] = {0};
+            crange[0] = expr->crange.start;
+            crange[1] = expr->crange.end;
+            add_asset(crange, S_CRANGE, asset);
             return;            
         case E_IDENTITY:
             expr->identity.str = add_asset(expr->identity.str, S_IDENTITY, asset);
@@ -40,14 +44,15 @@ void resolve_asset(GExpr *expr, SType stype, Asset *asset)
 char *add_asset(char *string, SType stype, Asset *asset)
 {
     for (int i = 0; i < asset->asset_num; i++)
-        if (strcmp(asset->starts[i], string) == 0 && asset->asset_types[i] == stype)
+        if (strcmp(asset->starts[i], string) == 0 && asset->stypes[i] == stype)
             return asset->starts[i];
 
     strcpy(asset->top, string);
     
     asset->starts[asset->asset_num] = asset->top;
-    asset->asset_types[asset->asset_num] = stype;
+    asset->stypes[asset->asset_num] = stype;
     asset->top += strlen(string) + 1;
+    asset->asset_size += strlen(string) + 1;
     asset->asset_num += 1;
 
     return asset->starts[asset->asset_num - 1];
@@ -95,10 +100,13 @@ void print_asset(Asset *asset)
 {
     for (int i = 0; i < asset->asset_num; i++)
     {
-        switch (asset->asset_types[i])
+        switch (asset->stypes[i])
         {
             case S_BASICS:
                 printf("[%2d] basic %s\n", i, asset->starts[i]);
+                break;
+            case S_CRANGE:
+                printf("[%2d] crange %c~%c\n", i, asset->starts[i][0], asset->starts[i][1]);
                 break;
             case S_GRAMMAR:
                 printf("[%2d] grammar %s\n", i, asset->starts[i]);
@@ -107,7 +115,7 @@ void print_asset(Asset *asset)
                 printf("[%2d] identity %s\n", i, asset->starts[i]);
                 break;
             default:
-                printf("print asset wtf %d %d %s\n", i, asset->asset_types[i], asset->starts[i]);
+                printf("print asset wtf %d %d %s\n", i, asset->stypes[i], asset->starts[i]);
                 exit(1);
         }
     }

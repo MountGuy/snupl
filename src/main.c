@@ -56,8 +56,6 @@ int main(int argv, char *argc[])
 
     Lexer lexer;
     lexer.input = buf;
-    lexer.strings = (char**) malloc(sizeof(char*) * char_num);
-    lexer.string_num = 0;
 
     lexing(&gparser, &lexer);
 
