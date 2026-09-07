@@ -23,7 +23,6 @@ void build_NFA(GExpr *expr, NFA *nfa, Lexer *lexer)
     nfa->used_state_num = 0;
     nfa->char_num = lexer->char_num;
 
-    printf("%d %d\n", nfa->state_num, lexer->char_num);
     nfa->trans = (int*) calloc(nfa->state_num * nfa->state_num * lexer->char_num, sizeof(int));
     nfa->start = alloc_NFA_state(nfa);
     nfa->end = _build_NFA(expr, nfa->start, nfa, lexer);
@@ -149,7 +148,6 @@ int alloc_NFA_state(NFA *nfa)
     return state;
 }
 
-
 void find_reachable(NFA *nfa)
 {
     int state_num = nfa->used_state_num;
@@ -229,18 +227,19 @@ void regist_char(char left, char right, Lexer *lexer)
 
 void regist_string(char *string, Lexer *lexer)
 {
-    for (int i = 0; i < lexer->gm_str_num; i++)
-        if (string == lexer->gm_strs[i])
+    int string_num = lexer->string_num;
+    for (int i = 0; i < string_num; i++)
+        if (string == lexer->strings[i])
             return;
 
-    lexer->gm_strs[lexer->gm_str_num] = string;
-    lexer->gm_str_num++;
+    lexer->strings[string_num] = string;
+    lexer->string_num++;
 }
 
 void regist_assets(Asset *asset, Lexer *lexer)
 {
-    lexer->gm_strs = (char**) malloc(sizeof(char*) * asset->asset_size);
-    lexer->gm_str_num = 0;
+    lexer->strings = (char**) malloc(sizeof(char*) * asset->asset_size);
+    lexer->string_num = 0;
     lexer->l_chars = (char*) malloc(sizeof(char*) * asset->asset_size);
     lexer->r_chars = (char*) malloc(sizeof(char*) * asset->asset_size);
     lexer->char_num = 0;
@@ -333,12 +332,12 @@ void lexing(GParser *parser, Lexer *lexer)
 
     while (*c)
     {
-        int left_string[lexer->gm_str_num];
+        int left_string[lexer->string_num];
         for (int i = 0; i < lexer->nfa_num; i++)
         {
             init_NFA_run(lexer->nfa + i);
         }
-        for (int i = 0; i < lexer->gm_str_num; i++)
+        for (int i = 0; i < lexer->string_num; i++)
             left_string[i] = B_TRUE;
 
         int string_len = 0;
@@ -346,21 +345,14 @@ void lexing(GParser *parser, Lexer *lexer)
         {
             int left_count = 0;
             for (int i = 0; i < lexer->nfa_num; i++)
-            {
-                int result = step_NFA(*(c + string_len), lexer->nfa + i, lexer);
-                // if (result)
-                //     printf("%s still can accept %c\n", lexer->nfa[i].name, *(c + string_len));
-                // else
-                //     printf("%s can't accept %c\n", lexer->nfa[i].name, *(c + string_len));
-                left_count += result;
+                left_count += step_NFA(*(c + string_len), lexer->nfa + i, lexer);
 
-            }
-            for (int i = 0; i < lexer->gm_str_num; i++)
+            for (int i = 0; i < lexer->string_num; i++)
             {
                 if (!left_string[i])
                     continue;
-                else if ((lexer->gm_strs[i][string_len] == c_null) ||
-                    (lexer->gm_strs[i][string_len] != *(c + string_len)))
+                else if ((lexer->strings[i][string_len] == c_null) ||
+                    (lexer->strings[i][string_len] != *(c + string_len)))
                 {
                     left_string[i] = B_FALSE;
                     continue;

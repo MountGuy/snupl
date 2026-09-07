@@ -346,7 +346,7 @@ void ebnf_parser(GParser *parser)
     parse_define(parser);
 
     GExpr *defs = parser->defs;
-    int char_num = parser->char_num, def_num = parser->def_num;
+    int def_num = parser->def_num;
 
     init_asset(parser->char_num, tok_num + 10, parser->asset);
 

@@ -67,8 +67,8 @@ typedef struct {
     NFA *nfa;
     int nfa_num;
 
-    char **gm_strs;
-    int gm_str_num;
+    char **strings;
+    int string_num;
 } Lexer;
 
 #endif
