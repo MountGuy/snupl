@@ -342,26 +342,29 @@ void ebnf_parser(GParser *parser)
     parse_define(parser);
 
     GExpr *defs = parser->defs;
+    int char_num = parser->char_num, def_num = parser->def_num;
 
     init_asset(parser->char_num, tok_num + 10, parser->asset);
 
-    for (int i = 0; i < parser->def_num; i++)
-        defs[i].identity.str = add_asset(defs[i].identity.str, S_IDENTITY, parser->asset);
-    for (int i = 0; i < parser->def_num; i++)
+    for (int i = 0; i < def_num; i++)
     {
+        defs[i].identity.str = add_asset(defs[i].identity.str, S_IDENTITY, parser->asset);
         SType stype = (defs[i].identity.str[0] == '_'? S_BASICS : S_GRAMMAR);
         resolve_asset(defs[i].identity.expr, stype, parser->asset);
     }
 
-    for (int i = 0; i < parser->def_num; i++)
-        index_identity(parser->defs[i].identity.expr, parser);
+    for (int i = 0; i < def_num; i++)
+        index_identity(defs[i].identity.expr, parser);
 
-    for (int i = 0; i < parser->def_num; i++)
+    for (int i = 0; i < def_num; i++)
     {
-        if (parser->defs[i].identity.str[0] == '_')
+        if (defs[i].identity.str[0] == '_')
         {
-            unroll_identity(parser->defs[i].identity.expr, parser);
-            flatten_expr(parser->defs[i].identity.expr, parser);
+            unroll_identity(defs[i].identity.expr, parser);
+            flatten_expr(defs[i].identity.expr, parser);
         }
     }
+
+    print_parser(parser);
+    print_asset(parser->asset);
 }

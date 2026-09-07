@@ -10,6 +10,6 @@ clean:
 	@rm -rf scanner output.txt
 
 pl: scanner
-	./scanner snupl2.gm code1.cd
+	./scanner snupl2.gm code1.spl
 inv: scanner
 	./scanner snupl2.gm invalid.tc
