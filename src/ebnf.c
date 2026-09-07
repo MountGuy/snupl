@@ -166,8 +166,8 @@ GExpr *parse_primary(GParser *parser)
                 GToken *end_token = advance_parser(parser);
                 expr = alloc_expr(parser);
                 expr->kind = E_CRANGE;
-                expr->crange.start = token->string[0];
-                expr->crange.end = end_token->string[0];
+                expr->crange.lb = token->string[0];
+                expr->crange.up = end_token->string[0];
                 return expr;
             }
             else
@@ -368,7 +368,4 @@ void ebnf_parser(GParser *parser)
             flatten_expr(defs[i].identity.expr, parser);
         }
     }
-
-    print_parser(parser);
-    print_asset(parser->asset);
 }

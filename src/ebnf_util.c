@@ -28,8 +28,8 @@ void resolve_asset(GExpr *expr, SType stype, Asset *asset)
             return;
         case E_CRANGE:
             char crange[3] = {0};
-            crange[0] = expr->crange.start;
-            crange[1] = expr->crange.end;
+            crange[0] = expr->crange.lb;
+            crange[1] = expr->crange.up;
             add_asset(crange, S_CRANGE, asset);
             return;            
         case E_IDENTITY:
@@ -172,7 +172,7 @@ void print_expr(GExpr *expr)
             printf("\"%s\"", expr->string.str);
             break;
         case E_CRANGE:
-            printf("\'%c\'~\'%c\'", expr->crange.start, expr->crange.end);
+            printf("\'%c\'~\'%c\'", expr->crange.lb, expr->crange.up);
             break;
         case E_IDENTITY:
             printf("%s[%d]", expr->identity.str, expr->identity.idx);

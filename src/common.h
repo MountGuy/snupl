@@ -35,7 +35,7 @@ typedef struct GExpr {
         struct { int expr_num; struct GExpr **exprs; } nary;
         struct { int idx; char *str; struct GExpr *expr; } identity;
         struct { char *str; } string;
-        struct { char start, end; } crange;
+        struct { char lb, up; } crange;
     };
 } GExpr;
 
@@ -62,7 +62,7 @@ typedef struct {
 typedef struct {
     char *input;
 
-    char *l_chars, *r_chars;
+    char *char_lbs, *char_ubs;
     int char_num;
     NFA *nfa;
     int nfa_num;

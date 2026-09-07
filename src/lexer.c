@@ -4,35 +4,8 @@
 
 #include "common.h"
 #include "lexer.h"
-#include "ebnf_util.h"
+#include "lexer_util.h"
 
-#define NFA_has_c(nfa, c) ((nfa)->char_to_idx[(int) (c)] != -1)
-
-int find_char(char left, char right, Lexer *lexer)
-{
-    for (int i = 0; i < lexer->char_num; i++)
-        if (left == lexer->l_chars[i] && right == lexer->r_chars[i])
-            return i;
-    printf("wtf findchar\n");
-    exit(1);
-}
-
-void build_NFA(GExpr *expr, NFA *nfa, Lexer *lexer)
-{
-    nfa->state_num = count_state(expr) + 1;
-    nfa->used_state_num = 0;
-    nfa->char_num = lexer->char_num;
-
-    nfa->trans = (int*) calloc(nfa->state_num * nfa->state_num * lexer->char_num, sizeof(int));
-    nfa->start = alloc_NFA_state(nfa);
-    nfa->end = _build_NFA(expr, nfa->start, nfa, lexer);
-
-    nfa->visiting = (int*) malloc(sizeof(int) * nfa->state_num);
-    nfa->visiting_new = (int*) malloc(sizeof(int) * nfa->state_num);
-
-    find_reachable(nfa);
-    absurb_eps(nfa);
-}
 
 int _build_NFA(GExpr *expr, int start, NFA *nfa, Lexer *lexer)
 {
@@ -96,8 +69,8 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa, Lexer *lexer)
         }
         case E_CRANGE:
         {
-            char left = expr->crange.start, right = expr->crange.end;
-            int i = find_char(left, right, lexer);
+            char lb = expr->crange.lb, ub = expr->crange.up;
+            int i = find_char(lb, ub, lexer);
             int end = alloc_NFA_state(nfa);
             NFA_TRANS(start, end, i, nfa) = B_TRUE;
             return end;
@@ -108,165 +81,24 @@ int _build_NFA(GExpr *expr, int start, NFA *nfa, Lexer *lexer)
     }
 }
 
-int count_state(GExpr *expr)
+void build_NFA(GExpr *expr, NFA *nfa, Lexer *lexer)
 {
-    switch (expr->kind)
-    {
-        case E_ALTER:
-        {
-            int count = 1;
-            for (int i = 0; i < expr->nary.expr_num; i++)
-            count += count_state(expr->nary.exprs[i]) + 1;
-            return count;
-        }
-        case E_CONCAT:
-        {
-            int count = 0;
-            for (int i = 0; i < expr->nary.expr_num; i++)
-            count += count_state(expr->nary.exprs[i]) + 1;
-            return count;
-        }   
-        case E_OPTION:
-        case E_REPEAT:
-            return count_state(expr->nary.exprs[0]) + 2;
-        case E_STRING:
-            return strlen(expr->string.str);
-        case E_CRANGE:
-            return 1;
-        default:
-            printf("wtf 4 %d\n", expr->kind);
-            exit(1);
-    }
+    nfa->state_num = count_state(expr) + 1;
+    nfa->used_state_num = 0;
+    nfa->char_num = lexer->char_num;
+
+    nfa->trans = (int*) calloc(nfa->state_num * nfa->state_num * lexer->char_num, sizeof(int));
+    nfa->start = alloc_NFA_state(nfa);
+    nfa->end = _build_NFA(expr, nfa->start, nfa, lexer);
+
+    nfa->visiting = (int*) malloc(sizeof(int) * nfa->state_num);
+    nfa->visiting_new = (int*) malloc(sizeof(int) * nfa->state_num);
+
+    find_reachable(nfa);
+    absurb_eps(nfa);
 }
 
-int alloc_NFA_state(NFA *nfa)
-{
-    int state = nfa->used_state_num;
-    nfa->used_state_num++;
-    return state;
-}
-
-void find_reachable(NFA *nfa)
-{
-    int state_num = nfa->used_state_num;
-    int *stack = (int*) malloc(sizeof(int) * state_num);
-    int *visited = (int*) malloc(sizeof(int) * state_num);
-    int curr_state, backed_state = -1, next_state, top;
-
-    for (int state = 0; state < state_num; state++)
-    {
-        for (int i = 0; i < state_num; i++)
-            visited[i] = 0;
-        top = 0;
-        stack[0] = state;
-        visited[state] = 1;
-        backed_state = -1;
-
-        while (top >= 0)
-        {
-            curr_state = stack[top];
-            if (backed_state == -1)
-                next_state = 0;
-            else
-                next_state = backed_state + 1;
-            while
-            (
-                next_state < state_num && (
-                !NFA_TRANS(curr_state, next_state, I_EPS, nfa) ||
-                visited[next_state] == 1
-            ))
-            next_state++;
-
-            if (next_state == state_num)
-            {
-                backed_state = curr_state;
-                curr_state = stack[top];
-                top--;
-                continue;
-            }
-            else
-            {
-                top++;
-                stack[top] = next_state;
-                backed_state = -1;
-                visited[next_state] = 1;
-                continue;
-            }
-        }
-
-        for (int i = 0; i < state_num; i++)
-            NFA_TRANS(state, i, I_EPS, nfa) |= visited[i];
-    }
-}
-
-void absurb_eps(NFA *nfa)
-{
-    int state_num = nfa->state_num, char_num = nfa->char_num;
-    
-    for (int i = 0; i < state_num; i++)
-        for (int j = 0; j < state_num; j++)
-            for (int k = 0; k < char_num; k++)
-                if (NFA_TRANS(i, j, k, nfa))
-                    for (int l = 0; l < state_num; l++)
-                        NFA_TRANS(i, l, k, nfa) |= NFA_TRANS(j, l, I_EPS, nfa);
-}
-
-void regist_char(char left, char right, Lexer *lexer)
-{
-    int char_num = lexer->char_num;
-    for (int i = 0; i < char_num; i++)
-        if (left == lexer->l_chars[i] && right == lexer->r_chars[i])
-            return;
-
-    lexer->l_chars[char_num] = left;
-    lexer->r_chars[char_num] = right;
-    lexer->char_num++;
-}
-
-void regist_string(char *string, Lexer *lexer)
-{
-    int string_num = lexer->string_num;
-    for (int i = 0; i < string_num; i++)
-        if (string == lexer->strings[i])
-            return;
-
-    lexer->strings[string_num] = string;
-    lexer->string_num++;
-}
-
-void regist_assets(Asset *asset, Lexer *lexer)
-{
-    lexer->strings = (char**) malloc(sizeof(char*) * asset->asset_size);
-    lexer->string_num = 0;
-    lexer->l_chars = (char*) malloc(sizeof(char*) * asset->asset_size);
-    lexer->r_chars = (char*) malloc(sizeof(char*) * asset->asset_size);
-    lexer->char_num = 0;
-
-    for (int i = 0; i < asset->asset_num; i++)
-    {
-        char *string = asset->starts[i];
-        SType stype = asset->stypes[i];
-
-        switch (stype)
-        {
-            case S_BASICS:
-                for (char *c = string; *c; c++)
-                    regist_char(*c, *c, lexer);
-            break;
-            case S_CRANGE:
-                regist_char(string[0], string[1], lexer);
-                break;
-            case S_GRAMMAR:
-                regist_string(string, lexer);
-                break;
-            case S_IDENTITY:
-                break;
-            default:
-                printf("wtf lexing\n");
-                exit(1);
-        }
-    }
-}
+//-----------------------------------------------------------------
 
 void init_NFA_run(NFA *nfa)
 {
@@ -309,7 +141,7 @@ void lexing(GParser *parser, Lexer *lexer)
 {
     regist_assets(parser->asset, lexer);
 
-    int char_num = lexer->char_num, string_num = lexer->string_num;
+    int char_num = lexer->char_num;
     int char_valid[lexer->char_num];
     
     int nfa_num = 0;
@@ -326,19 +158,28 @@ void lexing(GParser *parser, Lexer *lexer)
             nfa_num++;
         }
     }
+
+    for (int i = 0; i < lexer->string_num; i++)
+    {
+        GExpr expr;
+        expr.kind = E_STRING;
+        expr.string.str = lexer->strings[i];
+        build_NFA(&expr, lexer->nfa + nfa_num, lexer);
+        lexer->nfa[nfa_num].name = expr.string.str;
+        nfa_num++;
+    }
     lexer->nfa_num = nfa_num;
 
     char *cursor = lexer->input;
+    int is_alive[nfa_num];
 
     while (*cursor)
     {
-        int is_alive[nfa_num + string_num];
-        int char_valid[char_num];
-
         for (int i = 0; i < nfa_num; i++)
-            init_NFA_run(lexer->nfa + i);
-        for (int i = 0; i < nfa_num + string_num; i++)
+        {
             is_alive[i] = B_TRUE;
+            init_NFA_run(lexer->nfa + i);
+        }
 
         int tok_len = 0;
 
@@ -348,8 +189,8 @@ void lexing(GParser *parser, Lexer *lexer)
             char letter = *(cursor + tok_len);
 
             for (int i = 0; i < char_num; i++)
-                char_valid[i] = (lexer->l_chars[i] <= letter) && (letter <= lexer->r_chars[i]);
-
+                char_valid[i] = (lexer->char_lbs[i] <= letter) && (letter <= lexer->char_ubs[i]);
+            
             for (int i = 0; i < lexer->nfa_num; i++)
             {
                 if (!is_alive[i])
@@ -357,19 +198,11 @@ void lexing(GParser *parser, Lexer *lexer)
                 is_alive[i] = step_NFA(char_valid, lexer->nfa + i);
                 alive_num += is_alive[i];
             }
-
-            for (int i = 0; i < lexer->string_num; i++)
-            {
-                if (!is_alive[nfa_num + i])
-                    continue;
-                is_alive[nfa_num + i] = (lexer->strings[i][tok_len] != c_null) && (lexer->strings[i][tok_len] == letter);
-                alive_num += is_alive[i];
-            }
             if (alive_num == 0)
             {
                 for (int i =0; i < tok_len; i++)
                 {
-                    printf("%c",*(cursor + i));
+                    printf("%c", *(cursor + i));
                 }
                 newline;
                 cursor += tok_len;
