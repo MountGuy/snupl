@@ -32,8 +32,6 @@ void build_NFA(GExpr *expr, NFA *nfa, Lexer *lexer)
 
     find_reachable(nfa);
     absurb_eps(nfa);
-
-    // printf("state num: %d char_num: %d table: %d KB\n", nfa->state_num, nfa->char_num, nfa->state_num * nfa->state_num * nfa->char_num / 1024);
 }
 
 int _build_NFA(GExpr *expr, int start, NFA *nfa, Lexer *lexer)
@@ -276,32 +274,32 @@ void init_NFA_run(NFA *nfa)
         nfa->visiting[i] = NFA_TRANS(nfa->start, i, I_EPS, nfa);
 }
 
-int step_NFA(char c, NFA *nfa, Lexer *lexer)
+int step_NFA(int *char_valid, NFA *nfa)
 {
-    int state_num = nfa->state_num, char_num = lexer->char_num;
+    int state_num = nfa->state_num, char_num = nfa->char_num, total = 0;
+
     for (int i = 0; i < state_num; i++)
         nfa->visiting_new[i] = 0;
 
     for (int k = 0; k < char_num; k++)
     {
-        if (!(lexer->l_chars[k] <= c && c <= lexer->r_chars[k]))
+        if (!char_valid[k])
             continue;
         for (int i = 0; i < state_num; i++)
         {
             if (!nfa->visiting[i])
                 continue;
             for (int j = 0; j < state_num; j++)
+            {
                 nfa->visiting_new[j] |= NFA_TRANS(i, j, k, nfa);
+                total |= nfa->visiting_new[j];
+            }
         }
     }
     
     int *tmp = nfa->visiting;
     nfa->visiting = nfa->visiting_new;
     nfa->visiting_new = tmp;
-    
-    int total = 0;
-    for (int i = 0; i < state_num; i++)
-        total += nfa->visiting[i];
 
     return total > 0;
 
@@ -311,9 +309,11 @@ void lexing(GParser *parser, Lexer *lexer)
 {
     regist_assets(parser->asset, lexer);
 
+    int char_num = lexer->char_num, string_num = lexer->string_num;
+    int char_valid[lexer->char_num];
+    
     int nfa_num = 0;
-
-    lexer->nfa = (NFA*) malloc(sizeof(NFA) * parser->lexterm_num);
+    lexer->nfa = (NFA*) malloc(sizeof(NFA) * (parser->def_num + lexer->string_num));
     lexer->nfa_num = 0;
 
     for (int i = 0; i < parser->def_num; i++)
@@ -328,52 +328,57 @@ void lexing(GParser *parser, Lexer *lexer)
     }
     lexer->nfa_num = nfa_num;
 
-    char *c = lexer->input;
+    char *cursor = lexer->input;
 
-    while (*c)
+    while (*cursor)
     {
-        int left_string[lexer->string_num];
-        for (int i = 0; i < lexer->nfa_num; i++)
-        {
-            init_NFA_run(lexer->nfa + i);
-        }
-        for (int i = 0; i < lexer->string_num; i++)
-            left_string[i] = B_TRUE;
+        int is_alive[nfa_num + string_num];
+        int char_valid[char_num];
 
-        int string_len = 0;
+        for (int i = 0; i < nfa_num; i++)
+            init_NFA_run(lexer->nfa + i);
+        for (int i = 0; i < nfa_num + string_num; i++)
+            is_alive[i] = B_TRUE;
+
+        int tok_len = 0;
+
         while (B_TRUE)
         {
-            int left_count = 0;
+            int alive_num = 0;
+            char letter = *(cursor + tok_len);
+
+            for (int i = 0; i < char_num; i++)
+                char_valid[i] = (lexer->l_chars[i] <= letter) && (letter <= lexer->r_chars[i]);
+
             for (int i = 0; i < lexer->nfa_num; i++)
-                left_count += step_NFA(*(c + string_len), lexer->nfa + i, lexer);
+            {
+                if (!is_alive[i])
+                    continue;
+                is_alive[i] = step_NFA(char_valid, lexer->nfa + i);
+                alive_num += is_alive[i];
+            }
 
             for (int i = 0; i < lexer->string_num; i++)
             {
-                if (!left_string[i])
+                if (!is_alive[nfa_num + i])
                     continue;
-                else if ((lexer->strings[i][string_len] == c_null) ||
-                    (lexer->strings[i][string_len] != *(c + string_len)))
-                {
-                    left_string[i] = B_FALSE;
-                    continue;
-                }
-                else
-                    left_count++;
+                is_alive[nfa_num + i] = (lexer->strings[i][tok_len] != c_null) && (lexer->strings[i][tok_len] == letter);
+                alive_num += is_alive[i];
             }
-            if (left_count == 0)
+            if (alive_num == 0)
             {
-                for (int i =0; i < string_len; i++)
+                for (int i =0; i < tok_len; i++)
                 {
-                    printf("%c",*(c + i));
+                    printf("%c",*(cursor + i));
                 }
                 newline;
-                c += string_len;
-                while (*c == ' ' || *c == '\t' || *c == '\n') c++;
+                cursor += tok_len;
+                while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n') cursor++;
                 break;
             }
             else
             {
-                string_len++;
+                tok_len++;
             }
         }
     }

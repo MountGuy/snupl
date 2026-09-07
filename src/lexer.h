@@ -13,5 +13,5 @@ void regist_char(char left, char right, Lexer *lexer);
 void regist_string(char *string, Lexer *lexer);
 void regist_assets(Asset *asset, Lexer *lexer);
 void init_NFA_run(NFA *nfa);
-int step_NFA(char c, NFA *nfa, Lexer *lexer);
+int step_NFA(int *char_valid, NFA *nfa);
 void lexing(GParser *parser, Lexer *lexer);
