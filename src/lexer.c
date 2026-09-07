@@ -129,6 +129,10 @@ void regist_NFA(GParser *parser, Lexer *lexer)
     }
 
     lexer->nfa_num = nfa_num;
+    lexer->is_alive = (int*) malloc(sizeof(int) * nfa_num);
+    lexer->nfa_result = (int*) malloc(sizeof(int) * nfa_num);
+    lexer->char_valid = (int*) malloc(sizeof(int) * nfa_num);
+    lexer->lens = (int*) malloc(sizeof(int) * nfa_num);
 
     for (int i = 0; i < lexer->nfa_num; i++)
         build_NFA(exprs + i, lexer->nfa + i, lexer);
@@ -173,51 +177,70 @@ int step_NFA(int *char_valid, NFA *nfa)
 
 }
 
+int accepts_next_token(char c, Lexer *lexer)
+{
+    int alive_num = 0;
+
+    for (int i = 0; i < lexer->char_num; i++)
+        lexer->char_valid[i] = (lexer->char_lbs[i] <= c) && (c <= lexer->char_ubs[i]);
+    
+    for (int i = 0; i < lexer->nfa_num; i++)
+    {
+        if (!lexer->is_alive[i])
+            continue;
+
+        lexer->is_alive[i] = step_NFA(lexer->char_valid, lexer->nfa + i);
+        lexer->lens[i] += lexer->is_alive[i];
+        alive_num += lexer->is_alive[i];
+    }
+
+    return alive_num;
+}
+
 void lexing(GParser *parser, Lexer *lexer)
 {
     regist_char(parser->asset, lexer);
     regist_NFA(parser, lexer);
 
-    int char_num = lexer->char_num;
-    int char_valid[char_num];
-    
     char *cursor = lexer->input;
-    int is_alive[lexer->nfa_num];
 
     while (*cursor)
     {
         for (int i = 0; i < lexer->nfa_num; i++)
         {
-            is_alive[i] = B_TRUE;
+            lexer->is_alive[i] = B_TRUE;
+            lexer->lens[i] = 0;
             init_NFA_run(lexer->nfa + i);
         }
 
         int tok_len = 0;
-        int alive_num = lexer->nfa_num;
+        SKIP_SPACE(cursor);
+        if (*cursor == c_null) return;
 
-        while (B_TRUE)
+        while (accepts_next_token(*(cursor + tok_len), lexer))
         {
-            char letter = *(cursor + tok_len);
-            alive_num = 0;
-
-            for (int i = 0; i < char_num; i++)
-                char_valid[i] = (lexer->char_lbs[i] <= letter) && (letter <= lexer->char_ubs[i]);
-            
             for (int i = 0; i < lexer->nfa_num; i++)
-            {
-                if (!is_alive[i])
-                    continue;
-                is_alive[i] = step_NFA(char_valid, lexer->nfa + i);
-                alive_num += is_alive[i];
-            }
-            if (alive_num == 0)
-                break;
+                lexer->nfa_result[i] = lexer->nfa[i].visiting[lexer->nfa[i].end];
             tok_len++;
         }
-        printf("%.*s\n", tok_len, cursor);
-        cursor += tok_len;
-        while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n')
-            cursor++;
+        int best_idx = -1;
+
+        for (int i = 0; i < lexer->nfa_num; i++)
+        {
+            if (lexer->lens[i] > lexer->lens[best_idx] && lexer->nfa_result[i])
+                best_idx = i;
+        }
+
+        if (best_idx != -1)
+        {
+            printf("%.*s ", tok_len, cursor);
+            cursor += tok_len;
+        }
+        else
+        {
+            printf("failed to lex\n");
+            exit(1);
+        }
     }
 }
 

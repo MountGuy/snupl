@@ -60,13 +60,10 @@ typedef struct {
 } NFA;
 
 typedef struct {
-    char *input;
-
-    char *char_lbs, *char_ubs;
-    int char_num;
-
+    char *input, *char_lbs, *char_ubs;
     NFA *nfa;
-    int nfa_num;
+
+    int nfa_num, char_num, *is_alive, *lens, *nfa_result, *char_valid;
 } Lexer;
 
 #endif
