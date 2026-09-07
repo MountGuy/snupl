@@ -98,6 +98,42 @@ void build_NFA(GExpr *expr, NFA *nfa, Lexer *lexer)
     absurb_eps(nfa);
 }
 
+void regist_NFA(GParser *parser, Lexer *lexer)
+{
+    lexer->nfa = (NFA*) malloc(sizeof(NFA) * (parser->asset->asset_num));
+
+    int nfa_num = 0;
+    GExpr exprs[parser->asset->asset_num];
+
+    for (int i = 0; i < parser->def_num; i++)
+    {
+        char *term = parser->defs[i].identity.str;
+        if (IS_LEXING_TERM(term))
+        {
+            exprs[nfa_num] = *(parser->defs[i].identity.expr);
+            lexer->nfa[nfa_num].name = term;
+            nfa_num++;
+        }
+    }
+
+    for (int i = 0; i < parser->asset->asset_num; i++)
+    {
+        SType stype = parser->asset->stypes[i];
+        if (stype == S_GRAMMAR)
+        {
+            exprs[nfa_num].kind = E_STRING;
+            exprs[nfa_num].string.str = parser->asset->starts[i];
+            lexer->nfa[nfa_num].name = parser->asset->starts[i];
+            nfa_num++;
+        }
+    }
+
+    lexer->nfa_num = nfa_num;
+
+    for (int i = 0; i < lexer->nfa_num; i++)
+        build_NFA(exprs + i, lexer->nfa + i, lexer);
+}
+
 //-----------------------------------------------------------------
 
 void init_NFA_run(NFA *nfa)
@@ -139,54 +175,30 @@ int step_NFA(int *char_valid, NFA *nfa)
 
 void lexing(GParser *parser, Lexer *lexer)
 {
-    regist_assets(parser->asset, lexer);
+    regist_char(parser->asset, lexer);
+    regist_NFA(parser, lexer);
 
     int char_num = lexer->char_num;
-    int char_valid[lexer->char_num];
+    int char_valid[char_num];
     
-    int nfa_num = 0;
-    lexer->nfa = (NFA*) malloc(sizeof(NFA) * (parser->def_num + lexer->string_num));
-    lexer->nfa_num = 0;
-
-    for (int i = 0; i < parser->def_num; i++)
-    {
-        char *term = parser->defs[i].identity.str;
-        if (term[0] == '_' && term[1] != '_')
-        {
-            build_NFA(parser->defs[i].identity.expr, lexer->nfa + nfa_num, lexer);
-            lexer->nfa[nfa_num].name = parser->defs[i].identity.str;
-            nfa_num++;
-        }
-    }
-
-    for (int i = 0; i < lexer->string_num; i++)
-    {
-        GExpr expr;
-        expr.kind = E_STRING;
-        expr.string.str = lexer->strings[i];
-        build_NFA(&expr, lexer->nfa + nfa_num, lexer);
-        lexer->nfa[nfa_num].name = expr.string.str;
-        nfa_num++;
-    }
-    lexer->nfa_num = nfa_num;
-
     char *cursor = lexer->input;
-    int is_alive[nfa_num];
+    int is_alive[lexer->nfa_num];
 
     while (*cursor)
     {
-        for (int i = 0; i < nfa_num; i++)
+        for (int i = 0; i < lexer->nfa_num; i++)
         {
             is_alive[i] = B_TRUE;
             init_NFA_run(lexer->nfa + i);
         }
 
         int tok_len = 0;
+        int alive_num = lexer->nfa_num;
 
         while (B_TRUE)
         {
-            int alive_num = 0;
             char letter = *(cursor + tok_len);
+            alive_num = 0;
 
             for (int i = 0; i < char_num; i++)
                 char_valid[i] = (lexer->char_lbs[i] <= letter) && (letter <= lexer->char_ubs[i]);
@@ -199,21 +211,13 @@ void lexing(GParser *parser, Lexer *lexer)
                 alive_num += is_alive[i];
             }
             if (alive_num == 0)
-            {
-                for (int i =0; i < tok_len; i++)
-                {
-                    printf("%c", *(cursor + i));
-                }
-                newline;
-                cursor += tok_len;
-                while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n') cursor++;
                 break;
-            }
-            else
-            {
-                tok_len++;
-            }
+            tok_len++;
         }
+        printf("%.*s\n", tok_len, cursor);
+        cursor += tok_len;
+        while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n')
+            cursor++;
     }
-
 }
+

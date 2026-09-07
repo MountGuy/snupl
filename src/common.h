@@ -64,11 +64,9 @@ typedef struct {
 
     char *char_lbs, *char_ubs;
     int char_num;
+
     NFA *nfa;
     int nfa_num;
-
-    char **strings;
-    int string_num;
 } Lexer;
 
 #endif

@@ -8,6 +8,5 @@ int alloc_NFA_state(NFA *nfa);
 void find_reachable(NFA *nfa);
 void absurb_eps(NFA *nfa);
 
-void regist_char(char lb, char ub, Lexer *lexer);
-void regist_string(char *string, Lexer *lexer);
-void regist_assets(Asset *asset, Lexer *lexer);
+void _regist_char(char lb, char ub, Lexer *lexer);
+void regist_char(Asset *asset, Lexer *lexer);

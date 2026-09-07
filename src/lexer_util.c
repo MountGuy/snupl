@@ -120,7 +120,7 @@ void absurb_eps(NFA *nfa)
 
 //-----------------------------------------------------------------
 
-void regist_char(char lb, char ub, Lexer *lexer)
+void _regist_char(char lb, char ub, Lexer *lexer)
 {
     int char_num = lexer->char_num;
     for (int i = 0; i < char_num; i++)
@@ -132,21 +132,8 @@ void regist_char(char lb, char ub, Lexer *lexer)
     lexer->char_num++;
 }
 
-void regist_string(char *string, Lexer *lexer)
+void regist_char(Asset *asset, Lexer *lexer)
 {
-    int string_num = lexer->string_num;
-    for (int i = 0; i < string_num; i++)
-        if (string == lexer->strings[i])
-            return;
-
-    lexer->strings[string_num] = string;
-    lexer->string_num++;
-}
-
-void regist_assets(Asset *asset, Lexer *lexer)
-{
-    lexer->strings = (char**) malloc(sizeof(char*) * asset->asset_size);
-    lexer->string_num = 0;
     lexer->char_lbs = (char*) malloc(sizeof(char*) * asset->asset_size);
     lexer->char_ubs = (char*) malloc(sizeof(char*) * asset->asset_size);
     lexer->char_num = 0;
@@ -160,15 +147,14 @@ void regist_assets(Asset *asset, Lexer *lexer)
         {
             case S_BASICS:
                 for (char *c = string; *c; c++)
-                    regist_char(*c, *c, lexer);
+                    _regist_char(*c, *c, lexer);
             break;
             case S_CRANGE:
-                regist_char(string[0], string[1], lexer);
+                _regist_char(string[0], string[1], lexer);
                 break;
             case S_GRAMMAR:
-                regist_string(string, lexer);
                 for (char *c = string; *c; c++)
-                    regist_char(*c, *c, lexer);
+                    _regist_char(*c, *c, lexer);
                 break;
             case S_IDENTITY:
                 break;
