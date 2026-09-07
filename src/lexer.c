@@ -140,10 +140,17 @@ void regist_NFA(GParser *parser, Lexer *lexer)
 
 //-----------------------------------------------------------------
 
-void init_NFA_run(NFA *nfa)
+void init_NFA_run(Lexer *lexer)
 {
-    for (int i = 0; i < nfa->state_num; i++)
-        nfa->visiting[i] = NFA_TRANS(nfa->start, i, I_EPS, nfa);
+
+    for (int i = 0; i < lexer->nfa_num; i++)
+    {
+        NFA *nfa = lexer->nfa + i;
+        lexer->is_alive[i] = B_TRUE;
+        lexer->lens[i] = 0;
+        for (int i = 0; i < nfa->state_num; i++)
+            nfa->visiting[i] = NFA_TRANS(nfa->start, i, I_EPS, nfa);
+    }
 }
 
 int step_NFA(int *char_valid, NFA *nfa)
@@ -203,38 +210,30 @@ void lexing(GParser *parser, Lexer *lexer)
     regist_NFA(parser, lexer);
 
     char *cursor = lexer->input;
+    SKIP_SPACE(cursor);
 
     while (*cursor)
     {
-        for (int i = 0; i < lexer->nfa_num; i++)
-        {
-            lexer->is_alive[i] = B_TRUE;
-            lexer->lens[i] = 0;
-            init_NFA_run(lexer->nfa + i);
-        }
-
+        init_NFA_run(lexer);
+        
         int tok_len = 0;
-        SKIP_SPACE(cursor);
-        if (*cursor == c_null) return;
-
         while (accepts_next_token(*(cursor + tok_len), lexer))
         {
             for (int i = 0; i < lexer->nfa_num; i++)
                 lexer->nfa_result[i] = lexer->nfa[i].visiting[lexer->nfa[i].end];
             tok_len++;
         }
-        int best_idx = -1;
 
+        int best_idx = -1;
         for (int i = 0; i < lexer->nfa_num; i++)
-        {
             if (lexer->lens[i] > lexer->lens[best_idx] && lexer->nfa_result[i])
                 best_idx = i;
-        }
 
         if (best_idx != -1)
         {
             printf("%.*s ", tok_len, cursor);
             cursor += tok_len;
+            SKIP_SPACE(cursor);
         }
         else
         {
@@ -242,5 +241,6 @@ void lexing(GParser *parser, Lexer *lexer)
             exit(1);
         }
     }
+    newline;
 }
 

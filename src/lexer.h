@@ -5,7 +5,9 @@
 
 int _build_NFA(GExpr *expr, int start, NFA *nfa, Lexer *lexer);
 void build_NFA(GExpr *expr, NFA *nfa, Lexer *lexer);
+void regist_NFA(GParser *parser, Lexer *lexer);
 
-void init_NFA_run(NFA *nfa);
+void init_NFA_run(Lexer *lexer);
 int step_NFA(int *char_valid, NFA *nfa);
+int accepts_next_token(char c, Lexer *lexer);
 void lexing(GParser *parser, Lexer *lexer);
