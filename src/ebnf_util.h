@@ -17,7 +17,8 @@
 #define C_CONCAT  ','
 #define C_CRANGE  '~'
 
-char *search_asset(char *string, TType ttype, GParser *parser);
+void resolve_asset(GExpr *expr, SType stype, Asset *asset);
+char *add_asset(char *string, SType stype, Asset *asset);
 void set_nary_expr(GExpr *expr, ExprKind kind, GExpr **exprs, int expr_num);
 
 GToken *peek_tok(GParser *parser);
@@ -25,7 +26,7 @@ GToken *peek_next(GParser *parser);
 GToken *advance_parser(GParser *parser);
 GExpr *alloc_expr(GParser *parser);
 
-void print_asset(GParser *parser);
+void print_asset(Asset *asset);
 void print_tokens(int tok_num, GToken *tokens);
 void print_expr(GExpr *expr);
 void print_parser(GParser *parser);
@@ -35,6 +36,6 @@ void unroll_identity(GExpr *expr, GParser *parser);
 void flatten_expr(GExpr *expr, GParser *parser);
 
 
-extern char *S_LPAREN, *S_RPAREN, *S_LBRACE, *S_RBRACE, *S_LBRAKET, *S_RBRAKET, *S_END, *S_DEFINE, *S_ALTER, *S_CONCAT, *S_CRANGE;
+extern char *STR_LPAREN, *STR_RPAREN, *STR_LBRACE, *STR_RBRACE, *STR_LBRAKET, *STR_RBRAKET, *STR_END, *STR_DEFINE, *STR_ALTER, *STR_CONCAT, *STR_CRANGE;
 
 #endif

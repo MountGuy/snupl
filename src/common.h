@@ -12,6 +12,7 @@
 
 typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;
+typedef enum { S_BASICS, S_GRAMMAR, S_IDENTITY} SType;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY, E_DEFINE } ExprKind;
 typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 
@@ -20,6 +21,12 @@ typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 #define CMAP_SIZE 300
 
 typedef struct { char *string; TType ttype; } GToken;
+
+typedef struct {
+    int asset_num;
+    char *assets, *top, **starts;
+    SType *asset_types;
+} Asset;
 
 typedef struct GExpr {
     ExprKind kind;
@@ -34,10 +41,9 @@ typedef struct GExpr {
 
 typedef struct {
     char *input;
+    int char_num;
 
-    int char_num, asset_num;
-    char *assets, *top, **starts;
-    TType *asset_types;
+    Asset *asset;
     
     int tok_num;
     GToken *tokens;

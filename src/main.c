@@ -31,8 +31,10 @@ int main(int argv, char *argc[])
     fread(buf, 1, char_num, fp);
     buf[char_num] = c_null;
     
+    Asset asset;
     GParser gparser;
     gparser.input = buf;
+    gparser.asset = &asset;
     ebnf_lexer(&gparser);
     ebnf_parser(&gparser);
 

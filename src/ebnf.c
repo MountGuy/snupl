@@ -19,7 +19,7 @@ GExpr *parse_define(GParser *parser)
         if (!(
             tok_id->ttype == T_IDENTITY &&
             tok_def->ttype == T_OPERATOR &&
-            tok_def->string == S_DEFINE
+            tok_def->string == STR_DEFINE
         ))
         {
             printf("definition format error\n");
@@ -31,7 +31,7 @@ GExpr *parse_define(GParser *parser)
 
         if (!(
             tok_end->ttype == T_OPERATOR &&
-            tok_end->string == S_END
+            tok_end->string == STR_END
         ))
         {
             printf("definition format error\n");
@@ -64,14 +64,14 @@ GExpr *parse_alter(GParser *parser)
         expr_num++;
         
         if ((
-            string == S_END ||
-            string == S_RPAREN ||
-            string == S_RBRACE ||
-            string == S_RBRAKET) &&
+            string == STR_END ||
+            string == STR_RPAREN ||
+            string == STR_RBRACE ||
+            string == STR_RBRAKET) &&
             ttype == T_OPERATOR
         )
             break;
-        else if (ttype == T_OPERATOR && string == S_ALTER)
+        else if (ttype == T_OPERATOR && string == STR_ALTER)
         {
             advance_parser(parser);
             continue;
@@ -111,15 +111,15 @@ GExpr *parse_concat(GParser *parser)
         expr_num++;
 
         if ((
-            string == S_ALTER ||
-            string == S_END ||
-            string == S_RPAREN ||
-            string == S_RBRACE ||
-            string == S_RBRAKET) &&
+            string == STR_ALTER ||
+            string == STR_END ||
+            string == STR_RPAREN ||
+            string == STR_RBRACE ||
+            string == STR_RBRAKET) &&
             ttype == T_OPERATOR
         )
             break;
-        else if (ttype == T_OPERATOR && string == S_CONCAT)
+        else if (ttype == T_OPERATOR && string == STR_CONCAT)
         {
             advance_parser(parser);
             continue;
@@ -157,7 +157,7 @@ GExpr *parse_primary(GParser *parser)
         case T_STRING:
         {
             GToken *next_token = peek_tok(parser);
-            if (next_token->ttype == T_OPERATOR && next_token->string == S_CRANGE)
+            if (next_token->ttype == T_OPERATOR && next_token->string == STR_CRANGE)
             {
                 advance_parser(parser);
                 GToken *end_token = advance_parser(parser);
@@ -184,24 +184,24 @@ GExpr *parse_primary(GParser *parser)
             return expr;
         case T_OPERATOR:
             if (
-                string == S_LPAREN ||
-                string == S_LBRACE ||
-                string == S_LBRAKET
+                string == STR_LPAREN ||
+                string == STR_LBRACE ||
+                string == STR_LBRAKET
             )
             {
                 GExpr *body_expr = parse_alter(parser);
                 GToken *next_token = advance_parser(parser);
                 char *next_string = next_token->string;
 
-                if (string == S_LPAREN && next_string == S_RPAREN)
+                if (string == STR_LPAREN && next_string == STR_RPAREN)
                     return body_expr;
                 else if (
-                    (string == S_LBRACE && next_string == S_RBRACE) ||
-                    (string == S_LBRAKET && next_string == S_RBRAKET)
+                    (string == STR_LBRACE && next_string == STR_RBRACE) ||
+                    (string == STR_LBRAKET && next_string == STR_RBRAKET)
                 )
                 {
                     GExpr *expr = alloc_expr(parser);
-                    set_nary_expr(expr, (string == S_LBRACE? E_REPEAT: E_OPTION), &body_expr, 1);
+                    set_nary_expr(expr, (string == STR_LBRACE? E_REPEAT: E_OPTION), &body_expr, 1);
 
                     return expr;                    
                 }
@@ -219,17 +219,19 @@ GExpr *parse_primary(GParser *parser)
     }
 }
 
+void init_asset(int char_num, int tok_num, Asset *asset)
+{
+    asset->assets = (char*) malloc(sizeof(char) * (char_num + 10));
+    asset->starts = (char**) malloc(sizeof(char*) * (tok_num + 10));
+    asset->top = asset->assets;
+    asset->asset_num = 0;
+    asset->asset_types = (SType*) malloc(sizeof(SType) * (tok_num + 10));
+}
+
 void ebnf_lexer(GParser *parser)
 {
     int char_num = strlen(parser->input);
     int tok_num = 0;
-
-    parser->char_num = char_num;
-    parser->assets = (char*) malloc(sizeof(char) * (char_num + 10));
-    parser->starts = (char**) malloc(sizeof(char*) * (char_num + 10));
-    parser->top = parser->assets;
-    parser->asset_num = 0;
-    parser->asset_types = (TType*) malloc(sizeof(TType) * (char_num + 10));
 
     GToken *tokens = (GToken*) malloc(sizeof(GToken) * (char_num + 10));
     
@@ -283,37 +285,37 @@ void ebnf_lexer(GParser *parser)
             switch (*c)
             {
                 case C_LPAREN:
-                    tokens[tok_num].string = S_LPAREN;
+                    tokens[tok_num].string = STR_LPAREN;
                     break;
                 case C_RPAREN:
-                    tokens[tok_num].string = S_RPAREN;
+                    tokens[tok_num].string = STR_RPAREN;
                     break;
                 case C_LBRACE:
-                    tokens[tok_num].string = S_LBRACE;
+                    tokens[tok_num].string = STR_LBRACE;
                     break;
                 case C_RBRACE:
-                    tokens[tok_num].string = S_RBRACE;
+                    tokens[tok_num].string = STR_RBRACE;
                     break;
                 case C_LBRAKET:
-                    tokens[tok_num].string = S_LBRAKET;
+                    tokens[tok_num].string = STR_LBRAKET;
                     break;
                 case C_RBRAKET:
-                    tokens[tok_num].string = S_RBRAKET;
+                    tokens[tok_num].string = STR_RBRAKET;
                     break;
                 case C_DEFINE:
-                    tokens[tok_num].string = S_DEFINE;
+                    tokens[tok_num].string = STR_DEFINE;
                     break;
                 case C_ALTER:
-                    tokens[tok_num].string = S_ALTER;
+                    tokens[tok_num].string = STR_ALTER;
                     break;
                 case C_CONCAT:
-                    tokens[tok_num].string = S_CONCAT;
+                    tokens[tok_num].string = STR_CONCAT;
                     break;
                 case C_CRANGE:
-                    tokens[tok_num].string = S_CRANGE;
+                    tokens[tok_num].string = STR_CRANGE;
                     break;
                 case C_END:
-                    tokens[tok_num].string = S_END;
+                    tokens[tok_num].string = STR_END;
                     break;
             }
             *c = c_null;
@@ -322,12 +324,7 @@ void ebnf_lexer(GParser *parser)
         tok_num++;
     }
 
-    for (int i = 0; i < tok_num; i++)
-    {
-        if (tokens[i].ttype == T_IDENTITY || tokens[i].ttype == T_STRING)
-            tokens[i].string = search_asset(tokens[i].string, tokens[i].ttype, parser);
-    }
-
+    parser->char_num = char_num;
     parser->tok_num = tok_num;
     parser->tokens = tokens;
 }
@@ -343,6 +340,18 @@ void ebnf_parser(GParser *parser)
     parser->def_num = 0;
 
     parse_define(parser);
+
+    GExpr *defs = parser->defs;
+
+    init_asset(parser->char_num, tok_num + 10, parser->asset);
+
+    for (int i = 0; i < parser->def_num; i++)
+        defs[i].identity.str = add_asset(defs[i].identity.str, S_IDENTITY, parser->asset);
+    for (int i = 0; i < parser->def_num; i++)
+    {
+        SType stype = (defs[i].identity.str[0] == '_'? S_BASICS : S_GRAMMAR);
+        resolve_asset(defs[i].identity.expr, stype, parser->asset);
+    }
 
     for (int i = 0; i < parser->def_num; i++)
         index_identity(parser->defs[i].identity.expr, parser);

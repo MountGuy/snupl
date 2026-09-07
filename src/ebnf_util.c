@@ -5,27 +5,52 @@
 #include "ebnf_util.h"
 
 
-char *S_LPAREN = "(", *S_RPAREN = ")",
-     *S_LBRACE = "{", *S_RBRACE = "}",
-     *S_LBRAKET = "[", *S_RBRAKET = "]",
-     *S_END = ";", *S_DEFINE = "=",
-     *S_ALTER = "|", *S_CONCAT = ",",
-     *S_CRANGE = "~";
+char *STR_LPAREN = "(", *STR_RPAREN = ")",
+     *STR_LBRACE = "{", *STR_RBRACE = "}",
+     *STR_LBRAKET = "[", *STR_RBRAKET = "]",
+     *STR_END = ";", *STR_DEFINE = "=",
+     *STR_ALTER = "|", *STR_CONCAT = ",",
+     *STR_CRANGE = "~";
 
-char *search_asset(char *string, TType ttype, GParser *parser)
+void resolve_asset(GExpr *expr, SType stype, Asset *asset)
 {
-    for (int i = 0; i < parser->asset_num; i++)
-        if (strcmp(parser->starts[i], string) == 0 && parser->asset_types[i] == ttype)
-            return parser->starts[i];
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        case E_CONCAT:
+        case E_OPTION:
+        case E_REPEAT:
+            for (int i = 0; i < expr->nary.expr_num; i++)
+                resolve_asset(expr->nary.exprs[i], stype, asset);
+            return;
+        case E_STRING:
+            expr->string.str = add_asset(expr->string.str, stype, asset);
+            return;
+        case E_CRANGE:
+            return;            
+        case E_IDENTITY:
+            expr->identity.str = add_asset(expr->identity.str, S_IDENTITY, asset);
+            return;
+        default:
+            printf("wtf resolve asset\n");
+            exit(1);
+    }
+}
 
-    strcpy(parser->top, string);
+char *add_asset(char *string, SType stype, Asset *asset)
+{
+    for (int i = 0; i < asset->asset_num; i++)
+        if (strcmp(asset->starts[i], string) == 0 && asset->asset_types[i] == stype)
+            return asset->starts[i];
+
+    strcpy(asset->top, string);
     
-    parser->starts[parser->asset_num] = parser->top;
-    parser->asset_types[parser->asset_num] = ttype;
-    parser->top += strlen(string) + 1;
-    parser->asset_num += 1;
+    asset->starts[asset->asset_num] = asset->top;
+    asset->asset_types[asset->asset_num] = stype;
+    asset->top += strlen(string) + 1;
+    asset->asset_num += 1;
 
-    return parser->starts[parser->asset_num - 1];
+    return asset->starts[asset->asset_num - 1];
 }
 
 void set_nary_expr(GExpr *expr, ExprKind kind, GExpr **exprs, int expr_num)
@@ -66,17 +91,25 @@ GExpr *alloc_expr(GParser *parser)
 
 //-----------------------------------------------------------------
 
-void print_asset(GParser *parser)
+void print_asset(Asset *asset)
 {
-    for (int i = 0; i < parser->asset_num; i++)
+    for (int i = 0; i < asset->asset_num; i++)
     {
-        if (parser->asset_types[i] == T_STRING)
-            printf("[%2d] string %s\n", i, parser->starts[i]);
-        else if (parser->asset_types[i] == T_IDENTITY)
-            continue;
-            // printf("[%2d] identi %s\n", i, parser->starts[i]);
-        else
-            printf("wtf 5");
+        switch (asset->asset_types[i])
+        {
+            case S_BASICS:
+                printf("[%2d] basic %s\n", i, asset->starts[i]);
+                break;
+            case S_GRAMMAR:
+                printf("[%2d] grammar %s\n", i, asset->starts[i]);
+                break;
+            case S_IDENTITY:
+                printf("[%2d] identity %s\n", i, asset->starts[i]);
+                break;
+            default:
+                printf("print asset wtf %d %d %s\n", i, asset->asset_types[i], asset->starts[i]);
+                exit(1);
+        }
     }
 }
 
@@ -85,7 +118,7 @@ void print_tokens(int tok_num, GToken *tokens)
     for (int i = 0; i < tok_num; i++)
     {
         printf("%s ", tokens[i].string);
-        if (tokens[i].string == S_END)
+        if (tokens[i].string == STR_END)
         newline;
     }
     newline;
