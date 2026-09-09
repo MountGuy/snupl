@@ -131,7 +131,7 @@ void regist_NFA(GParser *parser, Lexer *lexer)
     lexer->nfa_num = nfa_num;
     lexer->is_alive = (int*) malloc(sizeof(int) * nfa_num);
     lexer->nfa_result = (int*) malloc(sizeof(int) * nfa_num);
-    lexer->char_valid = (int*) malloc(sizeof(int) * nfa_num);
+    lexer->char_valid = (int*) malloc(sizeof(int) * lexer->char_num);
     lexer->lens = (int*) malloc(sizeof(int) * nfa_num);
 
     for (int i = 0; i < lexer->nfa_num; i++)

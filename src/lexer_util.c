@@ -136,7 +136,7 @@ void regist_char(Asset *asset, Lexer *lexer)
 {
     lexer->char_lbs = (char*) malloc(sizeof(char*) * asset->asset_size);
     lexer->char_ubs = (char*) malloc(sizeof(char*) * asset->asset_size);
-    lexer->char_num = 0;
+    lexer->char_num = 1;
 
     for (int i = 0; i < asset->asset_num; i++)
     {
