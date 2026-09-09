@@ -1,9 +1,9 @@
 CC = gcc
 CFLAGS = -Wall
 TARGET = scanner
-SRCS = main.c ebnf.c ebnf_util.c analysis.c lexer.c lexer_util.c
+SRCS = arena.c main.c character.c dump.c meta.c
 OBJS = $(SRCS:.c=.o)
-COMMON = common.h
+COMMON = common.h struct.h
 
 all: $(TARGET)
 
@@ -19,5 +19,3 @@ main.h:
 clean:
 	rm -f $(OBJS) $(TARGET)
 
-test: $(TARGET) testcase.gm
-	./$(TARGET) testcase.gm

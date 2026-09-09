@@ -1,27 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
-#include "ebnf_util.h"
-#include "ebnf.h"
-#include "lexer.h"
-
+#include "common.h"
+#include "struct.h"
+#include "arena.h"
+#include "meta.h"
+#include "dump.h"
 
 int main(int argv, char *argc[])
 {
-    if (argv < 2)
-    {
-        printf("Grammar file path required...\n");
-        return 1;
-    }
+    FILE *fp = fopen("snupl2.gm", "r");
 
-    FILE *fp = fopen(argc[1], "r");
-    if (fp == p_null)
-    {
-        printf("Failed to open grammar file...\n");
-        return 1;
-    }
 
     fseek(fp, 0, SEEK_END);
     int char_num = ftell(fp);
@@ -30,34 +16,19 @@ int main(int argv, char *argc[])
     char *buf = (char*) malloc(sizeof(char) * (char_num + 10));
     fread(buf, 1, char_num, fp);
     buf[char_num] = c_null;
+
+    // printf("%s\n", buf);
     
-    Asset asset;
-    GParser gparser;
-    gparser.input = buf;
-    gparser.asset = &asset;
-    ebnf_lexer(&gparser);
-    ebnf_parser(&gparser);
+    Arena arena;
+    init_arena(&arena);
 
-    fclose(fp);
-    fp = fopen(argc[2], "r");
-    if (fp == p_null)
-    {
-        printf("Failed to open code file...\n");
-        return 1;
-    }
-
-    fseek(fp, 0, SEEK_END);
-    char_num = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    buf = (char*) malloc(sizeof(char) * (char_num + 10));
-    fread(buf, 1, char_num, fp);
-    buf[char_num] = c_null;
-
-    Lexer lexer;
+    MetaLexer lexer;
+    lexer.arena = &arena;
     lexer.input = buf;
+    lexer.input_len = strlen(buf);
 
-    lexing(&gparser, &lexer);
+    meta_lexing(&lexer);
+    print_meta_lexer(&lexer);
 
     return 0;
 }
