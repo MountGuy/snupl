@@ -20,7 +20,7 @@ int main(int argv, char *argc[])
     // printf("%s\n", buf);
     
     Arena arena;
-    init_arena(&arena);
+    init_arena(char_num, &arena);
 
     MetaLexer lexer;
     lexer.arena = &arena;
@@ -28,7 +28,13 @@ int main(int argv, char *argc[])
     lexer.input_len = strlen(buf);
 
     meta_lexing(&lexer);
-    print_meta_lexer(&lexer);
+
+    MetaParser parser;
+    parser.arena = &arena;
+    parser.tokens = lexer.tokens;
+    parser.token_num = lexer.token_num;
+
+    meta_parsing(&parser);
 
     return 0;
 }

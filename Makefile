@@ -1,6 +1,7 @@
 .PHONY: all clean test scanner
 
 all: scanner
+	./scanner
 
 scanner:
 	$(MAKE) -C src scanner

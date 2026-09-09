@@ -1,8 +1,6 @@
 #ifndef STRUCT_H
 #define STRUCT_H 1
 
-#include <stdbool.h>
-
 typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;
 typedef struct {
     char *string;
@@ -11,7 +9,7 @@ typedef struct {
 } MetaToken;
 
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY, E_DEFINE } ExprKind;
-typedef struct {
+typedef struct MetaExpr {
     ExprKind kind;
     union
     {
@@ -26,8 +24,8 @@ typedef struct {
     char *buffer, **strings;
     int buffer_used, buffer_max, string_used, string_max;
 
-    MetaExpr *exprs;
-    int expr_used, expr_max;
+    MetaExpr *exprs, **expr_lists;
+    int expr_used, expr_max, expr_list_used, expr_list_max;
 } Arena;
 
 typedef enum { D_LETTER, D_TERM, D_GRAMMAR } DType;
