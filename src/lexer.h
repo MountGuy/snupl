@@ -9,5 +9,5 @@ void regist_NFA(GParser *parser, Lexer *lexer);
 
 void init_NFA_run(Lexer *lexer);
 int step_NFA(int *char_valid, NFA *nfa);
-int accepts_next_token(char c, Lexer *lexer);
+int accepts_next_token(char c, int len, Lexer *lexer);
 void lexing(GParser *parser, Lexer *lexer);

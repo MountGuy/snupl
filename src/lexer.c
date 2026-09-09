@@ -112,6 +112,7 @@ void regist_NFA(GParser *parser, Lexer *lexer)
         {
             exprs[nfa_num] = *(parser->defs[i].identity.expr);
             lexer->nfa[nfa_num].name = term;
+            lexer->nfa[nfa_num].type = C_VALUE;
             nfa_num++;
         }
     }
@@ -124,6 +125,7 @@ void regist_NFA(GParser *parser, Lexer *lexer)
             exprs[nfa_num].kind = E_STRING;
             exprs[nfa_num].string.str = parser->asset->starts[i];
             lexer->nfa[nfa_num].name = parser->asset->starts[i];
+            lexer->nfa[nfa_num].type = C_GRAMMAR;
             nfa_num++;
         }
     }
@@ -184,7 +186,7 @@ int step_NFA(int *char_valid, NFA *nfa)
 
 }
 
-int accepts_next_token(char c, Lexer *lexer)
+int accepts_next_token(char c, int len, Lexer *lexer)
 {
     int alive_num = 0;
 
@@ -197,7 +199,8 @@ int accepts_next_token(char c, Lexer *lexer)
             continue;
 
         lexer->is_alive[i] = step_NFA(lexer->char_valid, lexer->nfa + i);
-        lexer->lens[i] += lexer->is_alive[i];
+        if (lexer->nfa[i].visiting[lexer->nfa[i].end] == B_TRUE)
+            lexer->lens[i] = len;
         alive_num += lexer->is_alive[i];
     }
 
@@ -209,6 +212,20 @@ void lexing(GParser *parser, Lexer *lexer)
     regist_char(parser->asset, lexer);
     regist_NFA(parser, lexer);
 
+    // int total_state_num = 0, curr_size = 0;
+
+    // for (int i = 0; i < lexer->nfa_num; i++)
+    // {
+    //     total_state_num += lexer->nfa[i].state_num;
+    //     curr_size += (lexer->nfa[i].state_num) * (lexer->nfa[i].state_num); 
+    //     printf("%d %d\n", lexer->nfa[i].state_num, lexer->nfa[i].char_num);
+    // }
+
+    // printf("%d vs %d\n", total_state_num * total_state_num * lexer->char_num / 1024, curr_size * lexer->char_num / 1024);
+
+    lexer->tokens = (CToken*) malloc(sizeof(CToken) * strlen(lexer->input));
+    lexer->token_num = 0;
+
     char *cursor = lexer->input;
     SKIP_SPACE(cursor);
 
@@ -217,22 +234,30 @@ void lexing(GParser *parser, Lexer *lexer)
         init_NFA_run(lexer);
         
         int tok_len = 0;
-        while (accepts_next_token(*(cursor + tok_len), lexer))
-        {
-            for (int i = 0; i < lexer->nfa_num; i++)
-                lexer->nfa_result[i] = lexer->nfa[i].visiting[lexer->nfa[i].end];
+        while (accepts_next_token(*(cursor + tok_len), tok_len + 1, lexer))
             tok_len++;
-        }
 
-        int best_idx = -1;
+        int best_idx = -1, best_len = 0;
         for (int i = 0; i < lexer->nfa_num; i++)
-            if (lexer->lens[i] > lexer->lens[best_idx] && lexer->nfa_result[i])
+        {
+            if (lexer->lens[i] > best_len || (lexer->lens[i] == best_len && lexer->nfa[i].type > lexer->nfa[best_idx].type))
+            {
                 best_idx = i;
-
+                best_len = lexer->lens[i];
+            }
+        }
+            
         if (best_idx != -1)
         {
-            printf("%.*s ", tok_len, cursor);
-            cursor += tok_len;
+            int tok_num = lexer->token_num;
+            lexer->tokens[tok_num].string = (char*) malloc(sizeof(char) * (best_len + 2));
+            memcpy(lexer->tokens[tok_num].string, cursor, sizeof(char) * best_len);
+            lexer->tokens[tok_num].string[best_len] = c_null;
+            lexer->tokens[tok_num].ctype = lexer->nfa[best_idx].type;
+            // printf("%d %s %s\n", best_len, (lexer->tokens[tok_num].ctype == C_GRAMMAR? "grammar" : "  value"), lexer->tokens[tok_num].string);
+            lexer->token_num++;
+
+            cursor += best_len;
             SKIP_SPACE(cursor);
         }
         else

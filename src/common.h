@@ -12,6 +12,7 @@
 
 typedef enum { B_FALSE, B_TRUE, B_VAR } Boolean;
 typedef enum { T_IDENTITY, T_STRING, T_OPERATOR } TType;
+typedef enum { C_VALUE, C_GRAMMAR } CType;
 typedef enum { S_BASICS, S_CRANGE, S_GRAMMAR, S_IDENTITY} SType;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY, E_DEFINE } ExprKind;
 typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
@@ -21,6 +22,7 @@ typedef enum { N_ALTER, N_CONCAT, N_REPEAT, N_PRIMARY } NFAKind;
 #define CMAP_SIZE 300
 
 typedef struct { char *string; TType ttype; } GToken;
+typedef struct { char *string; CType ctype; } CToken;
 
 typedef struct {
     int asset_num, asset_size;
@@ -57,6 +59,7 @@ typedef struct {
     int char_num, state_num, used_state_num;
     int *trans;
     int start, end, *visiting, *visiting_new;
+    CType type;
 } NFA;
 
 typedef struct {
@@ -64,6 +67,8 @@ typedef struct {
     NFA *nfa;
 
     int nfa_num, char_num, *is_alive, *lens, *nfa_result, *char_valid;
+    CToken *tokens;
+    int token_num;
 } Lexer;
 
 #endif
