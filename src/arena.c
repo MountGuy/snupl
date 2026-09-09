@@ -65,8 +65,6 @@ MetaExpr *alloc_expr(Arena *arena)
         memcpy(arena->exprs, tmp, sizeof(MetaExpr) * arena->expr_max);
         free(tmp);
     }
-    MetaExpr *return_val = arena->exprs + arena->expr_used;
-    arena->expr_used++;
-
-    return return_val;
+    return arena->exprs + arena->expr_used++;
 }
+

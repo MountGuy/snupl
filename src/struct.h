@@ -7,7 +7,7 @@ typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;
 typedef struct {
     char *string;
     MType type;
-    int line, col;
+    int line, col, len;
 } MetaToken;
 
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY, E_DEFINE } ExprKind;
@@ -49,7 +49,7 @@ typedef struct {
 
 typedef struct {
     MetaToken *tokens;
-    int token_num;
+    int token_num, cursor;
 
     MetaDef *defs;
     int def_num;
