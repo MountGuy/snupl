@@ -2,6 +2,7 @@
 #include "struct.h"
 #include "arena.h"
 #include "meta.h"
+#include "lexer.h"
 #include "dump.h"
 
 int main(int argv, char *argc[])
@@ -34,6 +35,8 @@ int main(int argv, char *argc[])
 
     Grammar grammar = meta_parsing(&parser);
     print_grammar(&grammar);
+
+    build_NFA(&grammar);
 
     return 0;
 }
