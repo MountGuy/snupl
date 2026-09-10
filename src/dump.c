@@ -27,18 +27,25 @@ void print_meta_lexer(MetaLexer *lexer)
         print_meta_token(lexer->tokens[i]);
 }
 
+void print_grammar(Grammar *grammar)
+{
+    for (int i = 0; i < grammar->def_num; i++)
+        print_meta_def(grammar->defs + i);
+
+}
+
 void print_meta_def(MetaDef *def)
 {
     switch (def->type)
     {
         case D_GRAMMAR:
-            printf("<gram> %s := ", def->identity);
+            printf("[ grammar ] %s := ", def->identity);
             break;
         case D_LETTER:
-            printf("<lett> %s := ", def->identity);
+            printf("[ letters ] %s := ", def->identity);
             break;
         case D_TERM:
-            printf("<term> %s := ", def->identity);
+            printf("[  term   ] %s := ", def->identity);
             break;
         default:
             printf("Unexpected def type %d\n", def->type);

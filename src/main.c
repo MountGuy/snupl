@@ -16,8 +16,6 @@ int main(int argv, char *argc[])
     char *buf = (char*) malloc(sizeof(char) * (char_num + 10));
     fread(buf, 1, char_num, fp);
     buf[char_num] = c_null;
-
-    // printf("%s\n", buf);
     
     Arena arena;
     init_arena(char_num, &arena);
@@ -34,7 +32,8 @@ int main(int argv, char *argc[])
     parser.tokens = lexer.tokens;
     parser.token_num = lexer.token_num;
 
-    meta_parsing(&parser);
+    Grammar grammar = meta_parsing(&parser);
+    print_grammar(&grammar);
 
     return 0;
 }

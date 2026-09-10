@@ -119,15 +119,7 @@ void meta_lexing(MetaLexer *lexer)
 
 }
 
-void meta_parsing(MetaParser *parser)
-{
-    parse_define(parser);
-
-    for (int i = 0; i < parser->def_num; i++)
-        print_meta_def(parser->defs + i);
-}
-
-void parse_define(MetaParser *parser)
+Grammar meta_parsing(MetaParser *parser)
 {
     int def_num = 0;
     MetaDef *buffer = (MetaDef*) malloc(sizeof(MetaDef) * parser->token_num);
@@ -163,10 +155,13 @@ void parse_define(MetaParser *parser)
         def_num++;
     }
 
-    parser->defs = (MetaDef*) malloc(sizeof(MetaDef) * def_num);
-    parser->def_num = def_num;
-    memcpy(parser->defs, buffer, sizeof(MetaDef) * def_num);
+    Grammar grammar = {
+        .def_num = def_num,
+        .defs = (MetaDef*) malloc(sizeof(MetaDef) * def_num),
+    };
+    memcpy(grammar.defs, buffer, sizeof(MetaDef) * def_num);
     free(buffer);
+    return grammar;
 }
 
 MetaExpr *parse_alter(MetaParser *parser)
