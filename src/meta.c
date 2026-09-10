@@ -47,7 +47,7 @@ void meta_lexing(MetaLexer *lexer)
         }
         else if (cursor[0] == '0' && cursor[1] == 'x')
         {
-            char hex_str[2] = { hex_to_int(cursor[1]) * 16 + hex_to_int(cursor[2]), c_null };
+            char hex_str[2] = { hex_to_int(cursor[2]) * 16 + hex_to_int(cursor[3]), c_null };
             token.string = add_string(hex_str, 1, lexer->arena);
             token.type = M_STRING;
             token.line = line;
