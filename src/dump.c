@@ -30,8 +30,26 @@ void print_meta_lexer(MetaLexer *lexer)
 void print_grammar(Grammar *grammar)
 {
     for (int i = 0; i < grammar->def_num; i++)
-        print_meta_def(grammar->defs + i);
-
+    {
+        MetaDef *def = grammar->defs + i;
+        switch (def->type)
+        {
+            case D_GRAMMAR:
+                printf("grammar [%d] %s := ", i, def->identity);
+                break;
+            case D_LETTER:
+                printf("letters [%d] %s := ", i, def->identity);
+                break;
+            case D_TERM:
+                printf(" term   [%d] %s := ", i, def->identity);
+                break;
+            default:
+                printf("Unexpected def type %d\n", def->type);
+                exit(1);
+        }
+        print_meta_expr(def->expr);
+        newline;
+    }
 }
 
 void print_meta_def(MetaDef *def)
@@ -39,13 +57,13 @@ void print_meta_def(MetaDef *def)
     switch (def->type)
     {
         case D_GRAMMAR:
-            printf("[ grammar ] %s := ", def->identity);
+            printf("grammar %s := ", def->identity);
             break;
         case D_LETTER:
-            printf("[ letters ] %s := ", def->identity);
+            printf("letters %s := ", def->identity);
             break;
         case D_TERM:
-            printf("[  term   ] %s := ", def->identity);
+            printf(" term   %s := ", def->identity);
             break;
         default:
             printf("Unexpected def type %d\n", def->type);
@@ -96,7 +114,7 @@ void print_meta_expr(MetaExpr *expr)
             printf("\'%c\'~\'%c\'", expr->crange.lb, expr->crange.ub);
             break;
         case E_IDENTITY:
-            printf("%s", expr->string.value);
+            printf("%s[%d]", expr->identity.id, expr->identity.idx);
             break;
         default:
             printf("error on print expr: %d\n", expr->kind);

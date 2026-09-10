@@ -8,7 +8,7 @@ typedef struct {
     int line, col, len;
 } MetaToken;
 
-typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY, E_DEFINE } ExprKind;
+typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY } ExprKind;
 typedef struct MetaExpr {
     ExprKind kind;
     union
@@ -16,6 +16,7 @@ typedef struct MetaExpr {
         struct { int expr_num; struct MetaExpr **exprs; } nary;
         struct { struct MetaExpr *expr; } unary;
         struct { char *value; } string;
+        struct { int idx; char *id; } identity;
         struct { char lb, ub; } crange;
     };
 } MetaExpr;

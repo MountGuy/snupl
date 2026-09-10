@@ -121,6 +121,51 @@ void meta_lexing(MetaLexer *lexer)
 
 Grammar meta_parsing(MetaParser *parser)
 {
+    Grammar grammar = parse_define(parser);
+    char **dict = (char**) malloc(sizeof(char*) * grammar.def_num + 1);
+    for (int i = 0; i < grammar.def_num; i++)
+        dict[i] = grammar.defs[i].identity;
+    dict[grammar.def_num] = p_null;
+
+    for (int i = 0; i < grammar.def_num; i++)
+        index_identity(dict, grammar.defs[i].expr);
+
+    return grammar;
+}
+
+void index_identity(char **dict, MetaExpr *expr)
+{
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        case E_CONCAT:
+            for (int i = 0; i < expr->nary.expr_num; i++)
+                index_identity(dict, expr->nary.exprs[i]);
+            return;
+        case E_OPTION:
+        case E_REPEAT:
+            index_identity(dict, expr->unary.expr);
+            return;
+        case E_CRANGE:
+        case E_STRING:
+            return;
+        case E_IDENTITY:
+            if (expr->identity.idx == -1)
+            {
+                for (int i = 0; dict[i]; i++)
+                    if (expr->identity.id == dict[i])
+                    {
+                        expr->identity.idx = i;
+                        return;
+                    }
+            }
+            printf("Identity %s is not indexed...\n", expr->identity.id);
+            exit(1);
+    }
+}
+
+Grammar parse_define(MetaParser *parser)
+{
     int def_num = 0;
     MetaDef *buffer = (MetaDef*) malloc(sizeof(MetaDef) * parser->token_num);
 
@@ -280,7 +325,8 @@ MetaExpr *parse_primary(MetaParser *parser)
         {
             MetaExpr *expr = alloc_expr(parser->arena);
             expr->kind = E_IDENTITY;
-            expr->string.value = string;
+            expr->identity.id = string;
+            expr->identity.idx = -1;
             return expr;
         }
         case M_OPERATOR:
