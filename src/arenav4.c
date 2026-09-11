@@ -1,9 +1,28 @@
-#include "character.h"
-#include "arena.h"
-#include "dump.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define DEF_MAX 1000
+#define C_NULL ('\0')
 
+typedef double MetaExpr;
+
+char *character_s = "character", *chunk_s = "chunk", *pointer_s = "pointer";
+
+typedef struct {
+    void *buf;
+    size_t unit;
+    int length, used, expands;
+} Chunk;
+
+typedef struct {
+    Chunk strings, string_heads, exprs, expr_lists;
+    int string_num;
+} Arena;
+
+void print_chunk(Chunk *chunk)
+{
+    printf("chunk pointer: %p\nunit: %d\nused_num: %d\nused: %d\n\n", chunk->buf, (int)chunk->unit, chunk->used, chunk->used);
+}
 
 Chunk init_chunk(size_t unit, int length)
 {
@@ -77,17 +96,6 @@ int has_space(int length, Chunk *chunk)
     return chunk->length >= chunk->used + length;
 }
 
-void print_arena(Arena *arena)
-{
-    char *str;
-    for (int i = 0; i < arena->string_num; i++)
-    {
-        read_data(&str, i, &arena->string_heads);
-        printf("[%d] %s\n", i, str);
-    }
-    newline;
-}
-
 void init_arena(Arena *arena)
 {
     Chunk chunk;
@@ -104,7 +112,7 @@ void init_arena(Arena *arena)
 
     arena->expr_lists = init_chunk(sizeof(Chunk), DEF_MAX);
     chunk = init_chunk(sizeof(MetaExpr*), DEF_MAX);
-    append_data(&chunk, 1, &arena->expr_lists);
+    append_data(&chunk, 1, &arena->exprs);
 }
 
 char *insert_string(char *string, int string_len, Arena *arena)
@@ -123,7 +131,7 @@ char *insert_string(char *string, int string_len, Arena *arena)
     }
 
     char *head = append_data(string, string_len, &last_buf);
-    char null = c_null;
+    char null = C_NULL;
     append_data(&null, 1, &last_buf);
     write_last(&last_buf, &arena->strings);
 

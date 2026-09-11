@@ -22,11 +22,14 @@ typedef struct MetaExpr {
 } MetaExpr;
 
 typedef struct {
-    char *buffer, **strings;
-    int buffer_used, buffer_max, string_used, string_max;
+    void *buf;
+    size_t unit;
+    int length, used, expands;
+} Chunk;
 
-    MetaExpr *exprs, **expr_lists;
-    int expr_used, expr_max, expr_list_used, expr_list_max;
+typedef struct {
+    Chunk strings, string_heads, exprs, expr_lists;
+    int string_num;
 } Arena;
 
 typedef enum { D_LETTER, D_TERM, D_GRAMMAR } DType;

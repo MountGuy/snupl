@@ -23,12 +23,14 @@ void print_meta_token(MetaToken token)
 
 void print_meta_lexer(MetaLexer *lexer)
 {
+    printf("print meta lexer\n");
     for (int i = 0; i < lexer->token_num; i++)
         print_meta_token(lexer->tokens[i]);
 }
 
 void print_grammar(Grammar *grammar)
 {
+    printf("number of grammar: %d\n", grammar->def_num);
     for (int i = 0; i < grammar->def_num; i++)
     {
         MetaDef *def = grammar->defs + i;
@@ -120,15 +122,6 @@ void print_meta_expr(MetaExpr *expr)
             printf("error on print expr: %d\n", expr->kind);
             exit(1);
             break;
-    }
-}
-
-void print_arena(Arena *arena)
-{
-    printf("string buffer %d/%d used\n", arena->buffer_used, arena->buffer_max);
-    for (int i = 0; i < arena->string_used; i++)
-    {
-        printf("%3d %s\n", i, arena->strings[i]);
     }
 }
 

@@ -24,7 +24,7 @@ int main(int argv, char *argc[])
 {
     char *buf = read_file(argc[1]);    
     Arena arena;
-    init_arena(10000, &arena);
+    init_arena(&arena);
 
     MetaLexer meta_lexer;
     meta_lexer.arena = &arena;

@@ -168,6 +168,7 @@ Grammar parse_define(MetaParser *parser)
 {
     int def_num = 0;
     MetaDef *buffer = (MetaDef*) malloc(sizeof(MetaDef) * parser->token_num);
+    parser->cursor = 0;
 
     while (parser->cursor < parser->token_num)
     {
