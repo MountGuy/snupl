@@ -94,17 +94,21 @@ void init_arena(Arena *arena)
     arena->strings = init_chunk(sizeof(Chunk), DEF_MAX);
     chunk = init_chunk(sizeof(char), DEF_MAX);
     append_data(&chunk, 1, &arena->strings);
+    arena->strings.expands = 1;
 
     arena->string_heads = init_chunk(sizeof(void*), DEF_MAX);
     arena->string_num = 0;
+    arena->string_heads.expands = 1;
 
     arena->exprs = init_chunk(sizeof(Chunk), DEF_MAX);
     chunk = init_chunk(sizeof(MetaExpr), DEF_MAX);
     append_data(&chunk, 1, &arena->exprs);
+    arena->exprs.expands = 1;
 
     arena->expr_lists = init_chunk(sizeof(Chunk), DEF_MAX);
     chunk = init_chunk(sizeof(MetaExpr*), DEF_MAX);
     append_data(&chunk, 1, &arena->expr_lists);
+    arena->expr_lists.expands = 1;
 }
 
 char *insert_string(char *string, int string_len, Arena *arena)
@@ -187,7 +191,7 @@ MetaExpr **alloc_exprs(int size, Arena *arena)
         append_data(&last_buf, 1, &arena->expr_lists);
     }
 
-    MetaExpr **head = alloc_mem(alloc_size, &last_buf);
+    MetaExpr **head = alloc_mem(size, &last_buf);
     write_last(&last_buf, &arena->expr_lists);
 
     return head;

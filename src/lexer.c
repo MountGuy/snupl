@@ -54,7 +54,7 @@ void prescan(MetaExpr *expr, DType type, NFABuilder *builder)
         case E_STRING:
             for (char *c = expr->string.value; *c; c++)
                 find_char(*c, *c, builder);
-            builder->state_num += strlen(expr->string.value) + 1;
+            builder->state_num += strlen(expr->string.value);
             break;
         case E_CRANGE:
             find_char(expr->crange.lb, expr->crange.ub, builder);
@@ -229,9 +229,9 @@ void postproc_trans(NFABuilder *builder)
             for (int k = 0; k < state_num; k++)
                 builder->trans[i][j][I_EPS] |= builder->trans[i][k][I_EPS] && builder->trans[k][j][I_EPS];
 
-    for (int i = 0; i < state_num; i++)
-        for (int j = 0; j < state_num; j++)
-            for (int k = 1; k < char_num; k++)
+    for (int k = 1; k < char_num; k++)
+        for (int i = 0; i < state_num; i++)
+            for (int j = 0; j < state_num; j++)
                 if (builder->trans[i][j][k])
                     for (int l = 0; l < state_num; l++)
                         builder->trans[i][l][k] |= builder->trans[j][l][I_EPS];
@@ -257,6 +257,8 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     for (int i = 0; i < grammar->def_num; i++)
     {
         MetaDef def = grammar->defs[i];
+        if (def.type == D_TERM)
+            builder.state_num++;
         prescan(def.expr, def.type, &builder);
     }
 
