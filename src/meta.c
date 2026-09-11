@@ -122,7 +122,7 @@ void meta_lexing(MetaLexer *lexer)
 Grammar meta_parsing(MetaParser *parser)
 {
     Grammar grammar = parse_define(parser);
-    char **dict = (char**) malloc(sizeof(char*) * grammar.def_num + 1);
+    char **dict = (char**) malloc(sizeof(char*) * (grammar.def_num + 1));
     for (int i = 0; i < grammar.def_num; i++)
         dict[i] = grammar.defs[i].identity;
     dict[grammar.def_num] = p_null;

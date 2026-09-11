@@ -22,7 +22,7 @@ char *read_file(char *filename)
 
 int main(int argv, char *argc[])
 {
-    char *buf = read_file("snupl2.gm");    
+    char *buf = read_file(argc[1]);    
     Arena arena;
     init_arena(10000, &arena);
 
@@ -43,7 +43,7 @@ int main(int argv, char *argc[])
     build_NFA(&grammar, &nfa);
 
     free(buf);
-    buf = read_file("code1.spl");
+    buf = read_file(argc[2]);
 
     Lexer lexer;
     lexer.input = buf;

@@ -247,7 +247,7 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     builder.ubs[0] = C_EPS;
     builder.char_num = 1;
     builder.state_num = 1;
-    builder.used_state_num = 1;
+    builder.used_state_num = 0;
     builder.end_names = (char**) malloc(sizeof(char*) * 1000);
     builder.end_num = 0;
     builder.ends = (int*) malloc(sizeof(int) * 1000);
@@ -313,7 +313,7 @@ int step_NFA(char letter, NFAScanner *scanner)
     for (int i = 0; i < nfa->state_num; i++)
         scanner->tmp[i] = false;
 
-    for (int cdx = 0; cdx < nfa->char_num; cdx++)
+    for (int cdx = 1; cdx < nfa->char_num; cdx++)
         if (nfa->lbs[cdx] <= letter && letter <= nfa->ubs[cdx])
             for (int j = 0; j < nfa->state_num; j++)
                 if (scanner->visiting[j])

@@ -7,3 +7,6 @@ scanner
 *.spl
 *.bak
 *.tar
+*.code
+test
+*.pdf
