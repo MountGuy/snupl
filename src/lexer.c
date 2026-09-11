@@ -2,6 +2,7 @@
 #include "struct.h"
 #include "lexer.h"
 #include "dump.h"
+#include "arena.h"
 
 #define C_EPS ('\0')
 #define I_EPS 0
@@ -14,7 +15,7 @@ int alloc_NFA_state(NFABuilder *builder)
 int find_char(char lb, char ub, NFABuilder *builder)
 {
     for (int i = 0; i < builder->char_num; i++)
-        if (builder->lbs[i] == lb && builder->ubs[i] == ub) 
+        if (builder->lbs[i] == lb && builder->ubs[i] == ub)
             return i;
     builder->lbs[builder->char_num] = lb;
     builder->ubs[builder->char_num] = ub;
@@ -108,7 +109,7 @@ int _build_NFA(MetaExpr *expr, int start, DType type, NFABuilder *builder)
 
                 int body_start = alloc_NFA_state(builder);
                 int body_end = _build_NFA(expr->unary.expr, body_start, type, builder);
-                
+
                 builder->trans[start][body_start][I_EPS] = true;
                 builder->trans[body_end][end][I_EPS] = true;
                 builder->trans[start][end][I_EPS] = true;
@@ -121,7 +122,7 @@ int _build_NFA(MetaExpr *expr, int start, DType type, NFABuilder *builder)
 
                 int body_start = alloc_NFA_state(builder);
                 int body_end = _build_NFA(expr->unary.expr, body_start, type, builder);
-                
+
                 builder->trans[start][body_start][I_EPS] = true;
                 builder->trans[body_end][body_start][I_EPS] = true;
                 builder->trans[body_end][end][I_EPS] = true;
@@ -197,7 +198,8 @@ int _build_NFA(MetaExpr *expr, int start, DType type, NFABuilder *builder)
                 return -1;
         }
     }
-    printf("wtf\n");
+    printf("Unexpected case during build NFA...\n");
+    exit(1);
 }
 
 void build_trans(NFABuilder *builder)
@@ -216,6 +218,25 @@ void build_trans(NFABuilder *builder)
     }
 }
 
+void postproc_trans(NFABuilder *builder)
+{
+    int state_num = builder->state_num, char_num = builder->char_num;
+    for (int i = 0; i < state_num; i++)
+        builder->trans[i][i][I_EPS] = true;
+
+    for (int i = 0; i < state_num; i++)
+        for (int j = 0; j < state_num; j++)
+            for (int k = 0; k < state_num; k++)
+                builder->trans[i][j][I_EPS] |= builder->trans[i][k][I_EPS] && builder->trans[k][j][I_EPS];
+
+    for (int i = 0; i < state_num; i++)
+        for (int j = 0; j < state_num; j++)
+            for (int k = 1; k < char_num; k++)
+                if (builder->trans[i][j][k])
+                    for (int l = 0; l < state_num; l++)
+                        builder->trans[i][l][k] |= builder->trans[j][l][I_EPS];
+}
+
 void build_NFA(Grammar *grammar, NFA *nfa)
 {
     NFABuilder builder;
@@ -226,7 +247,7 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     builder.ubs[0] = C_EPS;
     builder.char_num = 1;
     builder.state_num = 1;
-    builder.used_state_num = 0;
+    builder.used_state_num = 1;
     builder.end_names = (char**) malloc(sizeof(char*) * 1000);
     builder.end_num = 0;
     builder.ends = (int*) malloc(sizeof(int) * 1000);
@@ -257,6 +278,8 @@ void build_NFA(Grammar *grammar, NFA *nfa)
         }
     }
 
+    postproc_trans(&builder);
+
     nfa->trans = builder.trans;
     nfa->end_names = builder.end_names;
     nfa->lbs = builder.lbs;
@@ -267,6 +290,103 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     nfa->char_num = builder.char_num;
     nfa->state_num = builder.state_num;
     nfa->end_num = builder.end_num;
+}
+
+void init_scanner(NFAScanner *scanner)
+{
+    NFA *nfa = scanner->nfa;
+    int start = nfa->start;
+    for (int i = 0; i < scanner->state_num; i++)
+        scanner->visiting[i] = nfa->trans[start][i][I_EPS];
+    scanner->visiting[start] = true;
+
+    for (int i = 0; i < scanner->end_num; i++)
+        scanner->lens[i] = 0;
+    scanner->len = 0;
+}
+
+int step_NFA(char letter, NFAScanner *scanner)
+{
+    NFA *nfa = scanner->nfa;
+    scanner->len++;
+    
+    for (int i = 0; i < nfa->state_num; i++)
+        scanner->tmp[i] = false;
+
+    for (int cdx = 0; cdx < nfa->char_num; cdx++)
+        if (nfa->lbs[cdx] <= letter && letter <= nfa->ubs[cdx])
+            for (int j = 0; j < nfa->state_num; j++)
+                if (scanner->visiting[j])
+                    for (int k = 0; k < nfa->state_num; k++)
+                        scanner->tmp[k] |= nfa->trans[j][k][cdx];
+
+    memcpy(scanner->visiting, scanner->tmp, sizeof(int) * nfa->state_num);
+
+    for (int i = 0; i < nfa->end_num; i++)
+    {
+        int end = nfa->ends[i];
+        if (scanner->visiting[end] == true)
+            scanner->lens[i] = scanner->len;
+    }
+
+    int alive_state = 0;
+    for (int i = 0; i < nfa->state_num; i++)
+        if (scanner->visiting[i])
+            alive_state++;
+
+    return alive_state;
+}
+
+void lexing(Lexer *lexer)
+{
+    lexer->tokens = (Token*) malloc(sizeof(Token) * lexer->input_len);
+    lexer->token_num = 0;
+    lexer->cursor = 0;
+
+    NFAScanner scanner;
+    NFA *nfa = lexer->nfa;
+    scanner.nfa = nfa;
+    scanner.state_num = nfa->state_num;
+    scanner.end_num = nfa->end_num;
+    scanner.visiting = (int*) malloc(sizeof(int) * nfa->state_num);
+    scanner.tmp = (int*) malloc(sizeof(int) * nfa->state_num);
+    scanner.lens = (int*) malloc(sizeof(int) * nfa->end_num);
+
+    char *cursor = lexer->input;
+    skip_space(cursor);
+    while (cursor - lexer->input < lexer->input_len)
+    {
+        init_scanner(&scanner);
+        
+        int tok_len = 0;
+        while (step_NFA(*(cursor + tok_len), &scanner))
+            tok_len++;
+
+        int best_idx = -1, best_len = 0;
+        for (int i = 0; i < nfa->end_num; i++)
+        {
+            if (scanner.lens[i] > best_len)
+            {
+                best_idx = i;
+                best_len = scanner.lens[i];
+            }
+        }
+            
+        if (best_idx != -1)
+        {
+            int tok_num = lexer->token_num;
+            lexer->tokens[tok_num].string = add_string(cursor, best_len, lexer->arena);
+            lexer->token_num++;
+
+            cursor += best_len;
+            skip_space(cursor);
+        }
+        else
+        {
+            printf("failed to lex\n");
+            exit(1);
+        }
+    }
 }
 
 

@@ -71,10 +71,9 @@ typedef struct {
 } Token;
 
 typedef struct {
-    char ***trans, **end_names;
+    char ***trans, **end_names, *lbs, *ubs;
     TType *end_types;
     int start, *ends, char_num, state_num, used_state_num, end_num;
-    char *lbs, *ubs;
     Grammar *grammar;
 } NFABuilder;
 
@@ -85,12 +84,18 @@ typedef struct {
 } NFA;
 
 typedef struct {
+    int state_num, end_num, *visiting, *chars, *tmp, *lens, len;
+    NFA *nfa;
+} NFAScanner;
+
+typedef struct {
     char *input;
-    int input_len, pos;
+    int cursor, input_len;
 
     Token *tokens;
     int token_num;
 
+    NFA *nfa;
     Arena *arena;
 } Lexer;
 

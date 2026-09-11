@@ -5,40 +5,54 @@
 #include "lexer.h"
 #include "dump.h"
 
-int main(int argv, char *argc[])
+char *read_file(char *filename)
 {
-    FILE *fp = fopen("snupl2.gm", "r");
-
+    FILE *fp = fopen(filename, "r");
 
     fseek(fp, 0, SEEK_END);
-    int char_num = ftell(fp);
+    int char_num_ = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    char *buf = (char*) malloc(sizeof(char) * (char_num + 10));
-    fread(buf, 1, char_num, fp);
-    buf[char_num] = c_null;
-    
+    char *buf = (char*) malloc(sizeof(char) * (char_num_ + 10));
+    fread(buf, 1, char_num_, fp);
+    buf[char_num_] = c_null;
+
+    return buf;
+}
+
+int main(int argv, char *argc[])
+{
+    char *buf = read_file("snupl2.gm");    
     Arena arena;
-    init_arena(char_num, &arena);
+    init_arena(10000, &arena);
 
-    MetaLexer lexer;
-    lexer.arena = &arena;
-    lexer.input = buf;
-    lexer.input_len = strlen(buf);
-
-    meta_lexing(&lexer);
+    MetaLexer meta_lexer;
+    meta_lexer.arena = &arena;
+    meta_lexer.input = buf;
+    meta_lexer.input_len = strlen(buf);
+    meta_lexing(&meta_lexer);
 
     MetaParser parser;
     parser.arena = &arena;
-    parser.tokens = lexer.tokens;
-    parser.token_num = lexer.token_num;
+    parser.tokens = meta_lexer.tokens;
+    parser.token_num = meta_lexer.token_num;
 
     Grammar grammar = meta_parsing(&parser);
-    print_grammar(&grammar);
 
     NFA nfa;
-
     build_NFA(&grammar, &nfa);
+
+    free(buf);
+    buf = read_file("code1.spl");
+
+    Lexer lexer;
+    lexer.input = buf;
+    lexer.input_len = strlen(buf);
+    lexer.nfa = &nfa;
+    lexer.arena = &arena;
+    lexing(&lexer);
+
+    print_lexing_result(&lexer);
 
     return 0;
 }

@@ -131,3 +131,40 @@ void print_arena(Arena *arena)
         printf("%3d %s\n", i, arena->strings[i]);
     }
 }
+
+void print_nfa(NFA *nfa)
+{
+    printf("nfa characters:\n");
+    for (int cdx = 0; cdx < nfa->char_num; cdx++)
+        printf("[%d] %c-%c\n", cdx, nfa->lbs[cdx], nfa->ubs[cdx]);
+    newline;
+    printf("nfa ends:\n");
+    for (int i = 0; i < nfa->end_num; i++)
+        printf("[%d] %s\n", i, nfa->end_names[i]);
+    newline;
+    printf("trans:\n");
+    print_trans(nfa->state_num, nfa->char_num, nfa->trans);
+}
+
+void print_trans(int state_num, int char_num, char ***trans)
+{
+    for (int cdx = 0; cdx < char_num; cdx++)
+    {
+        for (int i = 0; i < state_num; i++)
+        {
+            for (int j = 0; j < state_num; j++)
+            {
+                if (i == j && cdx == 0) printf("x ");
+                else printf("%d ", trans[i][j][cdx]);
+            }
+            newline;
+        }
+        newline;
+    }
+}
+
+void print_lexing_result(Lexer *lexer)
+{
+    for (int i = 0; i < lexer->token_num; i++)
+        printf("[%3d] %s\n", i, lexer->tokens[i].string);
+}

@@ -11,4 +11,8 @@ void print_meta_def(MetaDef *def);
 void print_meta_expr(MetaExpr *expr);
 void print_arena(Arena *arena);
 
+void print_nfa(NFA *nfa);
+void print_trans(int state_num, int char_num, char ***trans);
+void print_lexing_result(Lexer *lexer);
+
 #endif
