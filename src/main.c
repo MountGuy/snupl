@@ -36,7 +36,9 @@ int main(int argv, char *argc[])
     Grammar grammar = meta_parsing(&parser);
     print_grammar(&grammar);
 
-    build_NFA(&grammar);
+    NFA nfa;
+
+    build_NFA(&grammar, &nfa);
 
     return 0;
 }

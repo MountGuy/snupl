@@ -71,17 +71,17 @@ typedef struct {
 } Token;
 
 typedef struct {
-    char ***trans;
-    int start, *ends;
-    int char_num, state_num, used_state_num, result_num;
-    char *lbs, *ubs, **results;
+    char ***trans, **end_names;
+    TType *end_types;
+    int start, *ends, char_num, state_num, used_state_num, end_num;
+    char *lbs, *ubs;
     Grammar *grammar;
 } NFABuilder;
 
 typedef struct {
-    char *trans, *output;
-    int start, end;
-    int char_num, state_num, used_state_num, output_num;
+    char ***trans, **end_names, *lbs, *ubs;
+    TType *end_types;
+    int start, *ends, char_num, state_num, end_num;
 } NFA;
 
 typedef struct {
