@@ -159,5 +159,9 @@ void print_trans(int state_num, int char_num, char ***trans)
 void print_lexing_result(Lexer *lexer)
 {
     for (int i = 0; i < lexer->token_num; i++)
-        printf("[%3d] %s\n", i, lexer->tokens[i].string);
+    {
+        Token token = lexer->tokens[i];
+        printf("[%d:%d-%d] ", token.line, token.col, token.col + token.string_len);
+        printf("[%s:%s] %s\n", token.type == T_GRAMMAR? "grammar" : "value", token.name, token.string);
+    }
 }

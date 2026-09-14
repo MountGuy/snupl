@@ -55,6 +55,8 @@ void prescan(MetaExpr *expr, DType type, NFABuilder *builder)
             for (char *c = expr->string.value; *c; c++)
                 find_char(*c, *c, builder);
             builder->state_num += strlen(expr->string.value);
+            if (type == D_GRAMMAR)
+                builder->state_num += 1;
             break;
         case E_CRANGE:
             find_char(expr->crange.lb, expr->crange.ub, builder);
@@ -224,17 +226,12 @@ void postproc_trans(NFABuilder *builder)
     for (int i = 0; i < state_num; i++)
         builder->trans[i][i][I_EPS] = true;
 
-    for (int i = 0; i < state_num; i++)
-        for (int j = 0; j < state_num; j++)
-            for (int k = 0; k < state_num; k++)
-                builder->trans[i][j][I_EPS] |= builder->trans[i][k][I_EPS] && builder->trans[k][j][I_EPS];
-
-    for (int k = 1; k < char_num; k++)
-        for (int i = 0; i < state_num; i++)
-            for (int j = 0; j < state_num; j++)
-                if (builder->trans[i][j][k])
-                    for (int l = 0; l < state_num; l++)
-                        builder->trans[i][l][k] |= builder->trans[j][l][I_EPS];
+    for (int c = 0; c < char_num; c++)
+        for (int k = 0; k < state_num; k++)
+            for (int i = 0; i < state_num; i++)
+                if (builder->trans[i][k][c])
+                    for (int j = 0; j < state_num; j++)
+                        builder->trans[i][j][c] |= builder->trans[i][k][c] && builder->trans[k][j][I_EPS];
 }
 
 void build_NFA(Grammar *grammar, NFA *nfa)
@@ -339,11 +336,42 @@ int step_NFA(char letter, NFAScanner *scanner)
     return alive_state;
 }
 
+void skip_nontoken(Lexer *lexer)
+{
+    char *cursor = lexer->cursor;
+
+    while (true)
+    {
+        if (*cursor == '/' && *(cursor + 1) == '/')
+        {
+            while (*cursor != '\n')
+                cursor++;
+            cursor++;
+            lexer->line++;
+            lexer->line_start = cursor;
+        }
+        else if (*cursor == ' ' || *cursor == '\t')
+            while(*cursor == ' ' || *cursor == '\t')
+                cursor++;
+        else if (*cursor == '\n')
+        {
+            cursor++;
+            lexer->line++;
+            lexer->line_start = cursor;
+        }
+        else
+            break;
+    }
+    lexer->cursor = cursor;
+}
+
 void lexing(Lexer *lexer)
 {
     lexer->tokens = (Token*) malloc(sizeof(Token) * lexer->input_len);
+    lexer->cursor = lexer->input;
+    lexer->line_start = lexer->input;
     lexer->token_num = 0;
-    lexer->cursor = 0;
+    lexer->line = 1;
 
     NFAScanner scanner;
     NFA *nfa = lexer->nfa;
@@ -354,14 +382,13 @@ void lexing(Lexer *lexer)
     scanner.tmp = (int*) malloc(sizeof(int) * nfa->state_num);
     scanner.lens = (int*) malloc(sizeof(int) * nfa->end_num);
 
-    char *cursor = lexer->input;
-    skip_space(cursor);
-    while (cursor - lexer->input < lexer->input_len)
+    skip_nontoken(lexer);
+    while (lexer->cursor - lexer->input < lexer->input_len)
     {
         init_scanner(&scanner);
         
         int tok_len = 0;
-        while (step_NFA(*(cursor + tok_len), &scanner))
+        while (step_NFA(*(lexer->cursor + tok_len), &scanner))
             tok_len++;
 
         int best_idx = -1, best_len = 0;
@@ -376,12 +403,17 @@ void lexing(Lexer *lexer)
             
         if (best_idx != -1)
         {
-            int tok_num = lexer->token_num;
-            lexer->tokens[tok_num].string = add_string(cursor, best_len, lexer->arena);
-            lexer->token_num++;
-
-            cursor += best_len;
-            skip_space(cursor);
+            Token token = {
+                .string = add_string(lexer->cursor, best_len, lexer->arena),
+                .string_len = best_len,
+                .col = lexer->cursor - lexer->line_start + 1,
+                .line = lexer->line,
+                .type = nfa->end_types[best_idx],
+                .name = nfa->end_names[best_idx],
+            };
+            lexer->tokens[lexer->token_num++] = token;
+            lexer->cursor += best_len;
+            skip_nontoken(lexer);
         }
         else
         {

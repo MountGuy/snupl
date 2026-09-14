@@ -66,7 +66,7 @@ typedef struct {
 
 typedef enum { T_TERM, T_GRAMMAR } TType;
 typedef struct {
-    char *string;
+    char *string, *name;
     int string_len;
 
     TType type;
@@ -92,8 +92,8 @@ typedef struct {
 } NFAScanner;
 
 typedef struct {
-    char *input;
-    int cursor, input_len;
+    char *input, *line_start, *cursor;
+    int input_len, line;
 
     Token *tokens;
     int token_num;

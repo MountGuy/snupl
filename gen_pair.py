@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 '''
-문법(.gm)과 그 문법에 맞는 프로그램(.spl)을 한 쌍으로 생성한다.
+문법(.gm)과 그 문법에 맞는 프로그램(.mod)을 한 쌍으로 생성한다.
 
 동작 원리
   1. 임의의 lexical 규칙 트리를 만든다 (리터럴/범위/선택/연접/반복/옵션/참조)
   2. 그 트리를 .gm 텍스트로 렌더링한다
-  3. 같은 트리에서 문자열을 샘플링해 .spl 을 만든다
+  3. 같은 트리에서 문자열을 샘플링해 .mod 을 만든다
      -> 생성한 프로그램이 생성한 문법에 맞는 것이 구조적으로 보장된다
   4. 같은 트리를 Python re 로도 변환해 레퍼런스 렉서(오라클)를 만들고,
      maximal munch 로 기대 토큰열을 계산해 .expected 에 쓴다
 
 출력
   BASE.gm        문법
-  BASE.spl       그 문법에 맞는 토큰열
+  BASE.mod       그 문법에 맞는 토큰열
   BASE.expected  한 줄에 "lexeme<TAB>규칙이름", 기대 결과
 
 사용법
-  ./gen_pair.py                        # t.gm / t.spl / t.expected
+  ./gen_pair.py                        # t.gm / t.mod / t.expected
   ./gen_pair.py -o case01 --seed 7
   ./gen_pair.py --rules 8 --tokens 300 --depth 4
   ./gen_pair.py --no-space             # 토큰 사이 공백 없음 (maximal munch 스트레스)
@@ -30,7 +30,7 @@ import string
 import sys
 
 # .gm 리터럴에 넣어도 안전한 문자.
-#   - 공백/탭/개행: .spl 의 토큰 구분자라 제외
+#   - 공백/탭/개행: .mod 의 토큰 구분자라 제외
 #   - '"' : 리터럴을 닫아버려서 제외
 #   - '\\' : 이스케이프 혼동을 피하려고 제외
 SAFE = (string.ascii_letters + string.digits +
@@ -254,14 +254,14 @@ class Oracle:
 
 def main():
     ap = argparse.ArgumentParser(
-        description=".gm 문법과 그에 맞는 .spl 프로그램을 함께 생성",
+        description=".gm 문법과 그에 맞는 .mod 프로그램을 함께 생성",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     ap.add_argument("-o", "--out", default="t", help="출력 파일 접두사 (기본 t)")
     ap.add_argument("--seed", type=int, default=None, help="난수 시드")
     ap.add_argument("--rules", type=int, default=5, help="토큰 규칙(_t*) 개수")
     ap.add_argument("--helpers", type=int, default=3, help="헬퍼 규칙(__h*) 개수")
-    ap.add_argument("--tokens", type=int, default=120, help=".spl 에 넣을 토큰 수")
+    ap.add_argument("--tokens", type=int, default=120, help=".mod 에 넣을 토큰 수")
     ap.add_argument("--depth", type=int, default=3, help="규칙 트리 최대 깊이")
     ap.add_argument("--no-space", action="store_true",
                     help="토큰 사이 공백 없이 붙임 (maximal munch 스트레스)")
@@ -303,19 +303,19 @@ def main():
         return 1
 
     gm_path = args.out + ".gm"
-    spl_path = args.out + ".spl"
+    mod_path = args.out + ".mod"
     exp_path = args.out + ".expected"
 
     with open(gm_path, "w") as f:
         f.write(emit_gm(rules, order, keywords))
-    with open(spl_path, "w") as f:
+    with open(mod_path, "w") as f:
         f.write(text + "\n")
     with open(exp_path, "w") as f:
         for lex, name in expected:
             f.write("%s\t%s\n" % (lex, name))
 
     drift = sum(1 for a, b in zip(picked, expected) if a[0] != b[0])
-    print("%s / %s / %s" % (gm_path, spl_path, exp_path), file=sys.stderr)
+    print("%s / %s / %s" % (gm_path, mod_path, exp_path), file=sys.stderr)
     print("  규칙 %d(토큰) + %d(헬퍼) + %d(키워드), 문자 %d, 기대 토큰 %d개"
           % (len(tokens), args.helpers, len(keywords), len(text), len(expected)),
           file=sys.stderr)
