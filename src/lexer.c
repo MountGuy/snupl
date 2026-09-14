@@ -23,7 +23,7 @@ int find_char(char lb, char ub, NFABuilder *builder)
     return builder->char_num++;
 }
 
-void add_ending(char *name, int end, NFABuilder *builder)
+void add_ending(char *name, int end, TType end_type, NFABuilder *builder)
 {
     for (int i = 0; i < builder->end_num; i++)
     {
@@ -31,6 +31,7 @@ void add_ending(char *name, int end, NFABuilder *builder)
             return;
     }
     builder->end_names[builder->end_num] = name;
+    builder->end_types[builder->end_num] = end_type;
     builder->ends[builder->end_num++] = end;
 }
 
@@ -192,7 +193,7 @@ int _build_NFA(MetaExpr *expr, int start, DType type, NFABuilder *builder)
                     builder->trans[cur_start][cur_end][cdx] = true;
                     cur_start = cur_end;
                 }
-                add_ending(expr->string.value, cur_start, builder);
+                add_ending(expr->string.value, cur_start, T_GRAMMAR, builder);
                 return -1;
             }
             case E_CRANGE:
@@ -246,6 +247,7 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     builder.state_num = 1;
     builder.used_state_num = 0;
     builder.end_names = (char**) malloc(sizeof(char*) * 1000);
+    builder.end_types = (TType*) malloc(sizeof(TType) * 1000);
     builder.end_num = 0;
     builder.ends = (int*) malloc(sizeof(int) * 1000);
 
@@ -269,7 +271,7 @@ void build_NFA(Grammar *grammar, NFA *nfa)
             int _start = alloc_NFA_state(&builder);
             builder.trans[builder.start][_start][I_EPS] = true;
             int _end = _build_NFA(def.expr, _start, D_TERM, &builder);
-            add_ending(def.identity, _end, &builder);
+            add_ending(def.identity, _end, T_TERM, &builder);
         }
         else if (def.type == D_GRAMMAR)
         {
@@ -394,7 +396,10 @@ void lexing(Lexer *lexer)
         int best_idx = -1, best_len = 0;
         for (int i = 0; i < nfa->end_num; i++)
         {
-            if (scanner.lens[i] > best_len)
+            if (
+                (scanner.lens[i] > best_len) || 
+                (scanner.lens[i] == best_len && (nfa->end_types[best_idx] == T_TERM && nfa->end_types[i] == T_GRAMMAR))
+            )
             {
                 best_idx = i;
                 best_len = scanner.lens[i];

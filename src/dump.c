@@ -125,7 +125,7 @@ void print_meta_expr(MetaExpr *expr)
     }
 }
 
-void print_nfa(NFA *nfa)
+void print_nfa(NFA *nfa, int debug)
 {
     printf("nfa characters:\n");
     for (int cdx = 0; cdx < nfa->char_num; cdx++)
@@ -134,9 +134,12 @@ void print_nfa(NFA *nfa)
     printf("nfa ends:\n");
     for (int i = 0; i < nfa->end_num; i++)
         printf("[%d] %s\n", i, nfa->end_names[i]);
-    newline;
-    printf("trans:\n");
-    print_trans(nfa->state_num, nfa->char_num, nfa->trans);
+    if (debug)
+    {
+        newline;
+        printf("trans:\n");
+        print_trans(nfa->state_num, nfa->char_num, nfa->trans);
+    }
 }
 
 void print_trans(int state_num, int char_num, char ***trans)
