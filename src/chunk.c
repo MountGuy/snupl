@@ -1,11 +1,11 @@
 #include "chunk.h"
 
-Chunk init_chunk(size_t unit, int max, int expands)
+Chunk init_chunk(size_t unit, int expands)
 {
     Chunk chunk = {
-        .buf = malloc(unit * max),
+        .buf = malloc(unit * DEF_MAX),
         .unit = unit,
-        .max = max,
+        .max = DEF_MAX,
         .used = 0,
         .expands = expands,
     };

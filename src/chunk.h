@@ -8,7 +8,7 @@
 
 #define DEF_MAX 1000
 
-Chunk init_chunk(size_t unit, int max, int expands);
+Chunk init_chunk(size_t unit, int expands);
 void expand_chunk(Chunk *chunk);
 void *append_data(void *source, int length, Chunk *chunk);
 void *alloc_mem(int length, Chunk *chunk);

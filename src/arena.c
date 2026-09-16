@@ -4,31 +4,32 @@
 void init_arena(Arena *arena)
 {
     Chunk chunk;
-    arena->strings = init_chunk(sizeof(Chunk), DEF_MAX, true);
-    chunk = init_chunk(sizeof(char), DEF_MAX, false);
+    arena->strings = init_chunk(sizeof(Chunk), true);
+    chunk = init_chunk(sizeof(char), false);
     append_data(&chunk, 1, &arena->strings);
 
-    arena->string_heads = init_chunk(sizeof(void*), DEF_MAX, true);
+    arena->string_heads = init_chunk(sizeof(void*), true);
     arena->string_num = 0;
 
-    arena->exprs = init_chunk(sizeof(Chunk), DEF_MAX, true);
-    chunk = init_chunk(sizeof(MetaExpr), DEF_MAX, false);
+    arena->exprs = init_chunk(sizeof(Chunk), true);
+    chunk = init_chunk(sizeof(MetaExpr), false);
     append_data(&chunk, 1, &arena->exprs);
 
-    arena->expr_lists = init_chunk(sizeof(Chunk), DEF_MAX, true);
-    chunk = init_chunk(sizeof(MetaExpr*), DEF_MAX, false);
+    arena->expr_lists = init_chunk(sizeof(Chunk), true);
+    chunk = init_chunk(sizeof(MetaExpr*), false);
     append_data(&chunk, 1, &arena->expr_lists);
 }
 
 char *insert_string(char *string, int string_len, Arena *arena)
 {
-    int alloc_len = string_len + 1 > DEF_MAX? string_len + 1 : DEF_MAX;
     Chunk last_buf;
     read_last(&last_buf, &arena->strings);
 
     if (!has_space(string_len + 1, &last_buf))
     {
-        last_buf = init_chunk(sizeof(char), alloc_len, false);
+        last_buf = init_chunk(sizeof(char), false);
+        while (last_buf.max < string_len + 1)
+            expand_chunk(&last_buf);
         append_data(&last_buf, 1, &arena->strings);
     }
 
@@ -69,7 +70,7 @@ MetaExpr *alloc_expr(Arena *arena)
 
     if (!has_space(1, &last_buf))
     {
-        last_buf = init_chunk(sizeof(MetaExpr), DEF_MAX, false);
+        last_buf = init_chunk(sizeof(MetaExpr), false);
         append_data(&last_buf, 1, &arena->exprs);
     }
 
@@ -87,7 +88,7 @@ MetaExpr **alloc_exprs(int size, Arena *arena)
 
     if (!has_space(alloc_size, &last_buf))
     {
-        last_buf = init_chunk(sizeof(MetaExpr*), DEF_MAX, false);
+        last_buf = init_chunk(sizeof(MetaExpr*), false);
         append_data(&last_buf, 1, &arena->expr_lists);
     }
 

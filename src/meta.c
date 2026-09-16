@@ -23,7 +23,7 @@ MetaToken *advance_parser(MetaParser *parser)
 
 void meta_lexing(MetaLexer *lexer)
 {
-    lexer->tokens = init_chunk(sizeof(MetaToken), DEF_MAX, 1);
+    lexer->tokens = init_chunk(sizeof(MetaToken), 1);
 
     char *cursor = lexer->input, *line_front = lexer->input;
     int line = 1;
@@ -159,7 +159,7 @@ void index_identity(char **dict, MetaExpr *expr)
 Grammar parse_define(MetaParser *parser)
 {
     parser->cursor = 0;
-    parser->defs = init_chunk(sizeof(MetaDef), DEF_MAX, 1);
+    parser->defs = init_chunk(sizeof(MetaDef), 1);
 
     while (parser->cursor < parser->token_num)
     {
