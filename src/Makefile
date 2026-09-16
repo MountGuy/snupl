@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g -O0
 TARGET = scanner
-SRCS = arena.c main.c character.c dump.c meta.c log.c lexer.c
+SRCS = arena.c main.c character.c dump.c meta.c log.c lexer.c chunk.c
 OBJS = $(SRCS:.c=.o)
 
 COMMON = common.h struct.h

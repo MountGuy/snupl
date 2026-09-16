@@ -5,6 +5,8 @@
 #include "struct.h"
 #include "arena.h"
 #include "character.h"
+#include "dump.h"
+#include "log.h"
 
 MetaToken *peek_tok(MetaParser *parser);
 MetaToken *peek_next(MetaParser *parser);

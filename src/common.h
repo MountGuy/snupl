@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#define c_null ('\0')
 #define p_null NULL
 #define flush (fflush(stdout))
 #define newline printf("\n")

@@ -1,8 +1,11 @@
 #ifndef DUMP_H
 #define DUMP_H 1
 
+#include <stdio.h>
+
 #include "struct.h"
 #include "common.h"
+#include "chunk.h"
 
 void print_meta_token(MetaToken token);
 void print_meta_lexer(MetaLexer *lexer);

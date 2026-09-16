@@ -1,8 +1,4 @@
-#include "common.h"
-#include "arena.h"
 #include "meta.h"
-#include "dump.h"
-#include "log.h"
 
 char ops[11][2] = {
     "(", ")", "{", "}", "[", "]", ";", "=", "|", ",", "~"

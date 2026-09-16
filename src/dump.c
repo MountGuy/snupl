@@ -1,6 +1,15 @@
-#include <stdio.h>
-
 #include "dump.h"
+
+void print_arena(Arena *arena)
+{
+    char *str;
+    for (int i = 0; i < arena->string_num; i++)
+    {
+        read_data(&str, i, &arena->string_heads);
+        printf("[%d] %s\n", i, str);
+    }
+    newline;
+}
 
 void print_meta_token(MetaToken token)
 {

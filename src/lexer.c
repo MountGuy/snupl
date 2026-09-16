@@ -1,11 +1,4 @@
-#include "common.h"
-#include "struct.h"
 #include "lexer.h"
-#include "dump.h"
-#include "arena.h"
-
-#define C_EPS ('\0')
-#define I_EPS 0
 
 int alloc_NFA_state(NFABuilder *builder)
 {
