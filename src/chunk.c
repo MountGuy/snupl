@@ -13,16 +13,6 @@ Chunk init_chunk(size_t unit, int expands)
     return chunk;
 }
 
-void *fix_chunk(Chunk *chunk)
-{
-    int size = chunk->unit * chunk->used;
-    void *data = malloc(size);
-    memcpy(data, chunk->buf, size);
-    free(chunk->buf);
-
-    return data;
-}
-
 void expand_chunk(Chunk *chunk)
 {
     if (!chunk->expands)
@@ -82,4 +72,14 @@ void read_last(void *dest, Chunk *chunk)
 int has_space(int length, Chunk *chunk)
 {
     return chunk->max >= chunk->used + length;
+}
+
+void *fix_chunk(Chunk *chunk)
+{
+    int size = chunk->unit * chunk->used;
+    void *data = malloc(size);
+    memcpy(data, chunk->buf, size);
+    free(chunk->buf);
+
+    return data;
 }

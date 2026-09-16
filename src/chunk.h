@@ -16,5 +16,6 @@ void write_data(void *source, int idx, Chunk *chunk);
 void write_last(void *source, Chunk *chunk);
 void read_data(void *dest, int idx, Chunk *chunk);
 void read_last(void *dest, Chunk *chunk);
+void *fix_chunk(Chunk *chunk);
 
 #endif

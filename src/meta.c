@@ -20,10 +20,9 @@ MetaToken *advance_parser(MetaParser *parser)
     return parser->tokens + parser->cursor++;
 }
 
-
 void meta_lexing(MetaLexer *lexer)
 {
-    lexer->tokens = init_chunk(sizeof(MetaToken), 1);
+    Chunk tokens = init_chunk(sizeof(MetaToken), 1);
 
     char *cursor = lexer->input, *line_front = lexer->input;
     int line = 1;
@@ -91,7 +90,7 @@ void meta_lexing(MetaLexer *lexer)
             }
         }
         if (token.string != p_null)
-            append_data(&token, 1, &lexer->tokens);
+            append_data(&token, 1, &tokens);
 
         while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n')
         {
@@ -104,8 +103,8 @@ void meta_lexing(MetaLexer *lexer)
         }
     }
 
-    lexer->token_num = lexer->tokens.used;
-
+    lexer->token_num = tokens.used;
+    lexer->tokens = fix_chunk(&tokens);
 }
 
 Grammar meta_parsing(MetaParser *parser)
