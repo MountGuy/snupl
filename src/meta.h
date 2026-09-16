@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "struct.h"
+#include "chunk.h"
 #include "arena.h"
 #include "character.h"
 #include "dump.h"

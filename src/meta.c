@@ -23,9 +23,7 @@ MetaToken *advance_parser(MetaParser *parser)
 
 void meta_lexing(MetaLexer *lexer)
 {
-    MetaToken *tokens = (MetaToken*) malloc(sizeof(MetaToken) * (lexer->input_len + 10));
-    int tok_num = 0;
-    lexer->tokens = tokens;
+    lexer->tokens = init_chunk(sizeof(MetaToken), DEF_MAX, 1);
 
     char *cursor = lexer->input, *line_front = lexer->input;
     int line = 1;
@@ -93,10 +91,7 @@ void meta_lexing(MetaLexer *lexer)
             }
         }
         if (token.string != p_null)
-        {
-            tokens[tok_num] = token;
-            tok_num++;
-        }
+            append_data(&token, 1, &lexer->tokens);
 
         while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n')
         {
@@ -107,11 +102,9 @@ void meta_lexing(MetaLexer *lexer)
             }
             cursor++;
         }
-        lexer->token_num = tok_num;
     }
 
-    lexer->tokens = tokens;
-    lexer->token_num = tok_num;
+    lexer->token_num = lexer->tokens.used;
 
 }
 
@@ -125,6 +118,8 @@ Grammar meta_parsing(MetaParser *parser)
 
     for (int i = 0; i < grammar.def_num; i++)
         index_identity(dict, grammar.defs[i].expr);
+
+    free(dict);
 
     return grammar;
 }

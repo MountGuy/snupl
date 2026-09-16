@@ -32,9 +32,10 @@ void print_meta_token(MetaToken token)
 
 void print_meta_lexer(MetaLexer *lexer)
 {
+    MetaToken *tokens = lexer->tokens.buf;
     printf("print meta lexer\n");
     for (int i = 0; i < lexer->token_num; i++)
-        print_meta_token(lexer->tokens[i]);
+        print_meta_token(tokens[i]);
 }
 
 void print_grammar(Grammar *grammar)

@@ -43,7 +43,7 @@ typedef struct {
     char *input;
     int input_len, pos;
 
-    MetaToken *tokens;
+    Chunk tokens;
     int token_num;
 
     Arena *arena;

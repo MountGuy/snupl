@@ -34,7 +34,7 @@ int main(int argv, char *argc[])
 
     MetaParser parser;
     parser.arena = &arena;
-    parser.tokens = meta_lexer.tokens;
+    parser.tokens = meta_lexer.tokens.buf;
     parser.token_num = meta_lexer.token_num;
 
     Grammar grammar = meta_parsing(&parser);
