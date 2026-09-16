@@ -158,7 +158,7 @@ void index_identity(char **dict, MetaExpr *expr)
 Grammar parse_define(MetaParser *parser)
 {
     parser->cursor = 0;
-    parser->defs = init_chunk(sizeof(MetaDef), 1);
+    Chunk defs = init_chunk(sizeof(MetaDef), 1);
 
     while (parser->cursor < parser->token_num)
     {
@@ -189,13 +189,12 @@ Grammar parse_define(MetaParser *parser)
             def.type = D_TERM;
         else
             def.type = D_LETTER;
-        append_data(&def, 1, &parser->defs);
+        append_data(&def, 1, &defs);
     }
 
-    Grammar grammar = {
-        .def_num = parser->defs.used,
-        .defs = parser->defs.buf,
-    };
+    Grammar grammar;
+    grammar.def_num = defs.used;
+    grammar.defs = fix_chunk(&defs);
 
     return grammar;
 }
