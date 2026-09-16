@@ -111,13 +111,14 @@ void meta_lexing(MetaLexer *lexer)
 Grammar meta_parsing(MetaParser *parser)
 {
     Grammar grammar = parse_define(parser);
+    MetaDef *defs = grammar.defs;
     char **dict = (char**) malloc(sizeof(char*) * (grammar.def_num + 1));
     for (int i = 0; i < grammar.def_num; i++)
-        dict[i] = grammar.defs[i].identity;
+        dict[i] = defs[i].identity;
     dict[grammar.def_num] = p_null;
 
     for (int i = 0; i < grammar.def_num; i++)
-        index_identity(dict, grammar.defs[i].expr);
+        index_identity(dict, defs[i].expr);
 
     free(dict);
 
@@ -157,9 +158,8 @@ void index_identity(char **dict, MetaExpr *expr)
 
 Grammar parse_define(MetaParser *parser)
 {
-    int def_num = 0;
-    MetaDef *buffer = (MetaDef*) malloc(sizeof(MetaDef) * parser->token_num);
     parser->cursor = 0;
+    parser->defs = init_chunk(sizeof(MetaDef), DEF_MAX, 1);
 
     while (parser->cursor < parser->token_num)
     {
@@ -181,23 +181,23 @@ Grammar parse_define(MetaParser *parser)
         ))
             print_error_mtoken("parse_define end", tok_end);
 
-        buffer[def_num].identity = tok_id->string;
-        buffer[def_num].expr = expr;
+        MetaDef def;
+        def.identity = tok_id->string;
+        def.expr = expr;
         if (tok_id->string[0] != '_')
-            buffer[def_num].type = D_GRAMMAR;
+            def.type = D_GRAMMAR;
         else if (tok_id->string[1] != '_')
-            buffer[def_num].type = D_TERM;
+            def.type = D_TERM;
         else
-            buffer[def_num].type = D_LETTER;
-        def_num++;
+            def.type = D_LETTER;
+        append_data(&def, 1, &parser->defs);
     }
 
     Grammar grammar = {
-        .def_num = def_num,
-        .defs = (MetaDef*) malloc(sizeof(MetaDef) * def_num),
+        .def_num = parser->defs.used,
+        .defs = parser->defs.buf,
     };
-    memcpy(grammar.defs, buffer, sizeof(MetaDef) * def_num);
-    free(buffer);
+
     return grammar;
 }
 

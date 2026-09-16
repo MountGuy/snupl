@@ -1,16 +1,26 @@
 #include "chunk.h"
 
-Chunk init_chunk(size_t unit, int length, int expands)
+Chunk init_chunk(size_t unit, int max, int expands)
 {
     Chunk chunk = {
-        .buf = malloc(unit * length),
+        .buf = malloc(unit * max),
         .unit = unit,
-        .length = length,
+        .max = max,
         .used = 0,
         .expands = expands,
     };
 
     return chunk;
+}
+
+void *fix_chunk(Chunk *chunk)
+{
+    int size = chunk->unit * chunk->used;
+    void *data = malloc(size);
+    memcpy(data, chunk->buf, size);
+    free(chunk->buf);
+
+    return data;
 }
 
 void expand_chunk(Chunk *chunk)
@@ -21,9 +31,9 @@ void expand_chunk(Chunk *chunk)
         exit(1);
     }
     Chunk new_chunk = {
-        .buf = malloc(chunk->unit * chunk->length * 2),
+        .buf = malloc(chunk->unit * chunk->max * 2),
         .unit = chunk->unit,
-        .length = chunk->length * 2,
+        .max = chunk->max * 2,
         .used = chunk->used,
         .expands = chunk->expands,
     };
@@ -34,7 +44,7 @@ void expand_chunk(Chunk *chunk)
 
 void *append_data(void *source, int length, Chunk *chunk)
 {
-    if (chunk->used + length > chunk->length)
+    if (chunk->used + length > chunk->max)
         expand_chunk(chunk);
     memcpy(chunk->buf + chunk->unit * chunk->used, source, chunk->unit * length);
     void *return_val = chunk->buf + chunk->unit * chunk->used;
@@ -71,5 +81,5 @@ void read_last(void *dest, Chunk *chunk)
 
 int has_space(int length, Chunk *chunk)
 {
-    return chunk->length >= chunk->used + length;
+    return chunk->max >= chunk->used + length;
 }

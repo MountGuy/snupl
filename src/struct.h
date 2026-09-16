@@ -24,7 +24,7 @@ typedef struct MetaExpr {
 typedef struct {
     void *buf;
     size_t unit;
-    int length, used, expands;
+    int max, used, expands;
 } Chunk;
 
 typedef struct {
@@ -53,7 +53,7 @@ typedef struct {
     MetaToken *tokens;
     int token_num, cursor;
 
-    MetaDef *defs;
+    Chunk defs;
     int def_num;
 
     Arena *arena;
