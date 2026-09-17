@@ -10,3 +10,5 @@ scanner
 *.code
 test
 *.pdf
+*.mod
+t.*

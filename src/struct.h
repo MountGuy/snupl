@@ -22,7 +22,7 @@ typedef struct MetaExpr {
 } MetaExpr;
 
 typedef struct {
-    void *buf;
+    void *data;
     size_t unit;
     int max, used, expands;
 } Chunk;
