@@ -18,9 +18,9 @@ void add_trans(int start, int cdx, int end, NFABuilder *builder);
 
 int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder);
 void postproc_trans(NFABuilder *builder);
-void build_NFA(Grammar *grammar, NFA *nfa);
+NFA build_NFA(Grammar *grammar);
 
 void init_scanner(NFA *nfa, NFAScanner *scanner);
 int step_NFA(char letter, NFA *nfa, NFAScanner *scanner);
 void skip_nontoken(Lexer *lexer);
-void lexing(Lexer *lexer);
+Chunk lexing(char *input, NFA *nfa, Arena *arena);

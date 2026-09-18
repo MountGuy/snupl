@@ -17,7 +17,7 @@ void print_arena(Arena *arena);
 
 void print_nfa(NFA *nfa, int debug);
 void print_trans(int trim_state_num, int state_num, int char_num, unsigned long long int *trans);
-void print_lexing_result(Lexer *lexer);
+void print_lexing_result(Chunk *tok_chunk);
 void print_binary_vector(unsigned long long int *vector, int length);
 
 #endif

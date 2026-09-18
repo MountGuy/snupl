@@ -202,7 +202,7 @@ void postproc_trans(NFABuilder *builder)
                 }
 }
 
-void build_NFA(Grammar *grammar, NFA *nfa)
+NFA build_NFA(Grammar *grammar)
 {
     char c = C_EPS;
 
@@ -259,22 +259,26 @@ void build_NFA(Grammar *grammar, NFA *nfa)
 
     postproc_trans(&builder);
 
-    nfa->trans = builder.trans;
-    nfa->lbs = malloc(sizeof(char) * lubs.used / 2);
-    nfa->ubs = malloc(sizeof(char) * lubs.used / 2);
-    nfa->tokcs = grammar->tokcs;
-    nfa->state_num = builder.state_num;
-    nfa->exact_state_num = exact_state_num;
-    nfa->char_num = builder.char_num;
-    nfa->end_states = end_states;
-    nfa->tokc_num = grammar->tokc_num;
+    NFA nfa = {
+        .trans = builder.trans,
+        .lbs = malloc(sizeof(char) * lubs.used / 2),
+        .ubs = malloc(sizeof(char) * lubs.used / 2),
+        .tokcs = grammar->tokcs,
+        .state_num = builder.state_num,
+        .exact_state_num = exact_state_num,
+        .char_num = builder.char_num,
+        .end_states = end_states,
+        .tokc_num = grammar->tokc_num,
+    };
 
     char *data = lubs.data;
     for (int i = 0; i < char_num; i++)
     {
-        nfa->lbs[i] = data[2 * i];
-        nfa->ubs[i] = data[2 * i + 1];
+        nfa.lbs[i] = data[2 * i];
+        nfa.ubs[i] = data[2 * i + 1];
     }
+
+    return nfa;
 }
 
 void init_scanner(NFA *nfa, NFAScanner *scanner)
@@ -349,15 +353,20 @@ void skip_nontoken(Lexer *lexer)
     lexer->cursor = cursor;
 }
 
-void lexing(Lexer *lexer)
+Chunk lexing(char *input, NFA *nfa, Arena *arena)
 {
-    lexer->cursor = lexer->input;
-    lexer->line_start = lexer->input;
-    lexer->line = 1;
+    Lexer lexer = {
+        .input = input,
+        .input_len = strlen(input),
+        .line_start = input,
+        .cursor = input,
+        .line = 1,
+        .nfa = nfa,
+        .arena = arena,
+    };
 
     Chunk tokens = init_chunk(sizeof(Token), 1);
 
-    NFA *nfa = lexer->nfa;
     TokenClass *tokcs = nfa->tokcs;
     NFAScanner scanner = {
         .visiting = malloc(nfa->state_num / BYTE_SIZE),
@@ -365,13 +374,13 @@ void lexing(Lexer *lexer)
         .lens = malloc(sizeof(int) * nfa->tokc_num),
     };
 
-    skip_nontoken(lexer);
-    while (lexer->cursor - lexer->input < lexer->input_len)
+    skip_nontoken(&lexer);
+    while (lexer.cursor - lexer.input < lexer.input_len)
     {
         init_scanner(nfa, &scanner);
 
         int tok_len = 0;
-        while (step_NFA(*(lexer->cursor + tok_len), nfa, &scanner))
+        while (step_NFA(*(lexer.cursor + tok_len), nfa, &scanner))
             tok_len++;
 
         int best_idx = -1, best_len = 0;
@@ -391,14 +400,14 @@ void lexing(Lexer *lexer)
         {
             Token token = {
                 .tok_c = tokcs + best_idx,
-                .string = add_string(lexer->cursor, best_len, lexer->arena),
+                .string = add_string(lexer.cursor, best_len, lexer.arena),
                 .string_len = best_len,
-                .line = lexer->line,
-                .col = lexer->cursor - lexer->line_start + 1,
+                .line = lexer.line,
+                .col = lexer.cursor - lexer.line_start + 1,
             };
             append_data(&token, 1, &tokens);
-            lexer->cursor += best_len;
-            skip_nontoken(lexer);
+            lexer.cursor += best_len;
+            skip_nontoken(&lexer);
         }
         else
         {
@@ -409,6 +418,6 @@ void lexing(Lexer *lexer)
     free(scanner.visiting);
     free(scanner.tmp);
     free(scanner.lens);
-    lexer->token_num = tokens.used;
-    lexer->tokens = fix_chunk(&tokens);
+
+    return tokens;
 }

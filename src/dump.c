@@ -181,11 +181,13 @@ void print_trans(int exact_state_num, int state_num, int char_num, unsigned long
     }
 }
 
-void print_lexing_result(Lexer *lexer)
+void print_lexing_result(Chunk *tok_chunk)
 {
-    for (int i = 0; i < lexer->token_num; i++)
+    Token *tokens = tok_chunk->data;
+    int token_num = tok_chunk->used;
+    for (int i = 0; i < token_num; i++)
     {
-        Token token = lexer->tokens[i];
+        Token token = tokens[i];
         printf("[%3d:%2d-%2d] ", token.line, token.col, token.col + token.string_len);
         printf("[%10s:%10s ] %s\n", token.tok_c->type == T_CONST? "grammar" : "value", token.tok_c->name, token.string);
     }

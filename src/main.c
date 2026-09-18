@@ -22,26 +22,16 @@ char *read_file(char *filename)
 
 int main(int argv, char *argc[])
 {
-    char *buf = read_file(argc[1]);
+    char *buf1 = read_file(argc[1]);
+    char *buf2 = read_file(argc[2]);
+
     Arena arena = init_arena();
+    Chunk m_tokens = meta_lexing(buf1, &arena);
+    Grammar grammar = meta_parsing(m_tokens, &arena);
+    NFA nfa = build_NFA(&grammar);
+    Chunk tokens = lexing(buf2, &nfa, &arena);
 
-    Chunk tokens = meta_lexing(buf, &arena);
-    Grammar grammar = meta_parsing(tokens, &arena);
-
-    NFA nfa;
-    build_NFA(&grammar, &nfa);
-
-    free(buf);
-    buf = read_file(argc[2]);
-
-    Lexer lexer;
-    lexer.input = buf;
-    lexer.input_len = strlen(buf);
-    lexer.nfa = &nfa;
-    lexer.arena = &arena;
-    lexing(&lexer);
-
-    print_lexing_result(&lexer);
+    print_lexing_result(&tokens);
 
     return 0;
 }
