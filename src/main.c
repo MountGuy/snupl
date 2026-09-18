@@ -22,23 +22,11 @@ char *read_file(char *filename)
 
 int main(int argv, char *argc[])
 {
-    char *buf = read_file(argc[1]);    
-    Arena arena;
-    init_arena(&arena);
+    char *buf = read_file(argc[1]);
+    Arena arena = init_arena();
 
-    MetaLexer meta_lexer;
-    meta_lexer.arena = &arena;
-    meta_lexer.input = buf;
-    meta_lexer.input_len = strlen(buf);
-    meta_lexing(&meta_lexer);
-
-    MetaParser parser;
-    parser.arena = &arena;
-    parser.tokens = meta_lexer.tokens;
-    parser.token_num = meta_lexer.token_num;
-
-    Grammar grammar = meta_parsing(&parser);
-    // print_grammar(&grammar);
+    Chunk tokens = meta_lexing(buf, &arena);
+    Grammar grammar = meta_parsing(tokens, &arena);
 
     NFA nfa;
     build_NFA(&grammar, &nfa);

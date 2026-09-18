@@ -40,16 +40,6 @@ typedef struct  {
 } MetaDef;
 
 typedef struct {
-    char *input;
-    int input_len, pos;
-
-    MetaToken *tokens;
-    int token_num;
-
-    Arena *arena;
-} MetaLexer;
-
-typedef struct {
     MetaToken *tokens;
     int token_num, cursor;
 

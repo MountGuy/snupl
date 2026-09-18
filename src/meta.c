@@ -20,11 +20,11 @@ MetaToken *advance_parser(MetaParser *parser)
     return parser->tokens + parser->cursor++;
 }
 
-void meta_lexing(MetaLexer *lexer)
+Chunk meta_lexing(char *input, Arena *arena)
 {
     Chunk tokens = init_chunk(sizeof(MetaToken), 1);
 
-    char *cursor = lexer->input, *line_front = lexer->input;
+    char *cursor = input, *line_front = input;
     int line = 1;
 
     while (cursor[0])
@@ -41,7 +41,7 @@ void meta_lexing(MetaLexer *lexer)
         else if (cursor[0] == '0' && cursor[1] == 'x')
         {
             char hex_str[2] = { hex_to_int(cursor[2]) * 16 + hex_to_int(cursor[3]), c_null };
-            token.string = add_string(hex_str, 1, lexer->arena);
+            token.string = add_string(hex_str, 1, arena);
             token.type = M_STRING;
             token.line = line;
             token.col = cursor - line_front + 1;
@@ -53,7 +53,7 @@ void meta_lexing(MetaLexer *lexer)
             int string_len = 0;
             while (is_identc(cursor[string_len]))
                 string_len++;
-            token.string = add_string(cursor, string_len, lexer->arena);
+            token.string = add_string(cursor, string_len, arena);
             token.type = M_IDENTITY;
             token.line = line;
             token.col = cursor - line_front + 1;
@@ -66,7 +66,7 @@ void meta_lexing(MetaLexer *lexer)
             cursor++;
             while (cursor[string_len] != '\"')
                 string_len++;
-            token.string = add_string(cursor, string_len, lexer->arena);
+            token.string = add_string(cursor, string_len, arena);
             token.type = M_STRING;
             token.line = line;
             token.col = cursor - line_front;
@@ -103,13 +103,17 @@ void meta_lexing(MetaLexer *lexer)
         }
     }
 
-    lexer->token_num = tokens.used;
-    lexer->tokens = fix_chunk(&tokens);
+    return tokens;
 }
 
-Grammar meta_parsing(MetaParser *parser)
+Grammar meta_parsing(Chunk tokens, Arena *arena)
 {
-    Grammar grammar = parse_define(parser);
+    MetaParser parser = {
+        .token_num = tokens.used,
+        .arena = arena,
+    };
+    parser.tokens = fix_chunk(&tokens);
+    Grammar grammar = parse_define(&parser);
     MetaDef *defs = grammar.defs;
     char **dict = (char**) malloc(sizeof(char*) * (grammar.def_num + 1));
     for (int i = 0; i < grammar.def_num; i++)

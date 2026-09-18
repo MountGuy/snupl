@@ -1,23 +1,26 @@
 #include "arena.h"
 
 
-void init_arena(Arena *arena)
+Arena init_arena()
 {
+    Arena arena;
     Chunk chunk;
-    arena->strings = init_chunk(sizeof(Chunk), true);
+    arena.strings = init_chunk(sizeof(Chunk), true);
     chunk = init_chunk(sizeof(char), false);
-    append_data(&chunk, 1, &arena->strings);
+    append_data(&chunk, 1, &arena.strings);
 
-    arena->string_heads = init_chunk(sizeof(void*), true);
-    arena->string_num = 0;
+    arena.string_heads = init_chunk(sizeof(void*), true);
+    arena.string_num = 0;
 
-    arena->exprs = init_chunk(sizeof(Chunk), true);
+    arena.exprs = init_chunk(sizeof(Chunk), true);
     chunk = init_chunk(sizeof(MetaExpr), false);
-    append_data(&chunk, 1, &arena->exprs);
+    append_data(&chunk, 1, &arena.exprs);
 
-    arena->expr_lists = init_chunk(sizeof(Chunk), true);
+    arena.expr_lists = init_chunk(sizeof(Chunk), true);
     chunk = init_chunk(sizeof(MetaExpr*), false);
-    append_data(&chunk, 1, &arena->expr_lists);
+    append_data(&chunk, 1, &arena.expr_lists);
+
+    return arena;
 }
 
 char *insert_string(char *string, int string_len, Arena *arena)
@@ -55,7 +58,7 @@ char *add_string(char *string, int string_len, Arena *arena)
         if (strncmp(str, string, string_len) == 0 && strlen(str) == string_len)
             return str;
     }
-    
+   
     str = insert_string(string, string_len, arena);
     insert_string_head(str, arena);
     arena->string_num++;
