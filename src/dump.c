@@ -158,7 +158,7 @@ void print_nfa(NFA *nfa, int debug)
     printf("total %d state, %d trimed state, %d char, %d tok class\n", nfa->state_num, nfa->exact_state_num, nfa->char_num, nfa->tokc_num);
 }
 
-void print_trans(int exact_state_num, int state_num, int char_num, unsigned long long int *trans)
+void print_trans(int exact_state_num, int state_num, int char_num, ulli *trans)
 {
     for (int cdx = 0; cdx < char_num; cdx++)
     {
@@ -169,10 +169,10 @@ void print_trans(int exact_state_num, int state_num, int char_num, unsigned long
                 if (i == j && cdx == 0) printf("x");
                 else
                 {
-                    int unit = 8 * sizeof(long long int);
+                    int unit = 8 * sizeof(ulli);
                     int offset = j + state_num * (cdx + char_num * i);
                     int idx = offset / unit, bit = offset % unit;
-                    printf("%d", trans[idx] & (((unsigned long long int) 1) << bit)? 1 : 0);
+                    printf("%d", trans[idx] & (((ulli) 1) << bit)? 1 : 0);
                 }
             }
             newline;
@@ -193,9 +193,9 @@ void print_lexing_result(Chunk *tok_chunk)
     }
 }
 
-void print_binary_vector(unsigned long long int *vector, int length)
+void print_binary_vector(ulli *vector, int length)
 {
     for (int i = 0; i < length; i++)
-        printf("%d", vector[i / 64] & (((unsigned long long int) 1)<<(i % 64))? 1 : 0);
+        printf("%d", vector[i / 64] & (((ulli) 1)<<(i % 64))? 1 : 0);
     newline;
 }

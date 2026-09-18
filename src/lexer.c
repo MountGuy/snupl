@@ -1,10 +1,10 @@
 #include "lexer.h"
 
 #define BYTE_SIZE 8
-#define SLB (sizeof(unsigned long long int) * BYTE_SIZE)
+#define SLB (sizeof(ulli) * BYTE_SIZE)
 #define OFFSET(s, c, e, sn, cn) ((e) + (sn) * ((c) + (cn) * (s)))
-#define READ_OFFSET(p, o) ((p)[(o) / SLB] & ((unsigned long long int) 1 << ((o) % SLB)))
-#define WRITE_OFFSET(p, o) ((p)[(o) / SLB] |= ((unsigned long long int) 1 << ((o) % SLB)))
+#define READ_OFFSET(p, o) ((p)[(o) / SLB] & ((ulli) 1 << ((o) % SLB)))
+#define WRITE_OFFSET(p, o) ((p)[(o) / SLB] |= ((ulli) 1 << ((o) % SLB)))
 
 int alloc_NFA_state(NFABuilder *builder)
 {
@@ -185,7 +185,7 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
 void postproc_trans(NFABuilder *builder)
 {
     int state_num = builder->state_num, char_num = builder->char_num;
-    unsigned long long int *trans = builder->trans;
+    ulli *trans = builder->trans;
 
     for (int i = 0; i < state_num; i++)
         add_trans(i, I_EPS, i, builder);

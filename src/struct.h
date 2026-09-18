@@ -1,6 +1,10 @@
 #ifndef STRUCT_H
 #define STRUCT_H 1
 
+#include <stddef.h>
+
+typedef unsigned long long int ulli;
+
 typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;
 typedef struct {
     char *string;
@@ -49,7 +53,7 @@ typedef struct {
     Arena *arena;
 } MetaParser;
 
-typedef enum { T_VAR, T_CONST } TType;
+typedef enum { T_EPS, T_VAR, T_CONST } TType;
 typedef struct {
     char *name;
     int idx;
@@ -70,14 +74,14 @@ typedef struct {
 } Token;
 
 typedef struct {
-    unsigned long long int *trans;
+    ulli *trans;
     int state_num, char_num, used_state_num;
     Chunk lubs;
     Grammar *grammar;
 } NFABuilder;
 
 typedef struct {
-    unsigned long long int *trans;
+    ulli *trans;
     char *lbs, *ubs;
     TokenClass *tokcs;
     int state_num, char_num, exact_state_num;
@@ -86,7 +90,7 @@ typedef struct {
 
 typedef struct {
     int *lens, len;
-    unsigned long long int *visiting, *tmp;
+    ulli *visiting, *tmp;
 } NFAScanner;
 
 typedef struct {
@@ -99,6 +103,16 @@ typedef struct {
     NFA *nfa;
     Arena *arena;
 } Lexer;
+
+typedef struct {
+    ulli *set;
+    int set_size;
+} Set;
+
+typedef struct {
+    Set *supsets, *subsets;
+    int equ_num;
+} SetEqu;
 
 #endif
 
