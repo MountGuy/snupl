@@ -51,7 +51,6 @@ int main(int argv, char *argc[])
     lexer.input_len = strlen(buf);
     lexer.nfa = &nfa;
     lexer.arena = &arena;
-    printf("lexing start\n");
     lexing(&lexer);
 
     print_lexing_result(&lexer);

@@ -173,7 +173,6 @@ void print_trans(int trim_state_num, int state_num, int char_num, unsigned long 
                     int unit = 8 * sizeof(long long int);
                     int offset = j + state_num * (cdx + char_num * i);
                     int idx = offset / unit, bit = offset % unit;
-                    // printf("%d %d %d %d %d %d %d \n",i, cdx, j,  offset, idx, bit, trans[idx] & (1 << bit)? 1 : 0);
                     printf("%d", trans[idx] & (((unsigned long long int) 1) << bit)? 1 : 0);
                 }
             }

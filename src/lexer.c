@@ -1,11 +1,36 @@
 #include "lexer.h"
 
-#define SLLI (sizeof(unsigned long long int) * 8)
-unsigned long long int one = 1;
+#define BYTE_SIZE 8
+#define SLB (sizeof(unsigned long long int) * BYTE_SIZE)
+#define OFFSET(s, c, e, sn, cn) ((e) + (sn) * ((c) + (cn) * (s)))
+#define READ_OFFSET(p, o) ((p)[(o) / SLB] & ((unsigned long long int) 1 << ((o) % SLB)))
+#define WRITE_OFFSET(p, o) ((p)[(o) / SLB] |= ((unsigned long long int) 1 << ((o) % SLB)))
 
 int alloc_NFA_state(NFABuilder *builder)
 {
     return builder->used_state_num++;
+}
+
+void add_char(char lb, char ub, Chunk *lubs)
+{
+    char *data = lubs->data;
+    for (int i = 0; i < lubs->used; i += 2)
+        if (lb == data[i] && ub == data[i + 1])
+            return;
+
+    append_data(&lb, 1, lubs);
+    append_data(&ub, 1, lubs);
+}
+
+int find_char(char lb, char ub, Chunk *lubs)
+{
+    char *data = lubs->data;
+    for (int i = 0; i < lubs->used; i += 2)
+        if (data[i] == lb && data[i + 1] == ub)
+            return i / 2;
+
+    printf("Unregisted character: %c~%c\n", lb, ub);
+    exit(1);
 }
 
 int count_state(MetaExpr *expr, Grammar *grammar)
@@ -34,29 +59,6 @@ int count_state(MetaExpr *expr, Grammar *grammar)
     }
 }
 
-void add_char(char lb, char ub, Chunk *lubs)
-{
-    char *data = lubs->data;
-    for (int i = 0; i < lubs->used; i += 2)
-    {
-        if (lb == data[i] && ub == data[i + 1])
-            return;
-    }
-    append_data(&lb, 1, lubs);
-    append_data(&ub, 1, lubs);
-}
-
-int find_char(char lb, char ub, Chunk *lubs)
-{
-    char *data = lubs->data;
-    for (int i = 0; i < lubs->used; i += 2)
-        if (data[i] == lb && data[i + 1] == ub)
-            return i / 2;
-
-    printf("Unregisted character: %c~%c\n", lb, ub);
-    exit(1);
-}
-
 void gather_char(MetaExpr *expr, Chunk *lubs)
 {
     switch (expr->kind)
@@ -83,19 +85,14 @@ void gather_char(MetaExpr *expr, Chunk *lubs)
 
 int can_trans(int start, int cdx, int end, NFABuilder *builder)
 {
-    int state_num = builder->state_num, char_num = builder->char_num;
-    int offset = end + state_num * (cdx + char_num * start);
-    int idx = offset / SLLI, bit = offset % SLLI;
-
-    return (builder->trans[idx] & (one << bit)) > 0;
+    int offset = OFFSET(start, cdx, end, builder->state_num, builder->char_num);
+    return READ_OFFSET(builder->trans, offset) > 0;
 }
 
 void add_trans(int start, int cdx, int end, NFABuilder *builder)
 {
-    int state_num = builder->state_num, char_num = builder->char_num;
-    int offset = end + state_num * (cdx + char_num * start);
-    int idx = offset / SLLI, bit = offset % SLLI;
-    builder->trans[idx] |= (one << bit);
+    int offset = OFFSET(start, cdx, end, builder->state_num, builder->char_num);
+    WRITE_OFFSET(builder->trans, offset);
 }
 
 int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
@@ -128,7 +125,6 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
         case E_OPTION:
         {
             int end = alloc_NFA_state(builder);
-
             int body_start = alloc_NFA_state(builder);
             int body_end = _build_NFA(expr->unary.expr, body_start, builder);
 
@@ -141,7 +137,6 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
         case E_REPEAT:
         {
             int end = alloc_NFA_state(builder);
-
             int body_start = alloc_NFA_state(builder);
             int body_end = _build_NFA(expr->unary.expr, body_start, builder);
 
@@ -199,8 +194,12 @@ void postproc_trans(NFABuilder *builder)
         for (int k = 0; k < state_num; k++)
             for (int i = 0; i < state_num; i++)
                 if (can_trans(i, c, k, builder))
-                    for (int j = 0; j < state_num / SLLI; j++)
-                        trans[(i * char_num + c) * state_num / SLLI + j] |= trans[k * char_num * state_num / SLLI + j];
+                {
+                    int off_dest = OFFSET(i, c, 0, state_num, char_num);
+                    int off_source = OFFSET(k, I_EPS, 0, state_num, char_num);
+                    for (int j = 0; j < state_num / SLB; j++)
+                        trans[off_dest / SLB + j] |= trans[off_source / SLB + j];
+                }
 }
 
 void build_NFA(Grammar *grammar, NFA *nfa)
@@ -227,14 +226,11 @@ void build_NFA(Grammar *grammar, NFA *nfa)
             trim_state_num += strlen(tc.name) + 2;
     }
 
-
-    printf("trim state num: %d\n", trim_state_num);
-
-    int state_num = (trim_state_num / SLLI + 1) * SLLI;
+    int state_num = (trim_state_num / SLB + 1) * SLB;
 
     int char_num = lubs.used / 2;
     NFABuilder builder = {
-        .trans = calloc(state_num * char_num * state_num / 8, 1),
+        .trans = calloc(state_num * char_num * state_num / BYTE_SIZE, 1),
         .char_num = char_num,
         .state_num = state_num,
         .trim_state_num = trim_state_num,
@@ -262,7 +258,7 @@ void build_NFA(Grammar *grammar, NFA *nfa)
             builder.end_states[i] = _build_NFA(&expr, 0, &builder);
         }
     }
-    
+
     postproc_trans(&builder);
 
     nfa->trans = builder.trans;
@@ -281,17 +277,11 @@ void build_NFA(Grammar *grammar, NFA *nfa)
         nfa->lbs[i] = data[2 * i];
         nfa->ubs[i] = data[2 * i + 1];
     }
-
-    printf("building nfa is done\n");
 }
 
 void init_scanner(NFAScanner *scanner)
 {
-    NFA *nfa = scanner->nfa;
-    for (int i = 0; i < scanner->state_num / SLLI; i++)
-    {
-        scanner->visiting[i] = nfa->trans[i];
-    }
+    memcpy(scanner->visiting, scanner->nfa->trans, scanner->state_num / BYTE_SIZE);
 
     for (int i = 0; i < scanner->tokc_num; i++)
         scanner->lens[i] = 0;
@@ -304,7 +294,7 @@ int step_NFA(char letter, NFAScanner *scanner)
     int state_num = nfa->state_num, char_num = nfa->char_num;
     scanner->len++;
 
-    for (int i = 0; i < state_num / SLLI; i++)
+    for (int i = 0; i < state_num / SLB; i++)
         scanner->tmp[i] = 0;
 
     for (int cdx = 1; cdx < char_num; cdx++)
@@ -312,28 +302,26 @@ int step_NFA(char letter, NFAScanner *scanner)
         {
             for (int j = 0; j < state_num; j++)
             {
-                int idx = j / SLLI, bit = j % SLLI;
-                if (scanner->visiting[idx] & (one << bit))
+                if (READ_OFFSET(scanner->visiting, j))
                 {
-                    int offset = (cdx + char_num * j) * state_num / SLLI;
-
-                    for (int k = 0; k < state_num / SLLI; k++)
-                        scanner->tmp[k] |= nfa->trans[k + offset];
+                    int offset = OFFSET(j, cdx, 0, state_num, char_num);
+                    for (int k = 0; k < state_num / SLB; k++)
+                        scanner->tmp[k] |= nfa->trans[k + offset / SLB];
                 }
             }
         }
 
-    memcpy(scanner->visiting, scanner->tmp, state_num / 8);
+    memcpy(scanner->visiting, scanner->tmp, state_num / BYTE_SIZE);
     for (int i = 0; i < nfa->tokc_num; i++)
     {
         int end = nfa->end_states[i];
-        if (scanner->visiting[end / SLLI] & (one << (end % SLLI)))
+        if (READ_OFFSET(scanner->visiting, end))
             scanner->lens[i] = scanner->len;
     }
 
     int alive_state = 0;
     for (int i = 0; i < nfa->state_num; i++)
-        if (scanner->visiting[i / SLLI] & (one << (i % SLLI)))
+        if (READ_OFFSET(scanner->visiting, i))
             alive_state++;
 
     return alive_state;

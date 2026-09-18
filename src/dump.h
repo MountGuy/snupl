@@ -7,6 +7,7 @@
 #include "common.h"
 #include "chunk.h"
 
+void print_arena(Arena *arena);
 void print_meta_token(MetaToken token);
 void print_meta_lexer(MetaLexer *lexer);
 void print_grammar(Grammar *grammar);
