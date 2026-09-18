@@ -59,35 +59,46 @@ typedef struct {
     Arena *arena;
 } MetaParser;
 
+typedef enum { T_VAR, T_CONST } TType;
+typedef struct {
+    char *name;
+    int idx;
+    TType type;
+} TokenClass;
+
 typedef struct {
     MetaDef *defs;
-    int def_num;
+    TokenClass *tokcs;
+    int def_num, tokc_num;
 } Grammar;
 
-typedef enum { T_TERM, T_GRAMMAR } TType;
 typedef struct {
-    char *string, *name;
+    TokenClass *tok_c;
+    char *string;
     int string_len;
-
-    TType type;
     int line, col;
 } Token;
 
 typedef struct {
-    char ***trans, **end_names, *lbs, *ubs;
-    TType *end_types;
-    int start, *ends, char_num, state_num, used_state_num, end_num;
+    unsigned long long int *trans;
+    int state_num, char_num, trim_state_num;
+    int start, used_state_num;
+    int *end_states;
+    Chunk lubs;
     Grammar *grammar;
 } NFABuilder;
 
 typedef struct {
-    char ***trans, **end_names, *lbs, *ubs;
-    TType *end_types;
-    int start, *ends, char_num, state_num, end_num;
+    unsigned long long int *trans;
+    char *lbs, *ubs;
+    TokenClass *tokcs;
+    int state_num, char_num, trim_state_num;
+    int *end_states, tokc_num;
 } NFA;
 
 typedef struct {
-    int state_num, end_num, *visiting, *chars, *tmp, *lens, len;
+    int state_num, tokc_num, *lens, len;
+    unsigned long long int *visiting, *tmp;
     NFA *nfa;
 } NFAScanner;
 

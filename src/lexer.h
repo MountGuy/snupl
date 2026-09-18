@@ -7,10 +7,16 @@
 #define I_EPS 0
 
 int alloc_NFA_state(NFABuilder *builder);
-int find_char(char lb, char ub, NFABuilder *builder);
-void _init_NFA_builder(MetaExpr *expr, NFABuilder *builder);
-int init_NFA_builder(Grammar *grammar);
-int _build_NFA(MetaExpr *expr, int start, DType type, NFABuilder *builder);
+int count_state(MetaExpr *expr, Grammar *grammar);
+void add_char(char lb, char ub, Chunk *lubs);
+int find_char(char lb, char ub, Chunk *lubs);
+void gather_char(MetaExpr *expr, Chunk *lubs);
+int can_trans(int start, int cdx, int end, NFABuilder *builder);
+void add_trans(int start, int cdx, int end, NFABuilder *builder);
+int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder);
 void postproc_trans(NFABuilder *builder);
 void build_NFA(Grammar *grammar, NFA *nfa);
+void init_scanner(NFAScanner *scanner);
+int step_NFA(char letter, NFAScanner *scanner);
+void skip_nontoken(Lexer *lexer);
 void lexing(Lexer *lexer);

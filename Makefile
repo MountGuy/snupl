@@ -13,6 +13,9 @@ clean:
 test: scanner
 	./scanner grammar.gm test/array01.mod
 
+simple: scanner
+	./scanner simple.gm simple.mod
+
 rtest: scanner
 	python3 gen_pair.py
 	./scanner t.gm t.mod > t.output

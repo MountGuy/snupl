@@ -62,6 +62,12 @@ void print_grammar(Grammar *grammar)
         print_meta_expr(defs[i].expr);
         newline;
     }
+    printf("number of token class: %d\n", grammar->tokc_num);
+    for (int i = 0; i < grammar->tokc_num; i++)
+    {
+        TokenClass class = grammar->tokcs[i];
+        printf("[%d] %s %d\n", i, class.name, class.type);
+    }
 }
 
 void print_meta_def(MetaDef *def)
@@ -142,26 +148,34 @@ void print_nfa(NFA *nfa, int debug)
         printf("[%d] %c-%c\n", cdx, nfa->lbs[cdx], nfa->ubs[cdx]);
     newline;
     printf("nfa ends:\n");
-    for (int i = 0; i < nfa->end_num; i++)
-        printf("[%d] %s\n", i, nfa->end_names[i]);
+    for (int i = 0; i < nfa->tokc_num; i++)
+        printf("[%d] %s ends with %d\n", i, nfa->tokcs[i].name, nfa->end_states[i]);
     if (debug)
     {
         newline;
         printf("trans:\n");
-        print_trans(nfa->state_num, nfa->char_num, nfa->trans);
+        print_trans(nfa->trim_state_num, nfa->state_num, nfa->char_num, nfa->trans);
     }
+    printf("total %d state, %d trimed state, %d char, %d tok class\n", nfa->state_num, nfa->trim_state_num, nfa->char_num, nfa->tokc_num);
 }
 
-void print_trans(int state_num, int char_num, char ***trans)
+void print_trans(int trim_state_num, int state_num, int char_num, unsigned long long int *trans)
 {
     for (int cdx = 0; cdx < char_num; cdx++)
     {
-        for (int i = 0; i < state_num; i++)
+        for (int i = 0; i < trim_state_num; i++)
         {
-            for (int j = 0; j < state_num; j++)
+            for (int j = 0; j < trim_state_num; j++)
             {
-                if (i == j && cdx == 0) printf("x ");
-                else printf("%d ", trans[i][j][cdx]);
+                if (i == j && cdx == 0) printf("x");
+                else
+                {
+                    int unit = 8 * sizeof(long long int);
+                    int offset = j + state_num * (cdx + char_num * i);
+                    int idx = offset / unit, bit = offset % unit;
+                    // printf("%d %d %d %d %d %d %d \n",i, cdx, j,  offset, idx, bit, trans[idx] & (1 << bit)? 1 : 0);
+                    printf("%d", trans[idx] & (((unsigned long long int) 1) << bit)? 1 : 0);
+                }
             }
             newline;
         }
@@ -175,6 +189,13 @@ void print_lexing_result(Lexer *lexer)
     {
         Token token = lexer->tokens[i];
         printf("[%d:%d-%d] ", token.line, token.col, token.col + token.string_len);
-        printf("[%s:%s] %s\n", token.type == T_GRAMMAR? "grammar" : "value", token.name, token.string);
+        printf("[%s:%s] %s\n", token.tok_c->type == T_CONST? "grammar" : "value", token.tok_c->name, token.string);
     }
+}
+
+void print_binary_vector(unsigned long long int *vector, int length)
+{
+    for (int i = 0; i < length; i++)
+        printf("%d", vector[i / 64] & (((unsigned long long int) 1)<<(i % 64))? 1 : 0);
+    newline;
 }

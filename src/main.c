@@ -38,6 +38,7 @@ int main(int argv, char *argc[])
     parser.token_num = meta_lexer.token_num;
 
     Grammar grammar = meta_parsing(&parser);
+    // print_grammar(&grammar);
 
     NFA nfa;
     build_NFA(&grammar, &nfa);
@@ -50,6 +51,7 @@ int main(int argv, char *argc[])
     lexer.input_len = strlen(buf);
     lexer.nfa = &nfa;
     lexer.arena = &arena;
+    printf("lexing start\n");
     lexing(&lexer);
 
     print_lexing_result(&lexer);

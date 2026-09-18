@@ -124,6 +124,38 @@ Grammar meta_parsing(MetaParser *parser)
     return grammar;
 }
 
+void regist_tok_class(MetaExpr *expr, Chunk *tokcs)
+{
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        case E_CONCAT:
+        {
+            for (int i = 0; i < expr->nary.expr_num; i++)
+                regist_tok_class(expr->nary.exprs[i], tokcs);
+            return;
+        }
+        case E_OPTION:
+        case E_REPEAT:
+            regist_tok_class(expr->unary.expr, tokcs);
+            return;
+        case E_STRING:
+            TokenClass *data = tokcs->data;
+            for (int i = 0; i < tokcs->used; i++)
+                if (expr->string.value == data[i].name && data[i].type == T_CONST)
+                    return;
+            TokenClass class = {
+                .name = expr->string.value,
+                .idx = tokcs->used,
+                .type = T_CONST,
+            };
+            append_data(&class, 1, tokcs);
+            return;
+        default:
+            return;
+    }
+}
+
 void index_identity(char **dict, MetaExpr *expr)
 {
     switch (expr->kind)
@@ -158,7 +190,7 @@ void index_identity(char **dict, MetaExpr *expr)
 Grammar parse_define(MetaParser *parser)
 {
     parser->cursor = 0;
-    Chunk defs = init_chunk(sizeof(MetaDef), 1);
+    Chunk _defs = init_chunk(sizeof(MetaDef), 1);
 
     while (parser->cursor < parser->token_num)
     {
@@ -189,12 +221,31 @@ Grammar parse_define(MetaParser *parser)
             def.type = D_TERM;
         else
             def.type = D_LETTER;
-        append_data(&def, 1, &defs);
+        append_data(&def, 1, &_defs);
     }
+    Chunk tokcs = init_chunk(sizeof(TokenClass), 1);
+
+    MetaDef *defs = _defs.data;
+    for (int i = 0; i < _defs.used; i++)
+        if (defs[i].type == D_TERM)
+        {
+            TokenClass class = {
+                .name = defs[i].identity,
+                .idx = i,
+                .type = T_VAR,
+            };
+            append_data(&class, 1, &tokcs);
+        }
+
+    for (int i = 0; i < _defs.used; i++)
+        if (defs[i].type == D_GRAMMAR)
+            regist_tok_class(defs[i].expr, &tokcs);
 
     Grammar grammar;
-    grammar.def_num = defs.used;
-    grammar.defs = fix_chunk(&defs);
+    grammar.def_num = _defs.used;
+    grammar.defs = fix_chunk(&_defs);
+    grammar.tokc_num = tokcs.used;
+    grammar.tokcs = fix_chunk(&tokcs);
 
     return grammar;
 }
