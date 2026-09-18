@@ -379,7 +379,7 @@ void lexing(Lexer *lexer)
         {
             if (
                 (scanner.lens[i] > best_len) ||
-                (scanner.lens[i] == best_len && (tokcs[best_idx].type == T_VAR && tokcs[i].type == T_CONST))
+                (scanner.lens[i] == best_len && tokcs[i].type == T_CONST)
             )
             {
                 best_idx = i;

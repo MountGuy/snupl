@@ -398,8 +398,8 @@ MetaExpr *parse_primary(MetaParser *parser)
                     expr->unary.expr = body;
                     return expr;
                 }
-                print_error_mtoken("parse_primary", token);
             }
+            print_error_mtoken("parse_primary", token);
         }
         default:
             print_error_mtoken("parse_primary default", token);
