@@ -154,18 +154,18 @@ void print_nfa(NFA *nfa, int debug)
     {
         newline;
         printf("trans:\n");
-        print_trans(nfa->trim_state_num, nfa->state_num, nfa->char_num, nfa->trans);
+        print_trans(nfa->exact_state_num, nfa->state_num, nfa->char_num, nfa->trans);
     }
-    printf("total %d state, %d trimed state, %d char, %d tok class\n", nfa->state_num, nfa->trim_state_num, nfa->char_num, nfa->tokc_num);
+    printf("total %d state, %d trimed state, %d char, %d tok class\n", nfa->state_num, nfa->exact_state_num, nfa->char_num, nfa->tokc_num);
 }
 
-void print_trans(int trim_state_num, int state_num, int char_num, unsigned long long int *trans)
+void print_trans(int exact_state_num, int state_num, int char_num, unsigned long long int *trans)
 {
     for (int cdx = 0; cdx < char_num; cdx++)
     {
-        for (int i = 0; i < trim_state_num; i++)
+        for (int i = 0; i < exact_state_num; i++)
         {
-            for (int j = 0; j < trim_state_num; j++)
+            for (int j = 0; j < exact_state_num; j++)
             {
                 if (i == j && cdx == 0) printf("x");
                 else
@@ -187,8 +187,8 @@ void print_lexing_result(Lexer *lexer)
     for (int i = 0; i < lexer->token_num; i++)
     {
         Token token = lexer->tokens[i];
-        printf("[%d:%d-%d] ", token.line, token.col, token.col + token.string_len);
-        printf("[%s:%s] %s\n", token.tok_c->type == T_CONST? "grammar" : "value", token.tok_c->name, token.string);
+        printf("[%3d:%2d-%2d] ", token.line, token.col, token.col + token.string_len);
+        printf("[%10s:%10s ] %s\n", token.tok_c->type == T_CONST? "grammar" : "value", token.tok_c->name, token.string);
     }
 }
 

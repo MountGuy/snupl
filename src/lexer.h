@@ -20,7 +20,7 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder);
 void postproc_trans(NFABuilder *builder);
 void build_NFA(Grammar *grammar, NFA *nfa);
 
-void init_scanner(NFAScanner *scanner);
-int step_NFA(char letter, NFAScanner *scanner);
+void init_scanner(NFA *nfa, NFAScanner *scanner);
+int step_NFA(char letter, NFA *nfa, NFAScanner *scanner);
 void skip_nontoken(Lexer *lexer);
 void lexing(Lexer *lexer);

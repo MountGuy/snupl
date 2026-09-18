@@ -210,36 +210,34 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     append_data(&c, 1, &lubs);
     append_data(&c, 1, &lubs);
 
-    int trim_state_num = 0;
+    int exact_state_num = 0;
     for (int i = 0; i < grammar->def_num; i++)
     {
         MetaDef def = grammar->defs[i];
         gather_char(def.expr, &lubs);
         if (def.type == D_TERM)
-            trim_state_num += count_state(def.expr, grammar) + 1;
+            exact_state_num += count_state(def.expr, grammar) + 1;
     }
 
     for (int i = 0; i < grammar->tokc_num; i++)
     {
         TokenClass tc = grammar->tokcs[i];
         if (tc.type == T_CONST)
-            trim_state_num += strlen(tc.name) + 2;
+            exact_state_num += strlen(tc.name) + 2;
     }
 
-    int state_num = (trim_state_num / SLB + 1) * SLB;
+    int state_num = (exact_state_num / SLB + 1) * SLB;
 
     int char_num = lubs.used / 2;
     NFABuilder builder = {
         .trans = calloc(state_num * char_num * state_num / BYTE_SIZE, 1),
-        .char_num = char_num,
         .state_num = state_num,
-        .trim_state_num = trim_state_num,
+        .char_num = char_num,
         .used_state_num = 1,
         .lubs = lubs,
-        .end_states = malloc(sizeof(int) * grammar->tokc_num),
         .grammar = grammar,
     };
-
+    int *end_states = malloc(sizeof(int) * grammar->tokc_num);
 
     for (int i = 0; i < grammar->tokc_num; i++)
     {
@@ -247,7 +245,7 @@ void build_NFA(Grammar *grammar, NFA *nfa)
         if (class.type == T_VAR)
         {
             MetaExpr *expr = grammar->defs[class.idx].expr;
-            builder.end_states[i] = _build_NFA(expr, 0, &builder);
+            end_states[i] = _build_NFA(expr, 0, &builder);
         }
         else if (class.type == T_CONST)
         {
@@ -255,7 +253,7 @@ void build_NFA(Grammar *grammar, NFA *nfa)
                 .kind = E_STRING,
                 .string.value = class.name,
             };
-            builder.end_states[i] = _build_NFA(&expr, 0, &builder);
+            end_states[i] = _build_NFA(&expr, 0, &builder);
         }
     }
 
@@ -266,9 +264,9 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     nfa->ubs = malloc(sizeof(char) * lubs.used / 2);
     nfa->tokcs = grammar->tokcs;
     nfa->state_num = builder.state_num;
-    nfa->trim_state_num = builder.trim_state_num;
+    nfa->exact_state_num = exact_state_num;
     nfa->char_num = builder.char_num;
-    nfa->end_states = builder.end_states;
+    nfa->end_states = end_states;
     nfa->tokc_num = grammar->tokc_num;
 
     char *data = lubs.data;
@@ -279,18 +277,17 @@ void build_NFA(Grammar *grammar, NFA *nfa)
     }
 }
 
-void init_scanner(NFAScanner *scanner)
+void init_scanner(NFA *nfa, NFAScanner *scanner)
 {
-    memcpy(scanner->visiting, scanner->nfa->trans, scanner->state_num / BYTE_SIZE);
+    memcpy(scanner->visiting, nfa->trans, nfa->state_num / BYTE_SIZE);
 
-    for (int i = 0; i < scanner->tokc_num; i++)
+    for (int i = 0; i < nfa->tokc_num; i++)
         scanner->lens[i] = 0;
     scanner->len = 0;
 }
 
-int step_NFA(char letter, NFAScanner *scanner)
+int step_NFA(char letter, NFA *nfa, NFAScanner *scanner)
 {
-    NFA *nfa = scanner->nfa;
     int state_num = nfa->state_num, char_num = nfa->char_num;
     scanner->len++;
 
@@ -299,17 +296,13 @@ int step_NFA(char letter, NFAScanner *scanner)
 
     for (int cdx = 1; cdx < char_num; cdx++)
         if (nfa->lbs[cdx] <= letter && letter <= nfa->ubs[cdx])
-        {
             for (int j = 0; j < state_num; j++)
-            {
                 if (READ_OFFSET(scanner->visiting, j))
                 {
                     int offset = OFFSET(j, cdx, 0, state_num, char_num);
                     for (int k = 0; k < state_num / SLB; k++)
                         scanner->tmp[k] |= nfa->trans[k + offset / SLB];
                 }
-            }
-        }
 
     memcpy(scanner->visiting, scanner->tmp, state_num / BYTE_SIZE);
     for (int i = 0; i < nfa->tokc_num; i++)
@@ -358,29 +351,27 @@ void skip_nontoken(Lexer *lexer)
 
 void lexing(Lexer *lexer)
 {
-    lexer->tokens = (Token*) malloc(sizeof(Token) * lexer->input_len);
     lexer->cursor = lexer->input;
     lexer->line_start = lexer->input;
-    lexer->token_num = 0;
     lexer->line = 1;
 
-    NFAScanner scanner;
+    Chunk tokens = init_chunk(sizeof(Token), 1);
+
     NFA *nfa = lexer->nfa;
     TokenClass *tokcs = nfa->tokcs;
-    scanner.nfa = nfa;
-    scanner.state_num = nfa->state_num;
-    scanner.tokc_num = nfa->tokc_num;
-    scanner.visiting = malloc(nfa->state_num);
-    scanner.tmp = malloc(nfa->state_num);
-    scanner.lens = malloc(sizeof(int) * nfa->tokc_num);
+    NFAScanner scanner = {
+        .visiting = malloc(nfa->state_num / BYTE_SIZE),
+        .tmp = malloc(nfa->state_num / BYTE_SIZE),
+        .lens = malloc(sizeof(int) * nfa->tokc_num),
+    };
 
     skip_nontoken(lexer);
     while (lexer->cursor - lexer->input < lexer->input_len)
     {
-        init_scanner(&scanner);
+        init_scanner(nfa, &scanner);
 
         int tok_len = 0;
-        while (step_NFA(*(lexer->cursor + tok_len), &scanner))
+        while (step_NFA(*(lexer->cursor + tok_len), nfa, &scanner))
             tok_len++;
 
         int best_idx = -1, best_len = 0;
@@ -405,7 +396,7 @@ void lexing(Lexer *lexer)
                 .line = lexer->line,
                 .col = lexer->cursor - lexer->line_start + 1,
             };
-            lexer->tokens[lexer->token_num++] = token;
+            append_data(&token, 1, &tokens);
             lexer->cursor += best_len;
             skip_nontoken(lexer);
         }
@@ -415,6 +406,9 @@ void lexing(Lexer *lexer)
             exit(1);
         }
     }
+    free(scanner.visiting);
+    free(scanner.tmp);
+    free(scanner.lens);
+    lexer->token_num = tokens.used;
+    lexer->tokens = fix_chunk(&tokens);
 }
-
-

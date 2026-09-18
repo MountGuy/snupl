@@ -81,9 +81,7 @@ typedef struct {
 
 typedef struct {
     unsigned long long int *trans;
-    int state_num, char_num, trim_state_num;
-    int start, used_state_num;
-    int *end_states;
+    int state_num, char_num, used_state_num;
     Chunk lubs;
     Grammar *grammar;
 } NFABuilder;
@@ -92,14 +90,13 @@ typedef struct {
     unsigned long long int *trans;
     char *lbs, *ubs;
     TokenClass *tokcs;
-    int state_num, char_num, trim_state_num;
+    int state_num, char_num, exact_state_num;
     int *end_states, tokc_num;
 } NFA;
 
 typedef struct {
-    int state_num, tokc_num, *lens, len;
+    int *lens, len;
     unsigned long long int *visiting, *tmp;
-    NFA *nfa;
 } NFAScanner;
 
 typedef struct {
