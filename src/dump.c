@@ -92,7 +92,6 @@ void print_meta_def(MetaDef *def)
 
 void print_meta_expr(MetaExpr *expr)
 {
-    printf("<%d ", expr->idx);
     switch (expr->kind)
     {
         case E_ALTER:
@@ -139,7 +138,6 @@ void print_meta_expr(MetaExpr *expr)
             exit(1);
             break;
     }
-    printf(">");
 }
 
 void print_nfa(NFA *nfa, int debug)

@@ -1,7 +1,5 @@
 #include "parse.h"
 
-int debug = 1;
-
 void index_node(MetaExpr *expr, int *counter)
 {
     switch (expr->kind)
@@ -31,6 +29,59 @@ void index_node(MetaExpr *expr, int *counter)
     }
 }
 
+int _null_analysis(MetaExpr *expr, int *can_eps)
+{
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        {
+            int result = 0;
+            for (int i = 0; i < expr->nary.expr_num; i++)
+                if (_null_analysis(expr->nary.exprs[i], can_eps))
+                    result = 1;
+            return can_eps[expr->idx] = result;
+        }
+        case E_CONCAT:
+        {
+            int result = 1;
+            for (int i = 0; i < expr->nary.expr_num; i++)
+                if (!_null_analysis(expr->nary.exprs[i], can_eps))
+                    result = 0;
+            return can_eps[expr->idx] = result;
+        }
+        case E_CRANGE:
+        case E_STRING:
+            return 0;
+        case E_IDENTITY:
+            return can_eps[expr->identity.idx];
+        case E_OPTION:
+        case E_REPEAT:
+            _null_analysis(expr->unary.expr, can_eps);
+            return can_eps[expr->idx] = 1;
+        default:
+            printf("Unexpected expr kind during _null_analysis\n");
+            exit(1);
+    }
+}
+
+int *null_analysis(Grammar *grammar, int set_num)
+{
+    int *can_eps = calloc(sizeof(int) * set_num, 1);
+    int prev_total = 0, curr_total = 0;
+
+    do {
+        prev_total = curr_total;
+        for (int i = 0; i < grammar->def_num; i++)
+            can_eps[i] = _null_analysis(grammar->defs[i].expr, can_eps);
+        curr_total = 0;
+        for (int i = 0; i < set_num; i++)
+            curr_total += can_eps[i];
+
+    } while (curr_total > prev_total);
+
+    return can_eps;
+}
+
 void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
 {
     Set *first = builder->first, *follow = builder->follow;
@@ -49,8 +100,6 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
                 Set *fir1 = first + sub_idx, *fir2 = first + sup_idx;
                 append_data(&fir1, 1, &builder->sub_sets);
                 append_data(&fir2, 1, &builder->sup_sets);
-                if (debug)
-                    printf("first %d in first %d\n", sub_idx, sup_idx);
             }
             break;
         }
@@ -61,14 +110,6 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
 
             for (int i = 0; i < expr->nary.expr_num; i++)
                 _build_equ(exprs[i], grammar, builder);
-
-            
-            int sub_idx = exprs[0]->idx, sup_idx = expr->idx;
-            Set *fir1 = first + sub_idx, *fir2 = first + sup_idx;
-            append_data(&fir1, 1, &builder->sub_sets);
-            append_data(&fir2, 1, &builder->sup_sets);
-            if (debug)
-                printf("first %d in first %d\n", sub_idx, sup_idx);
             
             for (int i = 0; i < expr->nary.expr_num - 1; i++)
             {
@@ -76,8 +117,17 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
                 Set *fir = first + sub_idx, *fol = follow + sup_idx;
                 append_data(&fir, 1, &builder->sub_sets);
                 append_data(&fol, 1, &builder->sup_sets);
-                if (debug)
-                    printf("first %d in follow %d\n", sub_idx, sup_idx);
+            }
+
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            {
+                int sub_idx = exprs[i]->idx, sup_idx = expr->idx;
+                Set *fir1 = first + sub_idx, *fir2 = first + sup_idx;
+                append_data(&fir1, 1, &builder->sub_sets);
+                append_data(&fir2, 1, &builder->sup_sets);
+
+                if (!builder->can_eps[sub_idx])
+                    break;
             }
             break;
         }
@@ -85,7 +135,6 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
         case E_REPEAT:
         {
             _build_equ(expr->unary.expr, grammar, builder);
-            // WRITE_OFFSET(builder->first[expr->idx].set, 0);
             break;
         }
         case E_STRING:
@@ -122,8 +171,6 @@ SetEqu build_equ(Grammar *grammar)
     for (int i = 0; i < grammar->def_num; i++)
         index_node(grammar->defs[i].expr, &set_num);
 
-    print_grammar(grammar);
-
     int exact_set_size = grammar->tokc_num;
     int set_size = (exact_set_size + SLB - 1) / SLB * SLB;
     Set *first = malloc(set_num * sizeof(Set));
@@ -141,6 +188,7 @@ SetEqu build_equ(Grammar *grammar)
     SetEquBuilder builder = {
         .first = first,
         .follow = follow,
+        .can_eps = null_analysis(grammar, set_num),
         .sup_sets = init_chunk(sizeof(Set*), 1),
         .sub_sets = init_chunk(sizeof(Set*), 1),
         .concat_exprs = init_chunk(sizeof(MetaExpr*), 1),

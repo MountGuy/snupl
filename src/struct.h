@@ -112,6 +112,7 @@ typedef struct {
 
 typedef struct {
     Set *first, *follow;
+    int *can_eps;
     Chunk sup_sets, sub_sets, concat_exprs;
 } SetEquBuilder;
 
