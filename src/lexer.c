@@ -191,8 +191,8 @@ void postproc_trans(NFABuilder *builder)
                 {
                     int off_dest = OFFSET(i, c, 0, state_num, char_num);
                     int off_source = OFFSET(k, I_EPS, 0, state_num, char_num);
-                    for (int j = 0; j < state_num / SLB; j++)
-                        trans[off_dest / SLB + j] |= trans[off_source / SLB + j];
+                    for (int j = 0; j < state_num / SZLIB; j++)
+                        trans[off_dest / SZLIB + j] |= trans[off_source / SZLIB + j];
                 }
 }
 
@@ -220,7 +220,7 @@ NFA build_NFA(Grammar *grammar)
             exact_state_num += strlen(tc.name) + 2;
     }
 
-    int state_num = (exact_state_num + SLB - 1) / SLB * SLB;
+    int state_num = (exact_state_num + SZLIB - 1) / SZLIB * SZLIB;
 
     int char_num = lubs.used / 2;
     NFABuilder builder = {
@@ -289,7 +289,7 @@ int step_NFA(char letter, NFA *nfa, NFAScanner *scanner)
     int state_num = nfa->state_num, char_num = nfa->char_num;
     scanner->len++;
 
-    for (int i = 0; i < state_num / SLB; i++)
+    for (int i = 0; i < state_num / SZLIB; i++)
         scanner->tmp[i] = 0;
 
     for (int cdx = 1; cdx < char_num; cdx++)
@@ -298,8 +298,8 @@ int step_NFA(char letter, NFA *nfa, NFAScanner *scanner)
                 if (READ_OFFSET(scanner->visiting, j))
                 {
                     int offset = OFFSET(j, cdx, 0, state_num, char_num);
-                    for (int k = 0; k < state_num / SLB; k++)
-                        scanner->tmp[k] |= nfa->trans[k + offset / SLB];
+                    for (int k = 0; k < state_num / SZLIB; k++)
+                        scanner->tmp[k] |= nfa->trans[k + offset / SZLIB];
                 }
 
     memcpy(scanner->visiting, scanner->tmp, state_num / BYTE_SIZE);

@@ -82,9 +82,14 @@ int *null_analysis(Grammar *grammar, int set_num)
     return can_eps;
 }
 
+void regist_equ(int sub_idx, int sup_idx, SetEquBuilder *builder)
+{
+    append_data(&sub_idx, 1, &builder->sub_sets);
+    append_data(&sup_idx, 1, &builder->sup_sets);
+}
+
 void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
 {
-    Set *first = builder->first, *follow = builder->follow;
     switch (expr->kind)
     {
         case E_ALTER:
@@ -95,64 +100,43 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
                 _build_equ(exprs[i], grammar, builder);
 
             for (int i = 0; i < expr->nary.expr_num; i++)
-            {
-                int sub_idx = exprs[i]->idx, sup_idx = expr->idx;
-                Set *fir1 = first + sub_idx, *fir2 = first + sup_idx;
-                append_data(&fir1, 1, &builder->sub_sets);
-                append_data(&fir2, 1, &builder->sup_sets);
-            }
+                regist_equ(exprs[i]->idx, expr->idx, builder);
+
             break;
         }
         case E_CONCAT:
         {
             MetaExpr **exprs = expr->nary.exprs;
-            append_data(expr, 1, &builder->concat_exprs);
-
             for (int i = 0; i < expr->nary.expr_num; i++)
                 _build_equ(exprs[i], grammar, builder);
-            
+
             for (int i = 0; i < expr->nary.expr_num - 1; i++)
-            {
-                int sub_idx = exprs[i + 1]->idx, sup_idx = exprs[i]->idx;
-                Set *fir = first + sub_idx, *fol = follow + sup_idx;
-                append_data(&fir, 1, &builder->sub_sets);
-                append_data(&fol, 1, &builder->sup_sets);
-            }
+                regist_equ(exprs[i + 1]->idx, exprs[i]->idx + builder->set_num, builder);
 
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                int sub_idx = exprs[i]->idx, sup_idx = expr->idx;
-                Set *fir1 = first + sub_idx, *fir2 = first + sup_idx;
-                append_data(&fir1, 1, &builder->sub_sets);
-                append_data(&fir2, 1, &builder->sup_sets);
+                regist_equ(exprs[i]->idx, expr->idx, builder);
 
-                if (!builder->can_eps[sub_idx])
+                if (!builder->can_eps[exprs[i]->idx])
                     break;
             }
+
             break;
         }
         case E_OPTION:
         case E_REPEAT:
-        {
             _build_equ(expr->unary.expr, grammar, builder);
             break;
-        }
         case E_STRING:
-        {
             for (int i = 0; i < grammar->tokc_num; i++)
                 if (grammar->tokcs[i].name == expr->string.value)
-                WRITE_OFFSET(builder->first[expr->idx].set, i);
-                ;
+                    WRITE_OFFSET(builder->sets + builder->offset * expr->idx, i);
             break;
-        }
         case E_IDENTITY:
-        {
             for (int i = 0; i < grammar->tokc_num; i++)
-            {
-                if (grammar->tokcs[i].type == T_VAR &&  grammar->tokcs[i].name == expr->identity.id)
-                    WRITE_OFFSET(builder->first[expr->idx].set, i);
-            }
-        }
+                if (grammar->tokcs[i].type == T_VAR && grammar->tokcs[i].name == expr->identity.id)
+                    WRITE_OFFSET(builder->sets + builder->offset * expr->idx, i);
+            break;
         case E_CRANGE:
             return;
         default:
@@ -171,42 +155,34 @@ SetEqu build_equ(Grammar *grammar)
     for (int i = 0; i < grammar->def_num; i++)
         index_node(grammar->defs[i].expr, &set_num);
 
-    int exact_set_size = grammar->tokc_num;
-    int set_size = (exact_set_size + SLB - 1) / SLB * SLB;
-    Set *first = malloc(set_num * sizeof(Set));
-    Set *follow = malloc(set_num * sizeof(Set));
-    ulli *buf = calloc(set_num * 2 * set_size / BYTE_SIZE, 1);
-    printf("pad size: %d\n", set_size);
-    for (int i = 0; i < set_num; i++)
-    {
-        first[i].set = buf + set_size / SLB * 2 * i;
-        follow[i].set = buf + set_size / SLB * (2 * i + 1);
-        first[i].set_size = set_size;
-        follow[i].set_size = set_size;
-    }
+    int set_size = (grammar->tokc_num + SZLIB - 1) / SZLIB * SZLIB;
+    ulli *sets = calloc(set_num * 2 * set_size / BYTE_SIZE, 1);
 
     SetEquBuilder builder = {
-        .first = first,
-        .follow = follow,
+        .sets = sets,
+        .set_num = set_num,
+        .set_size = set_size,
+        .offset = set_size / SZLIB,
         .can_eps = null_analysis(grammar, set_num),
-        .sup_sets = init_chunk(sizeof(Set*), 1),
-        .sub_sets = init_chunk(sizeof(Set*), 1),
-        .concat_exprs = init_chunk(sizeof(MetaExpr*), 1),
+        .sup_sets = init_chunk(sizeof(int), 1),
+        .sub_sets = init_chunk(sizeof(int), 1),
     };
 
     for (int i = 0; i < grammar->def_num; i++)
         _build_equ(grammar->defs[i].expr, grammar, &builder);
+    free(builder.can_eps);
 
     int equ_num = builder.sub_sets.used;
+
     SetEqu equ = {
-        .first = builder.first,
-        .follow = builder.follow,
+        .sets = sets,
         .sup_sets = fix_chunk(&builder.sup_sets),
         .sub_sets = fix_chunk(&builder.sub_sets),
         .equ_num = equ_num,
         .set_num = set_num,
         .set_size = set_size,
-        .exact_set_size = exact_set_size,
+        .offset = set_size / SZLIB,
+        .exact_set_size = grammar->tokc_num,
     };
 
     return equ;
@@ -215,48 +191,20 @@ SetEqu build_equ(Grammar *grammar)
 int apply_equ(SetEqu *equ)
 {
     int result = 0;
+
     for (int i = 0; i < equ->equ_num; i++)
     {
-        Set *sub = equ->sub_sets[i], *sup = equ->sup_sets[i];
-        for (int j = 0; j < sub->set_size / SLB; j++)
+        ulli *sub_set = equ->sets + equ->offset * equ->sub_sets[i];
+        ulli *sup_set = equ->sets + equ->offset * equ->sup_sets[i];
+
+        for (int j = 0; j < equ->set_size / SZLIB; j++)
         {
-            ulli before = sup->set[j];
-            sup->set[j] = before | sub->set[j];
-            if (sup->set[j] > before)
+            if ((sup_set[j] | sub_set[j]) > sup_set[j])
                 result++;
+            sup_set[j] |= sub_set[j];
         }
     }
     return result;
-}
-
-int count_one(SetEqu *equ)
-{
-    int total = 0;
-    for (int i = 0; i < equ->set_num; i++)
-        for (int j = 0; j < equ->set_size / SLB; j++)
-            for (int k = 0; k < SLB; k++)
-            {
-                if (equ->first[i].set[j] & (((ulli) 1) << k))
-                   total++;
-                if (equ->follow[i].set[j] & (((ulli) 1) << k))
-                   total++;
-            }
-    return total;
-}
-
-int count_one2(Set *first, Set *follow, int set_num)
-{
-    int total = 0, set_size = first[0].set_size;
-    for (int i = 0; i < set_num; i++)
-        for (int j = 0; j < set_size / SLB; j++)
-            for (int k = 0; k < SLB; k++)
-            {
-                if (first[i].set[j] & (((ulli) 1) << k))
-                   total++;
-                if (follow[i].set[j] & (((ulli) 1) << k))
-                   total++;
-            }
-    return total;
 }
 
 void solve_firstfollow(Grammar *grammar)

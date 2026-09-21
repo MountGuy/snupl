@@ -106,20 +106,15 @@ typedef struct {
 } Lexer;
 
 typedef struct {
-    ulli *set;
-    int set_size;
-} Set;
-
-typedef struct {
-    Set *first, *follow;
-    int *can_eps;
-    Chunk sup_sets, sub_sets, concat_exprs;
+    ulli *sets;
+    int set_num, set_size, offset, *can_eps;
+    Chunk sup_sets, sub_sets;
 } SetEquBuilder;
 
 typedef struct {
-    Set *first, *follow;
-    Set **sup_sets, **sub_sets;
-    int equ_num, set_num, set_size, exact_set_size;
+    ulli *sets;
+    int *sup_sets, *sub_sets;
+    int equ_num, set_num, set_size, offset, exact_set_size;
 } SetEqu;
 
 #endif
