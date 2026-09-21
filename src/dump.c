@@ -218,7 +218,6 @@ void print_seteq(SetEqu *equ)
         printf("follow [%d] ", i);
         print_binary_vector(equ->follow[i].set, set_size);
     }
-
 }
 
 void print_setequ_sol(SetEqu *equ, Grammar *grammar)
@@ -233,12 +232,7 @@ void print_setequ_sol(SetEqu *equ, Grammar *grammar)
         ulli *set = equ->first[i].set;
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
-            {
-                if (j > 0)
-                    printf("%20s can starts with    \"%s\"\n", def.identity, grammar->tokcs[j - 1].name);
-                else
-                    printf("%20s can starts with    \"eps\"\n", def.identity);
-            }
+                printf("%20s can starts with    \"%s\"\n", def.identity, grammar->tokcs[j].name);
     }
 
     for (int i = 0; i < grammar->def_num; i++)
@@ -250,12 +244,7 @@ void print_setequ_sol(SetEqu *equ, Grammar *grammar)
         ulli *set = equ->follow[i].set;
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
-            {
-                if (j > 0)
-                    printf("%20s can be followed by %s\n", def.identity, grammar->tokcs[j - 1].name);
-                else
-                    printf("%20s can be followed by eps\n", def.identity);
-            }
+                printf("%20s can be followed by %s\n", def.identity, grammar->tokcs[j].name);
     }
 
 }

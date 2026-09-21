@@ -31,11 +31,6 @@ void index_node(MetaExpr *expr, int *counter)
     }
 }
 
-void add_eps(Set *set)
-{
-    WRITE_OFFSET(set->set, 0);
-}
-
 void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
 {
     Set *first = builder->first, *follow = builder->follow;
@@ -90,14 +85,14 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
         case E_REPEAT:
         {
             _build_equ(expr->unary.expr, grammar, builder);
-            WRITE_OFFSET(builder->first[expr->idx].set, 0);
+            // WRITE_OFFSET(builder->first[expr->idx].set, 0);
             break;
         }
         case E_STRING:
         {
             for (int i = 0; i < grammar->tokc_num; i++)
                 if (grammar->tokcs[i].name == expr->string.value)
-                WRITE_OFFSET(builder->first[expr->idx].set, i + 1);
+                WRITE_OFFSET(builder->first[expr->idx].set, i);
                 ;
             break;
         }
@@ -106,7 +101,7 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
             for (int i = 0; i < grammar->tokc_num; i++)
             {
                 if (grammar->tokcs[i].type == T_VAR &&  grammar->tokcs[i].name == expr->identity.id)
-                    WRITE_OFFSET(builder->first[expr->idx].set, i + 1);
+                    WRITE_OFFSET(builder->first[expr->idx].set, i);
             }
         }
         case E_CRANGE:
@@ -129,7 +124,7 @@ SetEqu build_equ(Grammar *grammar)
 
     print_grammar(grammar);
 
-    int exact_set_size = grammar->tokc_num + 1;
+    int exact_set_size = grammar->tokc_num;
     int set_size = (exact_set_size + SLB - 1) / SLB * SLB;
     Set *first = malloc(set_num * sizeof(Set));
     Set *follow = malloc(set_num * sizeof(Set));
@@ -219,17 +214,6 @@ int count_one2(Set *first, Set *follow, int set_num)
 void solve_firstfollow(Grammar *grammar)
 {
     SetEqu equ = build_equ(grammar);
-    // print_seteq(&equ);
-    // sepline;
-    // sepline;
-    // sepline;
-    // print_setequ_sol(&equ, grammar);
-    // printf("equ_num: %d\n", equ.equ_num);
-    // printf("set_size: %d\n", equ.set_size);
-    // printf("eq total: %d\n", count_one(&equ));
     while(apply_equ(&equ));
-    // printf("eq total: %d\n", count_one(&equ));
-    // print_seteq(&equ);
     print_setequ_sol(&equ, grammar);
-
 }
