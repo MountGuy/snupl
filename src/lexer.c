@@ -1,11 +1,5 @@
 #include "lexer.h"
 
-#define BYTE_SIZE 8
-#define SLB (sizeof(ulli) * BYTE_SIZE)
-#define OFFSET(s, c, e, sn, cn) ((e) + (sn) * ((c) + (cn) * (s)))
-#define READ_OFFSET(p, o) ((p)[(o) / SLB] & ((ulli) 1 << ((o) % SLB)))
-#define WRITE_OFFSET(p, o) ((p)[(o) / SLB] |= ((ulli) 1 << ((o) % SLB)))
-
 int alloc_NFA_state(NFABuilder *builder)
 {
     return builder->used_state_num++;
@@ -226,7 +220,7 @@ NFA build_NFA(Grammar *grammar)
             exact_state_num += strlen(tc.name) + 2;
     }
 
-    int state_num = (exact_state_num / SLB + 1) * SLB;
+    int state_num = (exact_state_num + SLB - 1) / SLB * SLB;
 
     int char_num = lubs.used / 2;
     NFABuilder builder = {

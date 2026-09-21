@@ -23,6 +23,7 @@ typedef struct MetaExpr {
         struct { int idx; char *id; } identity;
         struct { char lb, ub; } crange;
     };
+    int idx;
 } MetaExpr;
 
 typedef struct {
@@ -110,8 +111,14 @@ typedef struct {
 } Set;
 
 typedef struct {
-    Set *supsets, *subsets;
-    int equ_num;
+    Set *first, *follow;
+    Chunk sup_sets, sub_sets, concat_exprs;
+} SetEquBuilder;
+
+typedef struct {
+    Set *first, *follow;
+    Set **sup_sets, **sub_sets;
+    int equ_num, set_num, set_size, exact_set_size;
 } SetEqu;
 
 #endif

@@ -4,6 +4,7 @@
 #include "meta.h"
 #include "lexer.h"
 #include "dump.h"
+#include "parse.h"
 
 char *read_file(char *filename)
 {
@@ -28,11 +29,11 @@ int main(int argv, char *argc[])
     Arena arena = init_arena();
     Chunk m_tokens = meta_lexing(buf1, &arena);
     Grammar grammar = meta_parsing(m_tokens, &arena);
-    print_grammar(&grammar);
     NFA nfa = build_NFA(&grammar);
+    // lexing(buf2, &nfa, &arena);
     Chunk tokens = lexing(buf2, &nfa, &arena);
+    // print_lexing_result(&tokens);
 
-    print_lexing_result(&tokens);
-
+    solve_firstfollow(&grammar);
     return 0;
 }

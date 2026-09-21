@@ -92,6 +92,7 @@ void print_meta_def(MetaDef *def)
 
 void print_meta_expr(MetaExpr *expr)
 {
+    printf("<%d ", expr->idx);
     switch (expr->kind)
     {
         case E_ALTER:
@@ -138,6 +139,7 @@ void print_meta_expr(MetaExpr *expr)
             exit(1);
             break;
     }
+    printf(">");
 }
 
 void print_nfa(NFA *nfa, int debug)
@@ -198,4 +200,62 @@ void print_binary_vector(ulli *vector, int length)
     for (int i = 0; i < length; i++)
         printf("%d", vector[i / 64] & (((ulli) 1)<<(i % 64))? 1 : 0);
     newline;
+}
+
+void print_seteq(SetEqu *equ)
+{
+    int set_size = equ->exact_set_size;
+    for (int i = 0; i < equ->set_num; i++)
+    {
+        printf("first [%d] ", i);
+        print_binary_vector(equ->first[i].set, set_size);
+    }
+
+    newline;
+
+    for (int i = 0; i < equ->set_num; i++)
+    {
+        printf("follow [%d] ", i);
+        print_binary_vector(equ->follow[i].set, set_size);
+    }
+
+}
+
+void print_setequ_sol(SetEqu *equ, Grammar *grammar)
+{
+    int set_size = equ->exact_set_size;
+    for (int i = 0; i < grammar->def_num; i++)
+    {
+        MetaDef def = grammar->defs[i];
+        if (def.type != D_GRAMMAR)
+            continue;
+
+        ulli *set = equ->first[i].set;
+        for (int j = 0; j < set_size; j++)
+            if (READ_OFFSET(set, j))
+            {
+                if (j > 0)
+                    printf("%20s can starts with    \"%s\"\n", def.identity, grammar->tokcs[j - 1].name);
+                else
+                    printf("%20s can starts with    \"eps\"\n", def.identity);
+            }
+    }
+
+    for (int i = 0; i < grammar->def_num; i++)
+    {
+        MetaDef def = grammar->defs[i];
+        if (def.type != D_GRAMMAR)
+            continue;
+
+        ulli *set = equ->follow[i].set;
+        for (int j = 0; j < set_size; j++)
+            if (READ_OFFSET(set, j))
+            {
+                if (j > 0)
+                    printf("%20s can be followed by %s\n", def.identity, grammar->tokcs[j - 1].name);
+                else
+                    printf("%20s can be followed by eps\n", def.identity);
+            }
+    }
+
 }

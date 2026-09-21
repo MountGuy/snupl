@@ -2,6 +2,7 @@
 #include "struct.h"
 #include "dump.h"
 #include "arena.h"
+#include "bitop.h"
 
 #define C_EPS ('\0')
 #define I_EPS 0
