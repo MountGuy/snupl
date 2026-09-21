@@ -107,6 +107,7 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
         case E_CONCAT:
         {
             MetaExpr **exprs = expr->nary.exprs;
+
             for (int i = 0; i < expr->nary.expr_num; i++)
                 _build_equ(exprs[i], grammar, builder);
 

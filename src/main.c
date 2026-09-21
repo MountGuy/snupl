@@ -24,16 +24,16 @@ char *read_file(char *filename)
 int main(int argv, char *argc[])
 {
     char *buf1 = read_file(argc[1]);
-    char *buf2 = read_file(argc[2]);
 
     Arena arena = init_arena();
     Chunk m_tokens = meta_lexing(buf1, &arena);
     Grammar grammar = meta_parsing(m_tokens, &arena);
     NFA nfa = build_NFA(&grammar);
-    // lexing(buf2, &nfa, &arena);
-    Chunk tokens = lexing(buf2, &nfa, &arena);
-    // print_lexing_result(&tokens);
-
     solve_firstfollow(&grammar);
+
+    char *buf2 = read_file(argc[2]);
+    Chunk tokens = lexing(buf2, &nfa, &arena);
+    printf("Lexing done: total %d tokens\n", tokens.used);
+
     return 0;
 }
