@@ -230,7 +230,7 @@ void print_setequ_sol(SetEqu *equ, Grammar *grammar)
         ulli *set = equ->sets + offset * i;
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
-                printf("%20s can starts with    \"%s\"\n", def.identity, grammar->tokcs[j].name);
+                printf("[%d] %20s can starts with    \"%s\"\n", i, def.identity, grammar->tokcs[j].name);
     }
 
     for (int i = 0; i < grammar->def_num; i++)
@@ -242,6 +242,6 @@ void print_setequ_sol(SetEqu *equ, Grammar *grammar)
         ulli *set = equ->sets + offset * (i + equ->set_num);
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
-                printf("%20s can be followed by \"%s\"\n", def.identity, grammar->tokcs[j].name);
+                printf("[%d] %20s can be followed by \"%s\"\n", i, def.identity, grammar->tokcs[j].name);
     }
 }

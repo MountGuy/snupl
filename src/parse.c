@@ -90,6 +90,8 @@ void regist_equ(int sub_idx, int sup_idx, SetEquBuilder *builder)
 
 void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
 {
+    int sn = builder->set_num;
+
     switch (expr->kind)
     {
         case E_ALTER:
@@ -97,11 +99,11 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
             MetaExpr **exprs = expr->nary.exprs;
 
             for (int i = 0; i < expr->nary.expr_num; i++)
+            {
                 _build_equ(exprs[i], grammar, builder);
-
-            for (int i = 0; i < expr->nary.expr_num; i++)
                 regist_equ(exprs[i]->idx, expr->idx, builder);
-
+                regist_equ(expr->idx + sn, exprs[i]->idx + sn, builder);
+            }
             break;
         }
         case E_CONCAT:
@@ -112,11 +114,19 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
                 _build_equ(exprs[i], grammar, builder);
 
             for (int i = 0; i < expr->nary.expr_num - 1; i++)
-                regist_equ(exprs[i + 1]->idx, exprs[i]->idx + builder->set_num, builder);
+                regist_equ(exprs[i + 1]->idx, exprs[i]->idx + sn, builder);
 
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
                 regist_equ(exprs[i]->idx, expr->idx, builder);
+
+                if (!builder->can_eps[exprs[i]->idx])
+                    break;
+            }
+
+            for (int i = expr->nary.expr_num - 1; i >= 0; i--)
+            {
+                regist_equ(expr->idx + sn, exprs[i]->idx + sn, builder);
 
                 if (!builder->can_eps[exprs[i]->idx])
                     break;
@@ -127,6 +137,10 @@ void _build_equ(MetaExpr *expr, Grammar *grammar, SetEquBuilder *builder)
         case E_OPTION:
         case E_REPEAT:
             _build_equ(expr->unary.expr, grammar, builder);
+            regist_equ(expr->idx + sn, expr->unary.expr->idx + sn, builder);
+            regist_equ(expr->unary.expr->idx, expr->idx, builder);
+            if (expr->kind == E_REPEAT)
+                regist_equ(expr->unary.expr->idx, expr->unary.expr->idx + sn, builder);
             break;
         case E_STRING:
             for (int i = 0; i < grammar->tokc_num; i++)
