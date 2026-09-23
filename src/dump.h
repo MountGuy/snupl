@@ -8,7 +8,7 @@
 #include "arena.h"
 #include "meta.h"
 #include "lexer.h"
-#include "parse.h"
+#include "parser.h"
 
 void print_arena(Arena *arena);
 void print_meta_token(MetaToken token);

@@ -3,7 +3,7 @@
 #include "meta.h"
 #include "lexer.h"
 #include "dump.h"
-#include "parse.h"
+#include "parser.h"
 
 char *read_file(char *filename)
 {
