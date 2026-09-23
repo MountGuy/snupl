@@ -25,7 +25,7 @@ Arena init_arena()
     return arena;
 }
 
-char *insert_string(char *string, int string_len, Arena *arena)
+char *insert_string1(char *string, int string_len, Arena *arena)
 {
     Chunk last_buf;
     read_last(&last_buf, &arena->strings);
@@ -42,6 +42,29 @@ char *insert_string(char *string, int string_len, Arena *arena)
     char null = c_null;
     append_data(&null, 1, &last_buf);
     write_last(&last_buf, &arena->strings);
+
+    return head;
+}
+
+char *insert_string(char *string, int string_len, Arena *arena)
+{
+    Chunk *chunks = arena->strings.data;
+    Chunk *last_buf = chunks + chunks->used - 1;
+    // read_last(&last_buf, &arena->strings);
+
+    if (!has_space(string_len + 1, last_buf))
+    {
+        Chunk new_buf = init_chunk(sizeof(char), true);
+        while (new_buf.max < string_len + 1)
+            expand_chunk(&new_buf);
+        new_buf.expands = false;
+        append_data(&new_buf, 1, &arena->strings);
+        last_buf = &new_buf;
+    }
+
+    char *head = append_data(string, string_len, last_buf);
+    char null = c_null;
+    append_data(&null, 1, last_buf);
 
     return head;
 }
