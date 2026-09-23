@@ -2,7 +2,6 @@
 #define META_H 1
 
 #include "common.h"
-#include "chunk.h"
 #include "arena.h"
 
 typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;

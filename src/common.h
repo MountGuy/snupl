@@ -1,11 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H 1
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stddef.h>
 
 #define c_null ('\0')
 #define p_null NULL
