@@ -1,10 +1,20 @@
 #include "meta.h"
 #include "character.h"
 
+void regist_tok_class(MetaExpr *expr, Chunk *tokcs);
+void index_identity(MetaExpr *expr, Grammar *grammar);
+void index_node(MetaExpr *expr, int *counter);
+
+void parse_define(MetaParser *parser);
+MetaExpr *parse_alter(MetaParser *parser);
+MetaExpr *parse_concat(MetaParser *parser);
+MetaExpr *parse_primary(MetaParser *parser);
+
 char ops[11][2] = {
     "(", ")", "{", "}", "[", "]", ";", "=", "|", ",", "~"
 };
 char *S_LPA = ops[0], *S_RPA = ops[1], *S_LBC = ops[2], *S_RBC = ops[3], *S_LBK = ops[4], *S_RBK = ops[5], *S_END = ops[6], *S_EQU = ops[7], *S_ALT = ops[8], *S_CON = ops[9], *S_TIL = ops[10];
+
 
 void print_error_mtoken(char *comment, MetaToken *token)
 {
