@@ -1,35 +1,6 @@
 #include "parser.h"
 #include "bitop.h"
 
-void index_node(MetaExpr *expr, int *counter)
-{
-    switch (expr->kind)
-    {
-        case E_ALTER:
-        case E_CONCAT:
-            for (int i = 0; i < expr->nary.expr_num; i++)
-            {
-                expr->nary.exprs[i]->idx = (*counter)++;
-                index_node(expr->nary.exprs[i], counter);
-            }
-            return;
-        case E_OPTION:
-        case E_REPEAT:
-            expr->unary.expr->idx = (*counter)++;
-            index_node(expr->unary.expr, counter);
-            return;
-        case E_STRING:
-        case E_CRANGE:
-            return;
-        case E_IDENTITY:
-            expr->idx = expr->identity.idx;
-            return;
-        default:
-            printf("Unexpected expr kind during count_set\n");
-            exit(1);
-    }
-}
-
 int _null_analysis(MetaExpr *expr, int *can_eps)
 {
     switch (expr->kind)
@@ -178,13 +149,7 @@ int solve_equ(SetEqu *equ)
 
 FirstFollow solve_ff(Grammar *grammar)
 {
-    int set_num = grammar->def_num, set_size = PAD_SIZE(grammar->tokc_num);
-
-    for (int i = 0; i < grammar->def_num; i++)
-        grammar->defs[i].expr->idx = i;
-
-    for (int i = 0; i < grammar->def_num; i++)
-        index_node(grammar->defs[i].expr, &set_num);
+    int set_num = grammar->expr_num, set_size = PAD_SIZE(grammar->tokc_num);
 
     FirstFollow ff = {
         .sets = calloc(set_num * 2 * set_size / BYTE_SIZE, 1),

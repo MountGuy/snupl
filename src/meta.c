@@ -130,6 +130,14 @@ Grammar meta_parsing(Chunk tokens, Arena *arena)
     for (int i = 0; i < grammar.def_num; i++)
         index_identity(dict, defs[i].expr);
 
+    for (int i = 0; i < grammar.def_num; i++)
+        grammar.defs[i].expr->idx = i;
+
+    int expr_num = grammar.def_num;
+    for (int i = 0; i < grammar.def_num; i++)
+        index_node(grammar.defs[i].expr, &expr_num);
+    grammar.expr_num = expr_num;
+
     free(dict);
 
     return grammar;
@@ -198,6 +206,35 @@ void index_identity(char **dict, MetaExpr *expr)
     }
 }
 
+void index_node(MetaExpr *expr, int *counter)
+{
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        case E_CONCAT:
+            for (int i = 0; i < expr->nary.expr_num; i++)
+            {
+                expr->nary.exprs[i]->idx = (*counter)++;
+                index_node(expr->nary.exprs[i], counter);
+            }
+            return;
+        case E_OPTION:
+        case E_REPEAT:
+            expr->unary.expr->idx = (*counter)++;
+            index_node(expr->unary.expr, counter);
+            return;
+        case E_STRING:
+        case E_CRANGE:
+            return;
+        case E_IDENTITY:
+            expr->idx = expr->identity.idx;
+            return;
+        default:
+            printf("Unexpected expr kind during count_set\n");
+            exit(1);
+    }
+}
+
 Grammar parse_define(MetaParser *parser)
 {
     parser->cursor = 0;
@@ -257,6 +294,7 @@ Grammar parse_define(MetaParser *parser)
     grammar.defs = fix_chunk(&_defs);
     grammar.tokc_num = tokcs.used;
     grammar.tokcs = fix_chunk(&tokcs);
+    grammar.expr_num = 0;
 
     return grammar;
 }

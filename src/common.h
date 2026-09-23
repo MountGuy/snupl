@@ -43,7 +43,7 @@ typedef struct {
 typedef struct {
     MetaDef *defs;
     TokenClass *tokcs;
-    int def_num, tokc_num;
+    int def_num, tokc_num, expr_num;
 } Grammar;
 
 typedef struct {
