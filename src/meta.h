@@ -13,10 +13,8 @@ typedef struct MetaToken {
 
 typedef struct {
     MetaToken *tokens;
-    int token_num, cursor;
-
-    Chunk defs;
-    int def_num;
+    int tok_num, cursor;
+    Chunk defs, tokcs;
 
     Arena *arena;
 } MetaParser;
@@ -29,10 +27,10 @@ Chunk meta_lexing(char *input, Arena *arena);
 
 Grammar meta_parsing(Chunk tokens, Arena *arena);
 void regist_tok_class(MetaExpr *expr, Chunk *tokcs);
-void index_identity(char **dict, MetaExpr *expr);
+void index_identity(MetaExpr *expr, Grammar *grammar);
 void index_node(MetaExpr *expr, int *counter);
 
-Grammar parse_define(MetaParser *parser);
+void parse_define(MetaParser *parser);
 MetaExpr *parse_alter(MetaParser *parser);
 MetaExpr *parse_concat(MetaParser *parser);
 MetaExpr *parse_primary(MetaParser *parser);

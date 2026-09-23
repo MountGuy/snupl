@@ -115,30 +115,36 @@ Chunk meta_lexing(char *input, Arena *arena)
 
 Grammar meta_parsing(Chunk tokens, Arena *arena)
 {
+    int tok_num = tokens.used;
     MetaParser parser = {
-        .token_num = tokens.used,
+        .tok_num = tok_num,
+        .tokens = fix_chunk(&tokens),
+        .defs = init_chunk(sizeof(MetaDef), true),
+        .tokcs = init_chunk(sizeof(TokenClass), true),
         .arena = arena,
     };
-    parser.tokens = fix_chunk(&tokens);
-    Grammar grammar = parse_define(&parser);
+
+    parse_define(&parser);
+
+    int def_num = parser.defs.used, tokc_num = parser.tokcs.used;
+    Grammar grammar = {
+        .def_num = def_num,
+        .tokc_num = tokc_num,
+        .expr_num = def_num,
+        .defs = fix_chunk(&parser.defs),
+        .tokcs = fix_chunk(&parser.tokcs),
+    };
+
     MetaDef *defs = grammar.defs;
-    char **dict = (char**) malloc(sizeof(char*) * (grammar.def_num + 1));
-    for (int i = 0; i < grammar.def_num; i++)
-        dict[i] = defs[i].identity;
-    dict[grammar.def_num] = p_null;
 
     for (int i = 0; i < grammar.def_num; i++)
-        index_identity(dict, defs[i].expr);
+        index_identity(defs[i].expr, &grammar);
 
     for (int i = 0; i < grammar.def_num; i++)
         grammar.defs[i].expr->idx = i;
 
-    int expr_num = grammar.def_num;
     for (int i = 0; i < grammar.def_num; i++)
-        index_node(grammar.defs[i].expr, &expr_num);
-    grammar.expr_num = expr_num;
-
-    free(dict);
+        index_node(grammar.defs[i].expr, &grammar.expr_num);
 
     return grammar;
 }
@@ -175,18 +181,18 @@ void regist_tok_class(MetaExpr *expr, Chunk *tokcs)
     }
 }
 
-void index_identity(char **dict, MetaExpr *expr)
+void index_identity(MetaExpr *expr, Grammar *grammar)
 {
     switch (expr->kind)
     {
         case E_ALTER:
         case E_CONCAT:
             for (int i = 0; i < expr->nary.expr_num; i++)
-                index_identity(dict, expr->nary.exprs[i]);
+                index_identity(expr->nary.exprs[i], grammar);
             return;
         case E_OPTION:
         case E_REPEAT:
-            index_identity(dict, expr->unary.expr);
+            index_identity(expr->unary.expr, grammar);
             return;
         case E_CRANGE:
         case E_STRING:
@@ -194,8 +200,8 @@ void index_identity(char **dict, MetaExpr *expr)
         case E_IDENTITY:
             if (expr->identity.idx == -1)
             {
-                for (int i = 0; dict[i]; i++)
-                    if (expr->identity.id == dict[i])
+                for (int i = 0; i < grammar->def_num; i++)
+                    if (expr->identity.id == grammar->defs[i].identity)
                     {
                         expr->identity.idx = i;
                         return;
@@ -235,12 +241,11 @@ void index_node(MetaExpr *expr, int *counter)
     }
 }
 
-Grammar parse_define(MetaParser *parser)
+void parse_define(MetaParser *parser)
 {
     parser->cursor = 0;
-    Chunk _defs = init_chunk(sizeof(MetaDef), 1);
 
-    while (parser->cursor < parser->token_num)
+    while (parser->cursor < parser->tok_num)
     {
         MetaToken *tok_id = advance_parser(parser);
         MetaToken *tok_equ = advance_parser(parser);
@@ -260,21 +265,21 @@ Grammar parse_define(MetaParser *parser)
         ))
             print_error_mtoken("parse_define end", tok_end);
 
-        MetaDef def;
-        def.identity = tok_id->string;
-        def.expr = expr;
-        if (tok_id->string[0] != '_')
-            def.type = D_GRAMMAR;
-        else if (tok_id->string[1] != '_')
-            def.type = D_TERM;
-        else
-            def.type = D_LETTER;
-        append_data(&def, 1, &_defs);
+        DType type = (tok_id->string[0] != '_'? D_GRAMMAR : 
+            (tok_id->string[1] != '_'? D_TERM : D_LETTER));
+            
+        MetaDef def = {
+            .identity = tok_id->string,
+            .type = type,
+            .expr = expr,
+        };
+        append_data(&def, 1, &parser->defs);
     }
-    Chunk tokcs = init_chunk(sizeof(TokenClass), 1);
 
-    MetaDef *defs = _defs.data;
-    for (int i = 0; i < _defs.used; i++)
+    int def_num = parser->defs.used;
+    MetaDef *defs = parser->defs.data;
+
+    for (int i = 0; i < def_num; i++)
         if (defs[i].type == D_TERM)
         {
             TokenClass class = {
@@ -282,27 +287,19 @@ Grammar parse_define(MetaParser *parser)
                 .idx = i,
                 .type = T_VAR,
             };
-            append_data(&class, 1, &tokcs);
+            append_data(&class, 1, &parser->tokcs);
         }
 
-    for (int i = 0; i < _defs.used; i++)
+    for (int i = 0; i < def_num; i++)
         if (defs[i].type == D_GRAMMAR)
-            regist_tok_class(defs[i].expr, &tokcs);
+            regist_tok_class(defs[i].expr, &parser->tokcs);
 
-    Grammar grammar;
-    grammar.def_num = _defs.used;
-    grammar.defs = fix_chunk(&_defs);
-    grammar.tokc_num = tokcs.used;
-    grammar.tokcs = fix_chunk(&tokcs);
-    grammar.expr_num = 0;
-
-    return grammar;
 }
 
 MetaExpr *parse_alter(MetaParser *parser)
 {
     int expr_num = 0;
-    MetaExpr **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->token_num);
+    MetaExpr **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
     MetaExpr *expr;
 
     while (true)
@@ -342,7 +339,7 @@ MetaExpr *parse_alter(MetaParser *parser)
 MetaExpr *parse_concat(MetaParser *parser)
 {
     int expr_num = 0;
-    MetaExpr **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->token_num);
+    MetaExpr **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
     MetaExpr *expr;
 
     while (true)
