@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "bitop.h"
+#include "dump.h"
 
 int _null_analysis(MetaExpr *expr, int *can_eps)
 {

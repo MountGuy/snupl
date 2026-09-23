@@ -228,8 +228,9 @@ void print_setequ_sol1(FirstFollow *ff, Grammar *grammar)
     {
         if (grammar->defs[i].type != D_GRAMMAR)
             continue;
+        int ff_idx = grammar->defs[i].expr->idx;
 
-        ulli *set = ff->sets + offset * i;
+        ulli *set = ff->sets + offset * ff_idx;
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
                 printf("[%d] %20s can starts with    \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
@@ -239,8 +240,9 @@ void print_setequ_sol1(FirstFollow *ff, Grammar *grammar)
     {
         if (grammar->defs[i].type != D_GRAMMAR)
             continue;
+        int ff_idx = grammar->defs[i].expr->idx;
 
-        ulli *set = ff->sets + offset * (i + ff->set_num);
+        ulli *set = ff->sets + offset * (ff_idx + ff->set_num);
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
                 printf("[%d] %20s can be followed by \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
@@ -258,7 +260,10 @@ void print_ff(FirstFollow *ff, Grammar *grammar)
             if (grammar->defs[j].type != D_GRAMMAR)
                 continue;
 
-            if (READ_OFFSET(ff->sets + offset * j, i))
+            int ff_idx = grammar->defs[j].expr->idx;
+            // printf("ff_idx of %d is %d\n", j, ff_idx);
+
+            if (READ_OFFSET(ff->sets + offset * ff_idx, i))
                 printf("[%d] %20s is a start of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
         }
         for (int j = 0; j < grammar->def_num; j++)
@@ -266,7 +271,10 @@ void print_ff(FirstFollow *ff, Grammar *grammar)
             if (grammar->defs[j].type != D_GRAMMAR)
                 continue;
 
-            if (READ_OFFSET(ff->sets + offset * (j + ff->set_num), i))
+            int ff_idx = grammar->defs[j].expr->idx;
+            // printf("ff_idx of %d is %d/%d\n", j, ff_idx, ff->set_num);
+
+            if (READ_OFFSET(ff->sets + offset * (ff_idx + ff->set_num), i))
                 printf("[%d] %20s is a follow of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
         }
         

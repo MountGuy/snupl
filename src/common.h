@@ -15,6 +15,7 @@ typedef unsigned long long int ulli;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY } ExprKind;
 typedef struct MetaExpr {
     ExprKind kind;
+    int idx;
     union
     {
         struct { int expr_num; struct MetaExpr **exprs; } nary;
@@ -23,7 +24,6 @@ typedef struct MetaExpr {
         struct { int idx; char *id; } identity;
         struct { char lb, ub; } crange;
     };
-    int idx;
 } MetaExpr;
 
 typedef enum { D_LETTER, D_TERM, D_GRAMMAR } DType;
