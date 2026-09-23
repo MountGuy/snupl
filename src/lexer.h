@@ -27,22 +27,6 @@ typedef struct {
     ulli *visiting, *tmp;
 } NFAScanner;
 
-int alloc_NFA_state(NFABuilder *builder);
-void add_char(char lb, char ub, Chunk *lubs);
-int find_char(char lb, char ub, Chunk *lubs);
-
-int count_state(MetaExpr *expr, Grammar *grammar);
-void gather_char(MetaExpr *expr, Chunk *lubs);
-
-int can_trans(int start, int cdx, int end, NFABuilder *builder);
-void add_trans(int start, int cdx, int end, NFABuilder *builder);
-
-int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder);
-void postproc_trans(NFABuilder *builder);
-NFA build_NFA(Grammar *grammar);
-
-void init_scanner(NFA *nfa, NFAScanner *scanner);
-int step_NFA(char letter, NFA *nfa, NFAScanner *scanner);
 Chunk lexing(char *input, Grammar *grammar, Arena *arena);
 
 #endif

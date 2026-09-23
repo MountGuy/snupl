@@ -22,12 +22,6 @@ typedef struct {
     int cursor;
 } Parser;
 
-void index_node(MetaExpr *expr, int *counter);
-int _null_analysis(MetaExpr *expr, int *can_eps);
-void null_analysis(Grammar *grammar, int *can_eps, int set_num);
-void regist_equ(int sub_idx, int sup_idx, SetEqu *set_equ);
-void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *set_equ);
-int solve_equ(SetEqu *equ);
 FirstFollow solve_ff(Grammar *grammar);
 
 #endif

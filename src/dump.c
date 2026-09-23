@@ -3,11 +3,10 @@
 
 void print_arena(Arena *arena)
 {
-    char *str;
+    char **strs = arena->string_heads.data;
     for (int i = 0; i < arena->string_num; i++)
     {
-        read_data(&str, i, &arena->string_heads);
-        printf("[%d] %s\n", i, str);
+        printf("[%d] %s\n", i, strs[i]);
     }
     newline;
 }
@@ -221,34 +220,6 @@ void print_seteq(SetEqu *equ)
     }
 }
 
-void print_setequ_sol1(FirstFollow *ff, Grammar *grammar)
-{
-    int set_size = ff->exact_set_size, offset = ff->offset;
-    for (int i = 0; i < grammar->def_num; i++)
-    {
-        if (grammar->defs[i].type != D_GRAMMAR)
-            continue;
-        int ff_idx = grammar->defs[i].expr->idx;
-
-        ulli *set = ff->sets + offset * ff_idx;
-        for (int j = 0; j < set_size; j++)
-            if (READ_OFFSET(set, j))
-                printf("[%d] %20s can starts with    \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
-    }
-
-    for (int i = 0; i < grammar->def_num; i++)
-    {
-        if (grammar->defs[i].type != D_GRAMMAR)
-            continue;
-        int ff_idx = grammar->defs[i].expr->idx;
-
-        ulli *set = ff->sets + offset * (ff_idx + ff->set_num);
-        for (int j = 0; j < set_size; j++)
-            if (READ_OFFSET(set, j))
-                printf("[%d] %20s can be followed by \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
-    }
-}
-
 void print_ff(FirstFollow *ff, Grammar *grammar)
 {
     int set_size = ff->exact_set_size, offset = ff->offset;
@@ -260,10 +231,7 @@ void print_ff(FirstFollow *ff, Grammar *grammar)
             if (grammar->defs[j].type != D_GRAMMAR)
                 continue;
 
-            int ff_idx = grammar->defs[j].expr->idx;
-            // printf("ff_idx of %d is %d\n", j, ff_idx);
-
-            if (READ_OFFSET(ff->sets + offset * ff_idx, i))
+            if (READ_OFFSET(ff->sets + offset * j, i))
                 printf("[%d] %20s is a start of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
         }
         for (int j = 0; j < grammar->def_num; j++)
@@ -271,13 +239,35 @@ void print_ff(FirstFollow *ff, Grammar *grammar)
             if (grammar->defs[j].type != D_GRAMMAR)
                 continue;
 
-            int ff_idx = grammar->defs[j].expr->idx;
-            // printf("ff_idx of %d is %d/%d\n", j, ff_idx, ff->set_num);
-
-            if (READ_OFFSET(ff->sets + offset * (ff_idx + ff->set_num), i))
+            if (READ_OFFSET(ff->sets + offset * (j + ff->set_num), i))
                 printf("[%d] %20s is a follow of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
         }
         
     }
 }
 
+void print_ff_tp(FirstFollow *ff, Grammar *grammar)
+{
+    int set_size = ff->exact_set_size, offset = ff->offset;
+    for (int i = 0; i < grammar->def_num; i++)
+    {
+        if (grammar->defs[i].type != D_GRAMMAR)
+            continue;
+
+        ulli *set = ff->sets + offset * i;
+        for (int j = 0; j < set_size; j++)
+            if (READ_OFFSET(set, j))
+                printf("[%d] %20s can starts with    \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
+    }
+
+    for (int i = 0; i < grammar->def_num; i++)
+    {
+        if (grammar->defs[i].type != D_GRAMMAR)
+            continue;
+
+        ulli *set = ff->sets + offset * (i + ff->set_num);
+        for (int j = 0; j < set_size; j++)
+            if (READ_OFFSET(set, j))
+                printf("[%d] %20s can be followed by \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
+    }
+}

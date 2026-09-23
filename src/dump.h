@@ -23,7 +23,7 @@ void print_trans(int trim_state_num, int state_num, int char_num, ulli *trans);
 void print_lexing_result(Chunk *tok_chunk);
 void print_binary_vector(ulli *vector, int length);
 void print_seteq(SetEqu *equ);
-void print_setequ_sol1(FirstFollow *ff, Grammar *grammar);
 void print_ff(FirstFollow *ff, Grammar *grammar);
+void print_ff_tp(FirstFollow *ff, Grammar *grammar);
 
 #endif

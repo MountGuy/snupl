@@ -1,5 +1,8 @@
 #include "arena.h"
 
+void insert_string_head(char *string_head, Arena *arena);
+char *insert_string(char *string, int string_len, Arena *arena);
+
 Arena init_arena()
 {
     Arena arena;
@@ -43,23 +46,15 @@ char *insert_string(char *string, int string_len, Arena *arena)
     return head;
 }
 
-void insert_string_head(char *string_head, Arena *arena)
-{
-    append_data(&string_head, 1, &arena->string_heads);
-}
-
 char *add_string(char *string, int string_len, Arena *arena)
 {
-    char *str;
+    char **strs = arena->string_heads.data;
     for (int i = 0; i < arena->string_num; i++)
-    {
-        read_data(&str, i, &arena->string_heads);
-        if (strncmp(str, string, string_len) == 0 && strlen(str) == string_len)
-            return str;
-    }
+        if (strncmp(strs[i], string, string_len) == 0 && strlen(strs[i]) == string_len)
+            return strs[i];
    
-    str = insert_string(string, string_len, arena);
-    insert_string_head(str, arena);
+    char *str = insert_string(string, string_len, arena);
+    append_data(&str, 1, &arena->string_heads);
     arena->string_num++;
 
     return str;
