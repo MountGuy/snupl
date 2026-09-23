@@ -223,9 +223,8 @@ NFA build_NFA(Grammar *grammar)
             exact_state_num += strlen(tc.name) + 2;
     }
 
-    int state_num = (exact_state_num + SZLIB - 1) / SZLIB * SZLIB;
+    int state_num = PAD_SIZE(exact_state_num), char_num = lubs.used / 2;
 
-    int char_num = lubs.used / 2;
     NFABuilder builder = {
         .trans = calloc(state_num * char_num * state_num / BYTE_SIZE, 1),
         .state_num = state_num,

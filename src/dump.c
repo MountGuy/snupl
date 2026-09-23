@@ -203,31 +203,31 @@ void print_binary_vector(ulli *vector, int length)
 
 void print_seteq(SetEqu *equ)
 {
-    int set_size = equ->exact_set_size, offset = equ->offset;
-    for (int i = 0; i < equ->set_num; i++)
+    int set_size = equ->ff->exact_set_size, offset = equ->ff->offset;
+    for (int i = 0; i < equ->ff->set_num; i++)
     {
         printf("first [%d] ", i);
-        print_binary_vector(equ->sets + i * offset, set_size);
+        print_binary_vector(equ->ff->sets + i * offset, set_size);
     }
 
     newline;
 
-    for (int i = 0; i < equ->set_num; i++)
+    for (int i = 0; i < equ->ff->set_num; i++)
     {
         printf("follow [%d] ", i);
-        print_binary_vector(equ->sets + (i + equ->set_num) * offset, set_size);
+        print_binary_vector(equ->ff->sets + (i + equ->ff->set_num) * offset, set_size);
     }
 }
 
-void print_setequ_sol1(SetEqu *equ, Grammar *grammar)
+void print_setequ_sol1(FirstFollow *ff, Grammar *grammar)
 {
-    int set_size = equ->exact_set_size, offset = equ->offset;
+    int set_size = ff->exact_set_size, offset = ff->offset;
     for (int i = 0; i < grammar->def_num; i++)
     {
         if (grammar->defs[i].type != D_GRAMMAR)
             continue;
 
-        ulli *set = equ->sets + offset * i;
+        ulli *set = ff->sets + offset * i;
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
                 printf("[%d] %20s can starts with    \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
@@ -238,16 +238,16 @@ void print_setequ_sol1(SetEqu *equ, Grammar *grammar)
         if (grammar->defs[i].type != D_GRAMMAR)
             continue;
 
-        ulli *set = equ->sets + offset * (i + equ->set_num);
+        ulli *set = ff->sets + offset * (i + ff->set_num);
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
                 printf("[%d] %20s can be followed by \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
     }
 }
 
-void print_setequ_sol2(SetEqu *equ, Grammar *grammar)
+void print_ff(FirstFollow *ff, Grammar *grammar)
 {
-    int set_size = equ->exact_set_size, offset = equ->offset;
+    int set_size = ff->exact_set_size, offset = ff->offset;
 
     for (int i = 0; i < set_size; i++)
     {
@@ -256,7 +256,7 @@ void print_setequ_sol2(SetEqu *equ, Grammar *grammar)
             if (grammar->defs[j].type != D_GRAMMAR)
                 continue;
 
-            if (READ_OFFSET(equ->sets + offset * j, i))
+            if (READ_OFFSET(ff->sets + offset * j, i))
                 printf("[%d] %20s is a start of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
         }
         for (int j = 0; j < grammar->def_num; j++)
@@ -264,7 +264,7 @@ void print_setequ_sol2(SetEqu *equ, Grammar *grammar)
             if (grammar->defs[j].type != D_GRAMMAR)
                 continue;
 
-            if (READ_OFFSET(equ->sets + offset * (j + equ->set_num), i))
+            if (READ_OFFSET(ff->sets + offset * (j + ff->set_num), i))
                 printf("[%d] %20s is a follow of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
         }
         

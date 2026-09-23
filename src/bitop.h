@@ -6,5 +6,6 @@
 #define OFFSET(s, c, e, sn, cn) ((e) + (sn) * ((c) + (cn) * (s)))
 #define READ_OFFSET(p, o) ((p)[(o) / SZLIB] & ((ulli) 1 << ((o) % SZLIB)))
 #define WRITE_OFFSET(p, o) ((p)[(o) / SZLIB] |= ((ulli) 1 << ((o) % SZLIB)))
+#define PAD_SIZE(i) ((i + SZLIB - 1) / SZLIB * SZLIB)
 
 #endif

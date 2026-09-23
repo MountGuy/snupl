@@ -28,8 +28,8 @@ int main(int argv, char *argc[])
     Arena arena = init_arena();
     Chunk m_tokens = meta_lexing(buf1, &arena);
     Grammar grammar = meta_parsing(m_tokens, &arena);
-    SetEqu equ = solve_firstfollow(&grammar);
-    print_setequ_sol2(&equ, &grammar);
+    FirstFollow ff = solve_ff(&grammar);
+    print_ff(&ff, &grammar);
 
     Chunk tokens = lexing(buf2, &grammar, &arena);
     printf("Lexing done: total %d tokens\n", tokens.used);
