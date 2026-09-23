@@ -3,9 +3,12 @@
 
 #include <stdio.h>
 
-#include "struct.h"
 #include "common.h"
 #include "chunk.h"
+#include "arena.h"
+#include "meta.h"
+#include "lexer.h"
+#include "parse.h"
 #include "bitop.h"
 
 void print_arena(Arena *arena);

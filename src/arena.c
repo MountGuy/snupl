@@ -1,6 +1,5 @@
 #include "arena.h"
 
-
 Arena init_arena()
 {
     Arena arena;
@@ -85,11 +84,10 @@ MetaExpr *alloc_expr(Arena *arena)
 
 MetaExpr **alloc_exprs(int size, Arena *arena)
 {
-    int alloc_size = size + 1 > DEF_MAX? size + 1 : DEF_MAX;
     Chunk last_buf;
     read_last(&last_buf, &arena->expr_lists);
 
-    if (!has_space(alloc_size, &last_buf))
+    if (!has_space(size + 1, &last_buf))
     {
         last_buf = init_chunk(sizeof(MetaExpr*), false);
         append_data(&last_buf, 1, &arena->expr_lists);

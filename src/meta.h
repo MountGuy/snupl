@@ -2,12 +2,27 @@
 #define META_H 1
 
 #include "common.h"
-#include "struct.h"
 #include "chunk.h"
 #include "arena.h"
 #include "character.h"
-#include "dump.h"
 #include "log.h"
+
+typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;
+typedef struct MetaToken {
+    char *string;
+    MType type;
+    int line, col, len;
+} MetaToken;
+
+typedef struct {
+    MetaToken *tokens;
+    int token_num, cursor;
+
+    Chunk defs;
+    int def_num;
+
+    Arena *arena;
+} MetaParser;
 
 MetaToken *peek_tok(MetaParser *parser);
 MetaToken *peek_next(MetaParser *parser);

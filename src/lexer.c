@@ -317,35 +317,36 @@ int step_NFA(char letter, NFA *nfa, NFAScanner *scanner)
     return alive_state;
 }
 
-Chunk lexing(char *input, NFA *nfa, Arena *arena)
+Chunk lexing(char *input, Grammar *grammar, Arena *arena)
 {
     int input_len = strlen(input), line = 1;
     char *cursor = input, *last_nl = input - 1;
 
     Chunk tokens = init_chunk(sizeof(Token), 1);
-    TokenClass *tokcs = nfa->tokcs;
+    NFA nfa = build_NFA(grammar);
+    TokenClass *tokcs = nfa.tokcs;
 
-    void *buffer = malloc(nfa->state_num / BYTE_SIZE * 2 + sizeof(int) * nfa->tokc_num);
+    void *buffer = malloc(nfa.state_num / BYTE_SIZE * 2 + sizeof(int) * nfa.tokc_num);
     NFAScanner scanner = {
         .visiting = buffer,
-        .tmp = buffer + nfa->state_num / BYTE_SIZE,
-        .lens = buffer + nfa->state_num / BYTE_SIZE * 2,
+        .tmp = buffer + nfa.state_num / BYTE_SIZE,
+        .lens = buffer + nfa.state_num / BYTE_SIZE * 2,
     };
 
     while (cursor - input < input_len)
     {
-        init_scanner(nfa, &scanner);
+        init_scanner(&nfa, &scanner);
 
         for (; IS_SKIP(*cursor); cursor++)
             if (*cursor == '\n')
                 line++, last_nl = cursor;
 
         int tok_len = 0;
-        while (step_NFA(*(cursor + tok_len), nfa, &scanner))
+        while (step_NFA(*(cursor + tok_len), &nfa, &scanner))
             tok_len++;
 
         int best_idx = -1, best_len = 0;
-        for (int i = 0; i < nfa->tokc_num; i++)
+        for (int i = 0; i < nfa.tokc_num; i++)
             if (
                 (scanner.lens[i] > 0 && best_idx == -1) ||
                 (scanner.lens[i] > best_len) ||

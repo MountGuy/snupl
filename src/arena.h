@@ -2,8 +2,12 @@
 #define ARENA_H 1
 
 #include "common.h"
-#include "struct.h"
 #include "chunk.h"
+
+typedef struct {
+    Chunk strings, string_heads, exprs, expr_lists;
+    int string_num;
+} Arena;
 
 Arena init_arena();
 char *insert_string(char *string, int string_len, Arena *arena);

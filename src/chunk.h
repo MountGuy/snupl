@@ -3,10 +3,13 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include "struct.h"
+#include <stddef.h>
 
-#define DEF_MAX 1000
+typedef struct {
+    void *data;
+    size_t unit;
+    int max, used, expands;
+} Chunk;
 
 Chunk init_chunk(size_t unit, int expands);
 void expand_chunk(Chunk *chunk);

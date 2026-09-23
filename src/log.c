@@ -1,4 +1,11 @@
 #include "log.h"
+#include "meta.h"
+
+void print_error(char *message)
+{
+    printf("%s\n", message);
+    exit(1);
+}
 
 void print_error_mtoken(char *comment, MetaToken *token)
 {

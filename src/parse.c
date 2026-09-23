@@ -1,4 +1,5 @@
 #include "parse.h"
+#include "dump.h"
 
 void index_node(MetaExpr *expr, int *counter)
 {

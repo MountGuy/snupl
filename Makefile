@@ -8,7 +8,7 @@ SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(SRCS))
 DEPS := $(OBJS:.o=.d)
 
-.PHONY: all clean test simple rtest rerun asan
+.PHONY: all clean test simple rtest rerun asan check-headers
 
 all: $(TARGET)
 
@@ -49,3 +49,15 @@ asan: BUILD := build-asan
 asan: TARGET := scanner-asan
 asan:
 	$(MAKE) BUILD=build-asan TARGET=scanner-asan CFLAGS="$(CFLAGS)" scanner-asan
+
+# 각 헤더가 단독으로 컴파일되는지 검사한다 (포함 순서 의존 / 순환 포함 탐지).
+check-headers:
+	@fail=0; \
+	for h in $(SRC_DIR)/*.h; do \
+		echo "#include \"$$(basename $$h)\"" > .hdrcheck.c; \
+		if $(CC) -fsyntax-only -I$(SRC_DIR) .hdrcheck.c 2>/dev/null; then \
+			printf '  %-16s OK\n' "$$(basename $$h)"; \
+		else \
+			printf '  %-16s FAIL\n' "$$(basename $$h)"; fail=1; \
+		fi; \
+	done; rm -f .hdrcheck.c; exit $$fail
