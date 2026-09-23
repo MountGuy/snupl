@@ -13,7 +13,7 @@ typedef struct MetaToken {
 
 typedef struct {
     MetaToken *tokens;
-    int tok_num, cursor;
+    int tok_num, cursor, expr_num;
     Chunk defs, tokcs;
 
     Arena *arena;

@@ -1,5 +1,6 @@
 #include "meta.h"
 #include "character.h"
+#include "dump.h"
 
 void regist_tok_class(MetaExpr *expr, Chunk *tokcs);
 void index_identity(MetaExpr *expr, Grammar *grammar);
@@ -140,7 +141,7 @@ Grammar meta_parsing(Chunk tokens, Arena *arena)
     Grammar grammar = {
         .def_num = def_num,
         .tokc_num = tokc_num,
-        .expr_num = def_num,
+        .expr_num = parser.expr_num + def_num,
         .defs = fix_chunk(&parser.defs),
         .tokcs = fix_chunk(&parser.tokcs),
     };
@@ -148,13 +149,14 @@ Grammar meta_parsing(Chunk tokens, Arena *arena)
     MetaDef *defs = grammar.defs;
 
     for (int i = 0; i < grammar.def_num; i++)
-        index_identity(defs[i].expr, &grammar);
-
-    for (int i = 0; i < grammar.def_num; i++)
         grammar.defs[i].expr->idx = i;
 
     for (int i = 0; i < grammar.def_num; i++)
-        index_node(grammar.defs[i].expr, &grammar.expr_num);
+        index_identity(defs[i].expr, &grammar);
+
+    printf("expr num: %d\n", grammar.expr_num);
+
+    print_grammar(&grammar);
 
     return grammar;
 }
@@ -193,6 +195,8 @@ void regist_tok_class(MetaExpr *expr, Chunk *tokcs)
 
 void index_identity(MetaExpr *expr, Grammar *grammar)
 {
+    if (expr->kind != E_IDENTITY)
+        expr->idx += grammar->def_num;
     switch (expr->kind)
     {
         case E_ALTER:
@@ -214,6 +218,7 @@ void index_identity(MetaExpr *expr, Grammar *grammar)
                     if (expr->identity.id == grammar->defs[i].identity)
                     {
                         expr->identity.idx = i;
+                        expr->idx = i;
                         return;
                     }
             }
@@ -341,10 +346,12 @@ MetaExpr *parse_alter(MetaParser *parser)
         expr->kind = E_ALTER;
         expr->nary.expr_num = expr_num;
         expr->nary.exprs = alloc_exprs(expr_num, parser->arena);
+        expr->idx = parser->expr_num++;
         memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr*) * expr_num);
     }
     free(buffer);
-    return expr;}
+    return expr;
+}
 
 MetaExpr *parse_concat(MetaParser *parser)
 {
@@ -382,6 +389,7 @@ MetaExpr *parse_concat(MetaParser *parser)
         expr->kind = E_CONCAT;
         expr->nary.expr_num = expr_num;
         expr->nary.exprs = alloc_exprs(expr_num, parser->arena);
+        expr->idx = parser->expr_num++;
         memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr*) * expr_num);
     }
     free(buffer);
@@ -408,6 +416,7 @@ MetaExpr *parse_primary(MetaParser *parser)
                 expr->kind = E_CRANGE;
                 expr->crange.lb = token->string[0];
                 expr->crange.ub = end_token->string[0];
+                expr->idx = parser->expr_num++;
                 return expr;
             }
             else
@@ -415,6 +424,7 @@ MetaExpr *parse_primary(MetaParser *parser)
                 MetaExpr *expr = alloc_expr(parser->arena);
                 expr->kind = E_STRING;
                 expr->string.value = string;
+                expr->idx = parser->expr_num++;
                 return expr;
             }
         }
@@ -424,6 +434,7 @@ MetaExpr *parse_primary(MetaParser *parser)
             expr->kind = E_IDENTITY;
             expr->identity.id = string;
             expr->identity.idx = -1;
+            expr->idx = -1;
             return expr;
         }
         case M_OPERATOR:
@@ -441,6 +452,7 @@ MetaExpr *parse_primary(MetaParser *parser)
                     MetaExpr *expr = alloc_expr(parser->arena);
                     expr->kind = E_REPEAT;
                     expr->unary.expr = body;
+                    expr->idx = parser->expr_num++;
                     return expr;
                 }
                 if (string == S_LBK && next_string == S_RBK)
@@ -448,6 +460,7 @@ MetaExpr *parse_primary(MetaParser *parser)
                     MetaExpr *expr = alloc_expr(parser->arena);
                     expr->kind = E_OPTION;
                     expr->unary.expr = body;
+                    expr->idx = parser->expr_num++;
                     return expr;
                 }
             }
