@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "bitop.h"
 
 #define IS_SKIP(c) ((c) == ' ' || (c) == '\t' || (c) == '\n')
 

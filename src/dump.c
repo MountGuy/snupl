@@ -1,4 +1,5 @@
 #include "dump.h"
+#include "bitop.h"
 
 void print_arena(Arena *arena)
 {

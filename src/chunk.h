@@ -1,8 +1,6 @@
 #ifndef CHUNK_H
 #define CHUNK_H 1
 
-#include <stdlib.h>
-#include <string.h>
 #include <stddef.h>
 
 typedef struct {

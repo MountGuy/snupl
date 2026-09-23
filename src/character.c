@@ -1,5 +1,8 @@
 #include "character.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 int hex_to_int(char c)
 {
     if ('0' <= c && c <= '9')

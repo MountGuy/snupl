@@ -6,7 +6,6 @@
 
 #include "common.h"
 #include "arena.h"
-#include "bitop.h"
 
 typedef struct {
     ulli *trans;

@@ -1,9 +1,16 @@
 #include "meta.h"
+#include "character.h"
 
 char ops[11][2] = {
     "(", ")", "{", "}", "[", "]", ";", "=", "|", ",", "~"
 };
 char *S_LPA = ops[0], *S_RPA = ops[1], *S_LBC = ops[2], *S_RBC = ops[3], *S_LBK = ops[4], *S_RBK = ops[5], *S_END = ops[6], *S_EQU = ops[7], *S_ALT = ops[8], *S_CON = ops[9], *S_TIL = ops[10];
+
+void print_error_mtoken(char *comment, MetaToken *token)
+{
+    printf("Unexpected token %s at [%d:%d-%d] during parsing %s\n", token->string, token->line, token->col, token->col + token->len, comment);
+    exit(1);
+}
 
 MetaToken *peek_tok(MetaParser *parser)
 {

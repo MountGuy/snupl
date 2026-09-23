@@ -1,5 +1,7 @@
 #include "chunk.h"
-#include "log.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define DEF_MAX 1000
 
@@ -20,7 +22,8 @@ void expand_chunk(Chunk *chunk)
 {
     if (!chunk->expands)
     {
-        print_error("This chunk cannot be expanded!\n");
+        printf("This chunk cannot be expanded!\n");
+        exit(1);
     }
     Chunk new_chunk = {
         .data = malloc(chunk->unit * chunk->max * 2),

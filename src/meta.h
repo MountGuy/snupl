@@ -4,8 +4,6 @@
 #include "common.h"
 #include "chunk.h"
 #include "arena.h"
-#include "character.h"
-#include "log.h"
 
 typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;
 typedef struct MetaToken {
@@ -24,6 +22,7 @@ typedef struct {
     Arena *arena;
 } MetaParser;
 
+void print_error_mtoken(char *comment, MetaToken *token);
 MetaToken *peek_tok(MetaParser *parser);
 MetaToken *peek_next(MetaParser *parser);
 MetaToken *advance_parser(MetaParser *parser);

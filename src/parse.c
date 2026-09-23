@@ -1,5 +1,5 @@
 #include "parse.h"
-#include "dump.h"
+#include "bitop.h"
 
 void index_node(MetaExpr *expr, int *counter)
 {
@@ -223,11 +223,11 @@ int apply_equ(SetEqu *equ)
     return result;
 }
 
-void solve_firstfollow(Grammar *grammar)
+SetEqu solve_firstfollow(Grammar *grammar)
 {
     SetEqu equ = build_equ(grammar);
     while(apply_equ(&equ));
-    print_setequ_sol2(&equ, grammar);
+    return equ;
 }
 
 void parse(Token *tokens, MetaDef *def)
