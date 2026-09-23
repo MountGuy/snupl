@@ -54,31 +54,6 @@ void *alloc_mem(int length, Chunk *chunk)
     return return_val;
 }
 
-void write_data(void *source, int idx, Chunk *chunk)
-{
-    memcpy(chunk->data + chunk->unit * idx, source, chunk->unit);
-}
-
-void write_last(void *source, Chunk *chunk)
-{
-    write_data(source, chunk->used - 1, chunk);
-}
-
-void read_data(void *dest, int idx, Chunk *chunk)
-{
-    memcpy(dest, chunk->data + chunk->unit * idx, chunk->unit);
-}
-
-void read_last(void *dest, Chunk *chunk)
-{
-    read_data(dest, chunk->used - 1, chunk);
-}
-
-int has_space(int length, Chunk *chunk)
-{
-    return chunk->max >= chunk->used + length;
-}
-
 void *fix_chunk(Chunk *chunk)
 {
     int size = chunk->unit * chunk->used;

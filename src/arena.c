@@ -1,7 +1,17 @@
 #include "arena.h"
 
-void insert_string_head(char *string_head, Arena *arena);
-char *insert_string(char *string, int string_len, Arena *arena);
+#define LAST_DATA(c) (((c)->data) + ((c)->used - 1) * ((c)->unit))
+#define HAS_SPACE(c, s) ((c)->max >= (c)->used + (s))
+
+Chunk init_large_chunk(size_t unit, int expands, int max)
+{
+    Chunk chunk = init_chunk(unit, true);
+    while (chunk.max < max)
+        expand_chunk(&chunk);
+    chunk.expands = false;
+
+    return chunk;
+}
 
 Arena init_arena()
 {
@@ -25,46 +35,20 @@ Arena init_arena()
     return arena;
 }
 
-char *insert_string1(char *string, int string_len, Arena *arena)
-{
-    Chunk last_buf;
-    read_last(&last_buf, &arena->strings);
-
-    if (!has_space(string_len + 1, &last_buf))
-    {
-        last_buf = init_chunk(sizeof(char), false);
-        while (last_buf.max < string_len + 1)
-            expand_chunk(&last_buf);
-        append_data(&last_buf, 1, &arena->strings);
-    }
-
-    char *head = append_data(string, string_len, &last_buf);
-    char null = c_null;
-    append_data(&null, 1, &last_buf);
-    write_last(&last_buf, &arena->strings);
-
-    return head;
-}
-
 char *insert_string(char *string, int string_len, Arena *arena)
 {
-    Chunk *chunks = arena->strings.data;
-    Chunk *last_buf = chunks + chunks->used - 1;
-    // read_last(&last_buf, &arena->strings);
+    Chunk *last_chunk = LAST_DATA(&arena->strings);
 
-    if (!has_space(string_len + 1, last_buf))
+    if (!HAS_SPACE(last_chunk, string_len + 1))
     {
-        Chunk new_buf = init_chunk(sizeof(char), true);
-        while (new_buf.max < string_len + 1)
-            expand_chunk(&new_buf);
-        new_buf.expands = false;
-        append_data(&new_buf, 1, &arena->strings);
-        last_buf = &new_buf;
+        Chunk new_chunk = init_large_chunk(sizeof(char), false, string_len + 1);
+        append_data(&new_chunk, 1, &arena->strings);
+        last_chunk = LAST_DATA(&arena->strings);
     }
 
-    char *head = append_data(string, string_len, last_buf);
+    char *head = append_data(string, string_len, last_chunk);
     char null = c_null;
-    append_data(&null, 1, last_buf);
+    append_data(&null, 1, last_chunk);
 
     return head;
 }
@@ -85,34 +69,32 @@ char *add_string(char *string, int string_len, Arena *arena)
 
 MetaExpr *alloc_expr(Arena *arena)
 {
-    Chunk last_buf;
-    read_last(&last_buf, &arena->exprs);
+    Chunk *last_chunk = LAST_DATA(&arena->exprs);
 
-    if (!has_space(1, &last_buf))
+    if (!HAS_SPACE(last_chunk, 1))
     {
-        last_buf = init_chunk(sizeof(MetaExpr), false);
-        append_data(&last_buf, 1, &arena->exprs);
+        Chunk new_chunk = init_chunk(sizeof(MetaExpr), false);
+        append_data(&new_chunk, 1, &arena->exprs);
+        last_chunk = LAST_DATA(&arena->exprs);
     }
 
-    MetaExpr *head = alloc_mem(1, &last_buf);
-    write_last(&last_buf, &arena->exprs);
+    MetaExpr *head = alloc_mem(1, last_chunk);
 
     return head;
 }
 
 MetaExpr **alloc_exprs(int size, Arena *arena)
 {
-    Chunk last_buf;
-    read_last(&last_buf, &arena->expr_lists);
+    Chunk *last_chunk = LAST_DATA(&arena->expr_lists);
 
-    if (!has_space(size + 1, &last_buf))
+    if (!HAS_SPACE(last_chunk, size))
     {
-        last_buf = init_chunk(sizeof(MetaExpr*), false);
-        append_data(&last_buf, 1, &arena->expr_lists);
+        Chunk new_chunk = init_large_chunk(sizeof(MetaExpr*), false, size);
+        append_data(&new_chunk, 1, &arena->expr_lists);
+        last_chunk = LAST_DATA(&arena->expr_lists);
     }
 
-    MetaExpr **head = alloc_mem(size, &last_buf);
-    write_last(&last_buf, &arena->expr_lists);
+    MetaExpr **head = alloc_mem(size, last_chunk);
 
     return head;
 

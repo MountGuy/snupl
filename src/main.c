@@ -29,7 +29,7 @@ int main(int argv, char *argc[])
     Chunk m_tokens = meta_lexing(buf1, &arena);
     Grammar grammar = meta_parsing(m_tokens, &arena);
     FirstFollow ff = solve_ff(&grammar);
-    print_ff(&ff, &grammar);
+    print_ff_tp(&ff, &grammar);
 
     Chunk tokens = lexing(buf2, &grammar, &arena);
     printf("Lexing done: total %d tokens\n", tokens.used);
