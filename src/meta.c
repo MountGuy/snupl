@@ -155,8 +155,8 @@ void parse_define(MetaParser *parser)
 MetaExpr *parse_alter(MetaParser *parser)
 {
     int expr_num = 0;
-    MetaExpr **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
-    // MetaExpr *buffer[parser->tok_num];
+    // MetaExpr **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
+    MetaExpr *buffer[parser->tok_num];
     MetaExpr *expr;
 
     while (true)
