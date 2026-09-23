@@ -18,7 +18,7 @@ typedef struct MetaExpr {
     int idx;
     union
     {
-        struct { int expr_num; struct MetaExpr **exprs; } nary;
+        struct { int expr_num; struct MetaExpr *exprs; } nary;
         struct { struct MetaExpr *expr; } unary;
         struct { char *value; } string;
         struct { int idx; char *id; } identity;

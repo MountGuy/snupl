@@ -13,7 +13,7 @@ char *read_file(char *filename)
     int char_num_ = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    char *buf = (char*) malloc(sizeof(char) * (char_num_ + 10));
+    char *buf = malloc(sizeof(char) * (char_num_ + 10));
     fread(buf, 1, char_num_, fp);
     buf[char_num_] = c_null;
 

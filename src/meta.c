@@ -41,7 +41,7 @@ void regist_tok_class(MetaExpr *expr, Chunk *tokcs)
         case E_CONCAT:
         {
             for (int i = 0; i < expr->nary.expr_num; i++)
-                regist_tok_class(expr->nary.exprs[i], tokcs);
+                regist_tok_class(expr->nary.exprs + i, tokcs);
             return;
         }
         case E_OPTION:
@@ -75,7 +75,7 @@ void index_expr(MetaExpr *expr, Grammar *grammar)
         case E_ALTER:
         case E_CONCAT:
             for (int i = 0; i < expr->nary.expr_num; i++)
-                index_expr(expr->nary.exprs[i], grammar);
+                index_expr(expr->nary.exprs + i, grammar);
             return;
         case E_OPTION:
         case E_REPEAT:
@@ -155,11 +155,11 @@ void parse_define(MetaParser *parser)
 MetaExpr *parse_alter(MetaParser *parser)
 {
     int expr_num = 0;
-    MetaExpr *expr, **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
+    MetaExpr *expr, *buffer = malloc(sizeof(MetaExpr) * parser->tok_num);
 
     while (true)
     {
-        buffer[expr_num++] = parse_concat(parser);
+        buffer[expr_num++] = *parse_concat(parser);
         MetaToken *token = peek_tok(parser);
 
         if ((
@@ -177,15 +177,19 @@ MetaExpr *parse_alter(MetaParser *parser)
     }
 
     if (expr_num == 1)
-        expr = buffer[0];
+    {
+        expr = alloc_expr(1, parser->arena);
+        *expr = buffer[0];
+        return expr;
+    }
     else
     {
-        expr = alloc_expr(parser->arena);
+        expr = alloc_expr(expr_num + 1, parser->arena);
         expr->kind = E_ALTER;
         expr->idx = -1;
         expr->nary.expr_num = expr_num;
-        expr->nary.exprs = alloc_exprs(expr_num, parser->arena);
-        memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr*) * expr_num);
+        expr->nary.exprs = expr + 1;
+        memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr) * expr_num);
     }
     free(buffer);
     return expr;
@@ -194,11 +198,11 @@ MetaExpr *parse_alter(MetaParser *parser)
 MetaExpr *parse_concat(MetaParser *parser)
 {
     int expr_num = 0;
-    MetaExpr *expr, **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
+    MetaExpr *expr, *buffer = malloc(sizeof(MetaExpr) * parser->tok_num);
 
     while (true)
     {
-        buffer[expr_num++] = parse_primary(parser);
+        buffer[expr_num++] = *parse_primary(parser);
         MetaToken *token = peek_tok(parser);
 
         if ((
@@ -217,15 +221,19 @@ MetaExpr *parse_concat(MetaParser *parser)
     }
 
     if (expr_num == 1)
-        expr = buffer[0];
+    {
+        expr = alloc_expr(1, parser->arena);
+        *expr = buffer[0];
+        return expr;
+    }
     else
     {
-        expr = alloc_expr(parser->arena);
+        expr = alloc_expr(expr_num + 1, parser->arena);
         expr->kind = E_CONCAT;
         expr->idx = -1;
         expr->nary.expr_num = expr_num;
-        expr->nary.exprs = alloc_exprs(expr_num, parser->arena);
-        memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr*) * expr_num);
+        expr->nary.exprs = expr + 1;
+        memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr) * expr_num);
     }
     free(buffer);
     return expr;
@@ -246,7 +254,7 @@ MetaExpr *parse_primary(MetaParser *parser)
             {
                 advance_parser(parser);
                 MetaToken *end_token = advance_parser(parser);
-                MetaExpr *expr = alloc_expr(parser->arena);
+                MetaExpr *expr = alloc_expr(1, parser->arena);
 
                 expr->kind = E_CRANGE;
                 expr->idx = -1;
@@ -256,7 +264,7 @@ MetaExpr *parse_primary(MetaParser *parser)
             }
             else
             {
-                MetaExpr *expr = alloc_expr(parser->arena);
+                MetaExpr *expr = alloc_expr(1, parser->arena);
                 expr->kind = E_STRING;
                 expr->idx = -1;
                 expr->string.value = string;
@@ -265,7 +273,7 @@ MetaExpr *parse_primary(MetaParser *parser)
         }
         case M_IDENTITY:
         {
-            MetaExpr *expr = alloc_expr(parser->arena);
+            MetaExpr *expr = alloc_expr(1, parser->arena);
             expr->kind = E_IDENTITY;
             expr->idx = -1;
             expr->identity.id = string;
@@ -284,7 +292,7 @@ MetaExpr *parse_primary(MetaParser *parser)
                     return body;
                 if (string == S_LBC && next_string == S_RBC)
                 {
-                    MetaExpr *expr = alloc_expr(parser->arena);
+                    MetaExpr *expr = alloc_expr(1, parser->arena);
                     expr->kind = E_REPEAT;
                     expr->idx = -1;
                     expr->unary.expr = body;
@@ -292,7 +300,7 @@ MetaExpr *parse_primary(MetaParser *parser)
                 }
                 if (string == S_LBK && next_string == S_RBK)
                 {
-                    MetaExpr *expr = alloc_expr(parser->arena);
+                    MetaExpr *expr = alloc_expr(1, parser->arena);
                     expr->kind = E_OPTION;
                     expr->idx = -1;
                     expr->unary.expr = body;

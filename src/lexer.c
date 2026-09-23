@@ -38,7 +38,7 @@ int count_state(MetaExpr *expr, Grammar *grammar)
         case E_CONCAT:
             int total = expr->nary.expr_num + (expr->kind == E_ALTER);
             for (int i = 0; i < expr->nary.expr_num; i++)
-                total += count_state(expr->nary.exprs[i], grammar);
+                total += count_state(expr->nary.exprs + i, grammar);
             return total;
         case E_OPTION:
         case E_REPEAT:
@@ -70,7 +70,7 @@ void gather_char(MetaExpr *expr, Chunk *lubs)
         case E_ALTER:
         case E_CONCAT:
             for (int i = 0; i < expr->nary.expr_num; i++)
-                gather_char(expr->nary.exprs[i], lubs);
+                gather_char(expr->nary.exprs + i, lubs);
             break;
         case E_OPTION:
         case E_REPEAT:
@@ -102,7 +102,7 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
                 int _start = alloc_NFA_state(builder);
-                int _end = _build_NFA(expr->nary.exprs[i], _start, builder);
+                int _end = _build_NFA(expr->nary.exprs + i, _start, builder);
                 add_trans(start, I_EPS, _start, builder);
                 add_trans(_end, I_EPS, end, builder);
             }
@@ -113,7 +113,7 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
             int cur_start = start, cur_end;
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                cur_end = _build_NFA(expr->nary.exprs[i], cur_start, builder);
+                cur_end = _build_NFA(expr->nary.exprs + i, cur_start, builder);
                 cur_start = alloc_NFA_state(builder);
                 add_trans(cur_end, I_EPS, cur_start, builder);
             }

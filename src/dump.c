@@ -99,7 +99,7 @@ void print_meta_expr(MetaExpr *expr)
             printf("(");
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                print_meta_expr(expr->nary.exprs[i]);
+                print_meta_expr(expr->nary.exprs + i);
                 if (i < expr->nary.expr_num - 1)
                     printf(" | ");
             }
@@ -109,7 +109,7 @@ void print_meta_expr(MetaExpr *expr)
             printf("(");
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                print_meta_expr(expr->nary.exprs[i]);
+                print_meta_expr(expr->nary.exprs + i);
                 if (i < expr->nary.expr_num - 1)
                     printf(" , ");
             }

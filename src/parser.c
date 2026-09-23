@@ -10,7 +10,7 @@ int _null_analysis(MetaExpr *expr, int *can_eps)
         {
             int result = 0;
             for (int i = 0; i < expr->nary.expr_num; i++)
-                if (_null_analysis(expr->nary.exprs[i], can_eps))
+                if (_null_analysis(expr->nary.exprs + i, can_eps))
                     result = 1;
             return can_eps[expr->idx] = result;
         }
@@ -18,7 +18,7 @@ int _null_analysis(MetaExpr *expr, int *can_eps)
         {
             int result = 1;
             for (int i = 0; i < expr->nary.expr_num; i++)
-                if (!_null_analysis(expr->nary.exprs[i], can_eps))
+                if (!_null_analysis(expr->nary.exprs + i, can_eps))
                     result = 0;
             return can_eps[expr->idx] = result;
         }
@@ -63,39 +63,39 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
     {
         case E_ALTER:
         {
-            MetaExpr **exprs = expr->nary.exprs;
+            MetaExpr *exprs = expr->nary.exprs;
 
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                build_equ(exprs[i], grammar, equ);
-                regist_equ(exprs[i]->idx, expr->idx, equ);
-                regist_equ(expr->idx + sn, exprs[i]->idx + sn, equ);
+                build_equ(exprs + i, grammar, equ);
+                regist_equ(exprs[i].idx, expr->idx, equ);
+                regist_equ(expr->idx + sn, exprs[i].idx + sn, equ);
             }
             break;
         }
         case E_CONCAT:
         {
-            MetaExpr **exprs = expr->nary.exprs;
+            MetaExpr *exprs = expr->nary.exprs;
 
             for (int i = 0; i < expr->nary.expr_num; i++)
-                build_equ(exprs[i], grammar, equ);
+                build_equ(exprs + i, grammar, equ);
 
             for (int i = 0; i < expr->nary.expr_num - 1; i++)
-                regist_equ(exprs[i + 1]->idx, exprs[i]->idx + sn, equ);
+                regist_equ(exprs[i + 1].idx, exprs[i].idx + sn, equ);
 
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                regist_equ(exprs[i]->idx, expr->idx, equ);
+                regist_equ(exprs[i].idx, expr->idx, equ);
 
-                if (!equ->can_eps[exprs[i]->idx])
+                if (!equ->can_eps[exprs[i].idx])
                     break;
             }
 
             for (int i = expr->nary.expr_num - 1; i >= 0; i--)
             {
-                regist_equ(expr->idx + sn, exprs[i]->idx + sn, equ);
+                regist_equ(expr->idx + sn, exprs[i].idx + sn, equ);
 
-                if (!equ->can_eps[exprs[i]->idx])
+                if (!equ->can_eps[exprs[i].idx])
                     break;
             }
 

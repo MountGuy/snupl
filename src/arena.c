@@ -3,12 +3,12 @@
 #define LAST_DATA(c) (((c)->data) + ((c)->used - 1) * ((c)->unit))
 #define HAS_SPACE(c, s) ((c)->max >= (c)->used + (s))
 
-Chunk init_large_chunk(size_t unit, int expands, int max)
+Chunk init_large_chunk(size_t unit, int expands, int size)
 {
     Chunk chunk = init_chunk(unit, true);
-    while (chunk.max < max)
+    while (chunk.max < size)
         expand_chunk(&chunk);
-    chunk.expands = false;
+    chunk.expands = expands;
 
     return chunk;
 }
@@ -27,10 +27,6 @@ Arena init_arena()
     arena.exprs = init_chunk(sizeof(Chunk), true);
     chunk = init_chunk(sizeof(MetaExpr), false);
     append_data(&chunk, 1, &arena.exprs);
-
-    arena.expr_lists = init_chunk(sizeof(Chunk), true);
-    chunk = init_chunk(sizeof(MetaExpr*), false);
-    append_data(&chunk, 1, &arena.expr_lists);
 
     return arena;
 }
@@ -67,35 +63,18 @@ char *add_string(char *string, int string_len, Arena *arena)
     return str;
 }
 
-MetaExpr *alloc_expr(Arena *arena)
+MetaExpr *alloc_expr(int size, Arena *arena)
 {
     Chunk *last_chunk = LAST_DATA(&arena->exprs);
 
-    if (!HAS_SPACE(last_chunk, 1))
+    if (!HAS_SPACE(last_chunk, size))
     {
-        Chunk new_chunk = init_chunk(sizeof(MetaExpr), false);
+        Chunk new_chunk = init_large_chunk(sizeof(MetaExpr), false, size);
         append_data(&new_chunk, 1, &arena->exprs);
         last_chunk = LAST_DATA(&arena->exprs);
     }
 
-    MetaExpr *head = alloc_mem(1, last_chunk);
+    MetaExpr *head = alloc_mem(size, last_chunk);
 
     return head;
-}
-
-MetaExpr **alloc_exprs(int size, Arena *arena)
-{
-    Chunk *last_chunk = LAST_DATA(&arena->expr_lists);
-
-    if (!HAS_SPACE(last_chunk, size))
-    {
-        Chunk new_chunk = init_large_chunk(sizeof(MetaExpr*), false, size);
-        append_data(&new_chunk, 1, &arena->expr_lists);
-        last_chunk = LAST_DATA(&arena->expr_lists);
-    }
-
-    MetaExpr **head = alloc_mem(size, last_chunk);
-
-    return head;
-
 }
