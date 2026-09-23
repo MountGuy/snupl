@@ -65,7 +65,7 @@ void regist_tok_class(MetaExpr *expr, Chunk *tokcs)
     }
 }
 
-void indexing(MetaExpr *expr, Grammar *grammar)
+void index_expr(MetaExpr *expr, Grammar *grammar)
 {
     if (expr->idx == -1 && expr->kind != E_IDENTITY)
         expr->idx = grammar->expr_num++;
@@ -75,11 +75,11 @@ void indexing(MetaExpr *expr, Grammar *grammar)
         case E_ALTER:
         case E_CONCAT:
             for (int i = 0; i < expr->nary.expr_num; i++)
-                indexing(expr->nary.exprs[i], grammar);
+                index_expr(expr->nary.exprs[i], grammar);
             return;
         case E_OPTION:
         case E_REPEAT:
-            indexing(expr->unary.expr, grammar);
+            index_expr(expr->unary.expr, grammar);
             return;
         case E_CRANGE:
         case E_STRING:
@@ -194,26 +194,23 @@ MetaExpr *parse_alter(MetaParser *parser)
 MetaExpr *parse_concat(MetaParser *parser)
 {
     int expr_num = 0;
-    MetaExpr **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
-    MetaExpr *expr;
+    MetaExpr *expr, **buffer = (MetaExpr**) malloc(sizeof(MetaExpr*) * parser->tok_num);
 
     while (true)
     {
-        buffer[expr_num] = parse_primary(parser);
+        buffer[expr_num++] = parse_primary(parser);
         MetaToken *token = peek_tok(parser);
-        char *string = token->string;
-        MType type = token->type;
-        expr_num++;
+
         if ((
-            string == S_ALT ||
-            string == S_END ||
-            string == S_RPA ||
-            string == S_RBC ||
-            string == S_RBK) &&
-            type == M_OPERATOR
+            token->string == S_ALT ||
+            token->string == S_END ||
+            token->string == S_RPA ||
+            token->string == S_RBC ||
+            token->string == S_RBK) &&
+            token->type == M_OPERATOR
         )
             break;
-        else if (type == M_OPERATOR && string == S_CON)
+        else if (token->type == M_OPERATOR && token->string == S_CON)
             advance_parser(parser);
         else
             print_error_mtoken("parse_concat", token);
@@ -424,7 +421,7 @@ Grammar meta_parsing(Chunk tokens, Arena *arena)
         defs[i].expr->idx = i;
 
     for (int i = 0; i < grammar.def_num; i++)
-        indexing(defs[i].expr, &grammar);
+        index_expr(defs[i].expr, &grammar);
 
     return grammar;
 }
