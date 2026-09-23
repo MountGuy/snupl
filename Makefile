@@ -30,6 +30,9 @@ clean:
 test: $(TARGET)
 	./$(TARGET) grammar.gm test/array01.mod
 
+output: $(TARGET)
+	./$(TARGET) grammar.gm test/array01.mod > output.txt
+
 simple: $(TARGET)
 	./$(TARGET) simple.gm simple.mod
 

@@ -226,5 +226,22 @@ void solve_firstfollow(Grammar *grammar)
 {
     SetEqu equ = build_equ(grammar);
     while(apply_equ(&equ));
-    print_setequ_sol(&equ, grammar);
+    print_setequ_sol2(&equ, grammar);
 }
+
+void parse(Token *tokens, MetaDef *def)
+{
+    MetaExpr *expr = def->expr;
+    switch (expr->kind)
+    {
+        case E_ALTER:
+        case E_CONCAT:
+        case E_STRING:
+        case E_OPTION:
+        case E_REPEAT:
+        case E_IDENTITY:
+
+        case E_CRANGE:
+    }
+}
+

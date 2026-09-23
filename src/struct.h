@@ -95,17 +95,6 @@ typedef struct {
 } NFAScanner;
 
 typedef struct {
-    char *input, *line_start, *cursor;
-    int input_len, line;
-
-    Token *tokens;
-    int token_num;
-
-    NFA *nfa;
-    Arena *arena;
-} Lexer;
-
-typedef struct {
     ulli *sets;
     int set_num, set_size, offset, *can_eps;
     Chunk sup_sets, sub_sets;
@@ -116,6 +105,13 @@ typedef struct {
     int *sup_sets, *sub_sets;
     int equ_num, set_num, set_size, offset, exact_set_size;
 } SetEqu;
+
+typedef struct {
+    Token *tokens;
+    int token_num;
+
+    int cursor;
+} Parser;
 
 #endif
 

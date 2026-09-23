@@ -1,5 +1,7 @@
 #include "lexer.h"
 
+#define IS_SKIP(c) ((c) == ' ' || (c) == '\t' || (c) == '\n')
+
 int alloc_NFA_state(NFABuilder *builder)
 {
     return builder->used_state_num++;
@@ -304,11 +306,8 @@ int step_NFA(char letter, NFA *nfa, NFAScanner *scanner)
 
     memcpy(scanner->visiting, scanner->tmp, state_num / BYTE_SIZE);
     for (int i = 0; i < nfa->tokc_num; i++)
-    {
-        int end = nfa->end_states[i];
-        if (READ_OFFSET(scanner->visiting, end))
+        if (READ_OFFSET(scanner->visiting, nfa->end_states[i]))
             scanner->lens[i] = scanner->len;
-    }
 
     int alive_state = 0;
     for (int i = 0; i < nfa->state_num; i++)
@@ -318,100 +317,58 @@ int step_NFA(char letter, NFA *nfa, NFAScanner *scanner)
     return alive_state;
 }
 
-void skip_nontoken(Lexer *lexer)
-{
-    char *cursor = lexer->cursor;
-
-    while (true)
-    {
-        if (*cursor == '/' && *(cursor + 1) == '/')
-        {
-            while (*cursor != '\n')
-                cursor++;
-            cursor++;
-            lexer->line++;
-            lexer->line_start = cursor;
-        }
-        else if (*cursor == ' ' || *cursor == '\t')
-            while(*cursor == ' ' || *cursor == '\t')
-                cursor++;
-        else if (*cursor == '\n')
-        {
-            cursor++;
-            lexer->line++;
-            lexer->line_start = cursor;
-        }
-        else
-            break;
-    }
-    lexer->cursor = cursor;
-}
-
 Chunk lexing(char *input, NFA *nfa, Arena *arena)
 {
-    Lexer lexer = {
-        .input = input,
-        .input_len = strlen(input),
-        .line_start = input,
-        .cursor = input,
-        .line = 1,
-        .nfa = nfa,
-        .arena = arena,
-    };
+    int input_len = strlen(input), line = 1;
+    char *cursor = input, *last_nl = input - 1;
 
     Chunk tokens = init_chunk(sizeof(Token), 1);
-
     TokenClass *tokcs = nfa->tokcs;
+
+    void *buffer = malloc(nfa->state_num / BYTE_SIZE * 2 + sizeof(int) * nfa->tokc_num);
     NFAScanner scanner = {
-        .visiting = malloc(nfa->state_num / BYTE_SIZE),
-        .tmp = malloc(nfa->state_num / BYTE_SIZE),
-        .lens = malloc(sizeof(int) * nfa->tokc_num),
+        .visiting = buffer,
+        .tmp = buffer + nfa->state_num / BYTE_SIZE,
+        .lens = buffer + nfa->state_num / BYTE_SIZE * 2,
     };
 
-    skip_nontoken(&lexer);
-    while (lexer.cursor - lexer.input < lexer.input_len)
+    while (cursor - input < input_len)
     {
         init_scanner(nfa, &scanner);
 
+        for (; IS_SKIP(*cursor); cursor++)
+            if (*cursor == '\n')
+                line++, last_nl = cursor;
+
         int tok_len = 0;
-        while (step_NFA(*(lexer.cursor + tok_len), nfa, &scanner))
+        while (step_NFA(*(cursor + tok_len), nfa, &scanner))
             tok_len++;
 
         int best_idx = -1, best_len = 0;
         for (int i = 0; i < nfa->tokc_num; i++)
-        {
             if (
+                (scanner.lens[i] > 0 && best_idx == -1) ||
                 (scanner.lens[i] > best_len) ||
                 (scanner.lens[i] == best_len && tokcs[i].type == T_CONST)
             )
-            {
-                best_idx = i;
-                best_len = scanner.lens[i];
-            }
-        }
+                best_idx = i, best_len = scanner.lens[i];
 
         if (best_idx != -1)
         {
             Token token = {
                 .tok_c = tokcs + best_idx,
-                .string = add_string(lexer.cursor, best_len, lexer.arena),
+                .string = add_string(cursor, best_len, arena),
                 .string_len = best_len,
-                .line = lexer.line,
-                .col = lexer.cursor - lexer.line_start + 1,
+                .line = line,
+                .col = cursor - last_nl,
             };
             append_data(&token, 1, &tokens);
-            lexer.cursor += best_len;
-            skip_nontoken(&lexer);
+            cursor += best_len;
         }
         else
-        {
-            printf("failed to lex\n");
-            exit(1);
-        }
+            printf("failed to lex\n"), exit(1);
     }
-    free(scanner.visiting);
-    free(scanner.tmp);
-    free(scanner.lens);
+    free(buffer);
 
     return tokens;
 }

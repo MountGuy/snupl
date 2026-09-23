@@ -23,5 +23,4 @@ NFA build_NFA(Grammar *grammar);
 
 void init_scanner(NFA *nfa, NFAScanner *scanner);
 int step_NFA(char letter, NFA *nfa, NFAScanner *scanner);
-void skip_nontoken(Lexer *lexer);
 Chunk lexing(char *input, NFA *nfa, Arena *arena);

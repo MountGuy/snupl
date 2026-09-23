@@ -21,6 +21,7 @@ void print_trans(int trim_state_num, int state_num, int char_num, ulli *trans);
 void print_lexing_result(Chunk *tok_chunk);
 void print_binary_vector(ulli *vector, int length);
 void print_seteq(SetEqu *equ);
-void print_setequ_sol(SetEqu *equ, Grammar *grammar);
+void print_setequ_sol1(SetEqu *equ, Grammar *grammar);
+void print_setequ_sol2(SetEqu *equ, Grammar *grammar);
 
 #endif

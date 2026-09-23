@@ -218,30 +218,55 @@ void print_seteq(SetEqu *equ)
     }
 }
 
-void print_setequ_sol(SetEqu *equ, Grammar *grammar)
+void print_setequ_sol1(SetEqu *equ, Grammar *grammar)
 {
     int set_size = equ->exact_set_size, offset = equ->offset;
     for (int i = 0; i < grammar->def_num; i++)
     {
-        MetaDef def = grammar->defs[i];
-        if (def.type != D_GRAMMAR)
+        if (grammar->defs[i].type != D_GRAMMAR)
             continue;
 
         ulli *set = equ->sets + offset * i;
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
-                printf("[%d] %20s can starts with    \"%s\"\n", i, def.identity, grammar->tokcs[j].name);
+                printf("[%d] %20s can starts with    \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
     }
 
     for (int i = 0; i < grammar->def_num; i++)
     {
-        MetaDef def = grammar->defs[i];
-        if (def.type != D_GRAMMAR)
+        if (grammar->defs[i].type != D_GRAMMAR)
             continue;
 
         ulli *set = equ->sets + offset * (i + equ->set_num);
         for (int j = 0; j < set_size; j++)
             if (READ_OFFSET(set, j))
-                printf("[%d] %20s can be followed by \"%s\"\n", i, def.identity, grammar->tokcs[j].name);
+                printf("[%d] %20s can be followed by \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
     }
 }
+
+void print_setequ_sol2(SetEqu *equ, Grammar *grammar)
+{
+    int set_size = equ->exact_set_size, offset = equ->offset;
+
+    for (int i = 0; i < set_size; i++)
+    {
+        for (int j = 0; j < grammar->def_num; j++)
+        {
+            if (grammar->defs[j].type != D_GRAMMAR)
+                continue;
+
+            if (READ_OFFSET(equ->sets + offset * j, i))
+                printf("[%d] %20s is a start of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
+        }
+        for (int j = 0; j < grammar->def_num; j++)
+        {
+            if (grammar->defs[j].type != D_GRAMMAR)
+                continue;
+
+            if (READ_OFFSET(equ->sets + offset * (j + equ->set_num), i))
+                printf("[%d] %20s is a follow of %s\n", i, grammar->tokcs[i].name, grammar->defs[j].identity);
+        }
+        
+    }
+}
+
