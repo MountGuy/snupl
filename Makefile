@@ -28,7 +28,7 @@ clean:
 	rm -rf $(BUILD) $(TARGET) build-asan output.txt t.*
 
 test: $(TARGET)
-	./$(TARGET) grammar.gm test/array01.mod
+	./$(TARGET) grammar.gm test/array03.mod
 
 output: $(TARGET)
 	./$(TARGET) grammar.gm test/array01.mod > output.txt

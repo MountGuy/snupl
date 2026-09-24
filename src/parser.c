@@ -177,22 +177,194 @@ FirstFollow solve_ff(Grammar *grammar)
     return ff;
 }
 
-void parse(Token *tokens, MetaExpr *expr)
+int can_first(MetaExpr *mexpr, TokenClass *tok_c, FirstFollow *ff)
 {
-    switch (expr->kind)
+    ulli *sets = ff->sets;
+    int expr_idx = mexpr->idx, tok_c_idx = tok_c->idx, offset = ff->offset;
+
+    return READ_OFFSET(sets + offset * expr_idx, tok_c_idx) > 0;
+}
+
+static Token *peek_tok(Parser *parser)
+{
+    return parser->tokens + parser->cursor;
+}
+
+static Token *peek_next(Parser *parser)
+{
+    return parser->tokens + parser->cursor + 1;
+}
+
+static Token *advance_parser(Parser *parser)
+{
+    printf("eat %s\n", parser->tokens[parser->cursor].string);
+    return parser->tokens + parser->cursor++;
+}
+
+Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
+{
+    while (true)
+    {
+        Token *token = peek_tok(parser);
+
+        if (token->string[0] != '/' || token->string[1] != '/')
+            break;
+        advance_parser(parser);
+    }
+    switch (mexpr->kind)
     {
         case E_ALTER:
-
+        {
+            Token *token = peek_tok(parser);
+            int i1 = -1, i2 = -1;
+            for (int i = 0; i < mexpr->nary.expr_num; i++)
+                if (can_first(mexpr->nary.exprs + i, token->tok_c, parser->ff))
+                {
+                    if (i1 == -1)
+                        i1 = i;
+                    else
+                        i2 = i;
+                }
+            if (i2 >= 0)
+            {
+                Token *next_token = peek_next(parser);
+                if (next_token->string[0] == '(' &&
+                    strcmp(mexpr->nary.exprs[i2].identity.id, "subroutineCall") == 0)
+                    return _parse(mexpr->nary.exprs + i2, parser, grammar);
+                else if (
+                    strcmp(mexpr->nary.exprs[i1].identity.id, "assignment") == 0 ||
+                    strcmp(mexpr->nary.exprs[i1].identity.id, "qualident") == 0)
+                    return _parse(mexpr->nary.exprs + i1, parser, grammar);
+                else
+                {
+                    exit(1);
+                }
+            }
+            else if (i1 == -1)
+            {
+                exit(1);
+            }
+            else
+                return _parse(mexpr->nary.exprs + i1, parser, grammar);
+        }
         case E_CONCAT:
-        case E_OPTION:
-        case E_REPEAT:
-        case E_IDENTITY:
+        {
+            Expr *seq = alloc_expr(mexpr->nary.expr_num, parser->arena);
+            for (int i = 0; i < mexpr->nary.expr_num; i++)
+                seq[i] = *_parse(mexpr->nary.exprs + i, parser, grammar);
+            Expr *expr = alloc_expr(1, parser->arena);
+            expr->type = C_SEQ;
+            expr->name = p_null;
+            expr->sequence.exprs = seq;
+            expr->sequence.expr_num = mexpr->nary.expr_num;
 
+            return expr;
+        }
+        case E_OPTION:
+        {
+            Token *token = peek_tok(parser);
+            if (can_first(mexpr->unary.expr, token->tok_c, parser->ff))
+                return _parse(mexpr->unary.expr, parser, grammar);                
+            else
+            {
+                Expr *expr = alloc_expr(1, parser->arena);
+                expr->type = C_NONE;
+                return expr;
+            }
+        }
+        case E_REPEAT:
+        {
+            Chunk chunk = init_chunk(sizeof(Expr), true);
+            while (true)
+            {
+                Token *token = peek_tok(parser);
+                if (!can_first(mexpr->unary.expr, token->tok_c, parser->ff))
+                    break;
+                Expr *expr = _parse(mexpr->unary.expr, parser, grammar);
+                append_data(expr, 1, &chunk);
+            }
+            int expr_num = chunk.used;
+            Expr *exprs = alloc_expr(expr_num, parser->arena);
+            memcpy(exprs, chunk.data, sizeof(Expr) * expr_num);
+            del_chunk(&chunk);
+
+            Expr *expr = alloc_expr(1, parser->arena);
+            expr->type = C_SEQ;
+            expr->name = p_null;
+            expr->sequence.exprs = exprs;
+            expr->sequence.expr_num = expr_num;
+
+            return expr;
+        }
+        case E_IDENTITY:
+        {
+            MetaDef def = grammar->defs[mexpr->identity.idx];
+            if (def.type == D_GRAMMAR)
+            {
+                Expr *expr = _parse(def.expr, parser, grammar);
+                expr->name = mexpr->identity.id;
+                
+                return expr;
+            }
+            else if (def.type == D_TERM)
+            {
+                Token *token = advance_parser(parser);
+                if (token->tok_c->name == mexpr->identity.id && token->tok_c->type == T_VAR)
+                {
+                    Expr *expr = alloc_expr(1, parser->arena);
+                    expr->type = C_TERM;
+                    expr->name = def.identity;
+                    expr->terminal.token = token;
+                    return expr;
+                }
+                else
+                {
+                    exit(1);
+                }
+            }
+            exit(1);
+        }
         case E_STRING:
         {
+            Token *token = advance_parser(parser);
+            if (token->string == mexpr->string.value && token->tok_c->type == T_CONST)
+            {
+                Expr *expr = alloc_expr(1, parser->arena);
+                expr->type = C_TERM;
+                expr->name = token->tok_c->name;
+                expr->terminal.token = token;
 
+                return expr;
+            }
+            else
+            {
+                exit(1);
+            }
         }
-        case E_CRANGE:
+        default:
+        {
+            exit(1);
+        }
     }
+}
+
+void parse(Chunk *chunk, Grammar *grammar, Arena *arena)
+{
+    int token_num = chunk->used;
+    Token *tokens = fix_chunk(chunk);
+    FirstFollow ff = solve_ff(grammar);
+    Parser parser = {
+        .tokens = tokens,
+        .token_num = token_num,
+        .ff = &ff,
+        .arena = arena,
+    };
+
+    _parse(grammar->defs[0].expr, &parser, grammar);
+
+    if (parser.cursor + 1 == token_num)
+        printf("parsing was successfully done!\n");
+    else
+        printf("total token %d, seen token %d\n", token_num, parser.cursor + 1);
 }
 

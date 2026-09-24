@@ -53,4 +53,16 @@ typedef struct {
     int line, col;
 } Token;
 
+typedef enum { C_TERM, C_SEQ, C_NONE } CType;
+typedef struct Expr {
+    CType type;
+    char *name;
+    union
+    {
+        struct { int expr_num; struct Expr *exprs; } sequence;
+        struct { Token *token; } terminal;
+        struct {} none;
+    };
+} Expr;
+
 #endif

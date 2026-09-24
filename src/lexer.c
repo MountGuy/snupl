@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "bitop.h"
+#include "dump.h"
 
 #define IS_SKIP(c) ((c) == ' ' || (c) == '\t' || (c) == '\n')
 
@@ -240,8 +241,13 @@ NFA build_NFA(Grammar *grammar)
         TokenClass class = grammar->tokcs[i];
         if (class.type == T_VAR)
         {
-            MetaExpr *expr = grammar->defs[class.idx].expr;
-            end_states[i] = _build_NFA(expr, 0, &builder);
+            for (int j = 0; j < grammar->def_num; j++)
+                if (grammar->defs[j].identity == class.name)
+                {
+                    MetaExpr *expr = grammar->defs[j].expr;
+                    end_states[i] = _build_NFA(expr, 0, &builder);
+                    break;
+                }
         }
         else if (class.type == T_CONST)
         {

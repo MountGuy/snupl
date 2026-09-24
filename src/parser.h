@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "arena.h"
 
 typedef struct {
     ulli *sets;
@@ -17,11 +18,13 @@ typedef struct {
 
 typedef struct {
     Token *tokens;
-    int token_num;
-
-    int cursor;
+    int token_num, cursor;
+    FirstFollow *ff;
+    Arena *arena;
 } Parser;
 
 FirstFollow solve_ff(Grammar *grammar);
+Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar);
+void parse(Chunk *tokens, Grammar *grammar, Arena *arena);
 
 #endif

@@ -271,3 +271,8 @@ void print_ff_tp(FirstFollow *ff, Grammar *grammar)
                 printf("[%d] %20s can be followed by \"%s\"\n", i, grammar->defs[i].identity, grammar->tokcs[j].name);
     }
 }
+
+void print_token(Token token)
+{
+    printf("token: %20s | class: %10s | class#: %d\n", token.string, token.tok_c->name, token.tok_c->idx);
+}

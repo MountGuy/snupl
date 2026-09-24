@@ -25,5 +25,6 @@ void print_binary_vector(ulli *vector, int length);
 void print_seteq(SetEqu *equ);
 void print_ff(FirstFollow *ff, Grammar *grammar);
 void print_ff_tp(FirstFollow *ff, Grammar *grammar);
+void print_token(Token token);
 
 #endif
