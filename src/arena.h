@@ -5,7 +5,7 @@
 #include "chunk.h"
 
 typedef struct {
-    Chunk strings, string_heads, exprs;
+    Chunk strings, string_heads, string_lens, exprs;
     int string_num;
 } Arena;
 

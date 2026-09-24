@@ -10,6 +10,7 @@ typedef struct {
 } Chunk;
 
 Chunk init_chunk(size_t unit, int expands);
+Chunk init_large_chunk(size_t unit, int size, int expands);
 void expand_chunk(Chunk *chunk);
 
 void *append_data(void *source, int length, Chunk *chunk);
