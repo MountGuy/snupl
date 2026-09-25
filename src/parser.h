@@ -7,13 +7,14 @@
 
 typedef struct {
     ulli *sets, *old_sets;
-    int set_num, set_size, mem_size, offset, exact_set_size;
-} FirstFollow;
-
-typedef struct {
-    int *can_eps;
+    int set_num, set_size, offset, equ_num;
     Chunk sub_idx, sup_idx;
 } SetEqu;
+
+typedef struct {
+    ulli *sets, *old_sets;
+    int set_num, set_size, mem_size, offset, exact_set_size;
+} FirstFollow;
 
 typedef struct {
     Token *tokens;
