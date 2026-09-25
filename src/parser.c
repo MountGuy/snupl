@@ -2,6 +2,11 @@
 #include "bitop.h"
 #include "dump.h"
 
+Expr expr_none = {
+    .type = C_NONE,
+    .name = p_null,
+};
+
 int _null_analysis(MetaExpr *expr, int *can_eps)
 {
     switch (expr->kind)
@@ -130,7 +135,7 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ, int *can_eps)
 
 int solve_equ(SetEqu *equ)
 {
-    int offset = equ->offset, equ_num = equ->sub_idx.used;
+    int offset = equ->offset, equ_num = equ->equ_num;
     int *sub_idx = equ->sub_idx.data, *sup_idx = equ->sup_idx.data;
     int mem_size = equ->set_num * 2 * equ->set_size / BYTE_SIZE;
 
@@ -138,7 +143,7 @@ int solve_equ(SetEqu *equ)
 
     for (int i = 0; i < equ_num; i++)
         for (int j = 0; j < equ->set_size / SZLIB; j++)
-            equ->sets[offset * sup_idx[i] +j] |= equ->sets[offset * sub_idx[i] +j];
+            equ->sets[offset * sup_idx[i] + j] |= equ->sets[offset * sub_idx[i] + j];
 
     for (int i = 0; i < mem_size / sizeof(ulli); i++)
         if (equ->sets[i] > equ->old_sets[i])
@@ -162,6 +167,7 @@ FirstFollow solve_ff(Grammar *grammar)
         .sub_idx = init_chunk(sizeof(int), 1),
         .sup_idx = init_chunk(sizeof(int), 1),
     };
+
     int *can_eps = calloc(sizeof(int), set_num);
     null_analysis(grammar, can_eps, set_num);
 
@@ -169,6 +175,7 @@ FirstFollow solve_ff(Grammar *grammar)
         build_equ(grammar->defs[i].expr, grammar, &equ, can_eps);
 
     while(solve_equ(&equ) > 0);
+
     free(equ.old_sets), free(can_eps);
     del_chunk(&equ.sub_idx), del_chunk(&equ.sup_idx);
 
@@ -183,12 +190,9 @@ FirstFollow solve_ff(Grammar *grammar)
     return ff;
 }
 
-int can_accept(MetaExpr *mexpr, TokenClass *tok_c, FirstFollow *ff)
+int can_accept(MetaExpr *mexpr, Token *token, FirstFollow *ff)
 {
-    ulli *sets = ff->sets;
-    int expr_idx = mexpr->idx, tok_c_idx = tok_c->idx, offset = ff->offset;
-
-    return READ_OFFSET(sets + offset * expr_idx, tok_c_idx) > 0;
+    return READ_OFFSET(ff->sets + ff->offset * mexpr->idx, token->tok_c->idx) > 0;
 }
 
 static Token *peek_tok(Parser *parser)
@@ -223,7 +227,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             Token *token = peek_tok(parser);
             int i1 = -1, i2 = -1;
             for (int i = 0; i < mexpr->nary.expr_num; i++)
-                if (can_accept(mexpr->nary.exprs + i, token->tok_c, parser->ff))
+                if (can_accept(mexpr->nary.exprs + i, token, parser->ff))
                 {
                     if (i1 == -1)
                         i1 = i;
@@ -247,6 +251,8 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             }
             else if (i1 == -1)
             {
+                printf("[%d:%d] ", token->line, token->col);
+                printf("Unexpected token here: %s\n", token->string);
                 exit(1);
             }
             else
@@ -268,38 +274,39 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
         case E_OPTION:
         {
             Token *token = peek_tok(parser);
-            if (can_accept(mexpr->unary.expr, token->tok_c, parser->ff))
+            if (can_accept(mexpr->unary.expr, token, parser->ff))
                 return _parse(mexpr->unary.expr, parser, grammar);                
             else
-            {
-                Expr *expr = alloc_expr(1, parser->arena);
-                expr->type = C_NONE;
-                return expr;
-            }
+                return &expr_none;
         }
         case E_REPEAT:
         {
             Chunk chunk = init_chunk(sizeof(Expr), true);
-            while (true)
+            while (can_accept(mexpr->unary.expr, peek_tok(parser), parser->ff))
             {
-                Token *token = peek_tok(parser);
-                if (!can_accept(mexpr->unary.expr, token->tok_c, parser->ff))
-                    break;
                 Expr *expr = _parse(mexpr->unary.expr, parser, grammar);
                 append_data(expr, 1, &chunk);
             }
+
             int expr_num = chunk.used;
             Expr *exprs = alloc_expr(expr_num, parser->arena);
             memcpy(exprs, chunk.data, sizeof(Expr) * expr_num);
             del_chunk(&chunk);
-
-            Expr *expr = alloc_expr(1, parser->arena);
-            expr->type = C_SEQ;
-            expr->name = p_null;
-            expr->sequence.exprs = exprs;
-            expr->sequence.expr_num = expr_num;
-
-            return expr;
+            
+            if (expr_num == 0)
+                return &expr_none;
+            else if (expr_num == 1)
+                return exprs;
+            else
+            {
+                Expr *expr = alloc_expr(1, parser->arena);
+                expr->type = C_SEQ;
+                expr->name = p_null;
+                expr->sequence.exprs = exprs;
+                expr->sequence.expr_num = expr_num;
+                
+                return expr;
+            }
         }
         case E_IDENTITY:
         {
@@ -324,9 +331,12 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
                 }
                 else
                 {
+                    printf("[%d:%d] ", token->line, token->col);
+                    printf("%s was expected but actually got %s\n", mexpr->identity.name, token->string);
                     exit(1);
                 }
             }
+            printf("Unexpected behavior: parser had gone down into D_LETTER\n");
             exit(1);
         }
         case E_STRING:
@@ -343,11 +353,14 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             }
             else
             {
+                printf("[%d:%d] ", token->line, token->col);
+                printf("%s was expected but actually got %s\n", mexpr->string.value, token->string);
                 exit(1);
             }
         }
         default:
         {
+            printf("Unexpected mexpr kind during _parse\n");
             exit(1);
         }
     }
