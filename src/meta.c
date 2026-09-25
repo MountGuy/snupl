@@ -2,6 +2,10 @@
 #include "character.h"
 #include "dump.h"
 
+#define PEEK(p) (p->tokens + p->cursor)
+#define POP(p) (p->tokens + p->cursor++)
+#define ADVANCE(p) (p->cursor++)
+
 MetaExpr *parse_alter(MetaParser *parser);
 MetaExpr *parse_concat(MetaParser *parser);
 MetaExpr *parse_primary(MetaParser *parser);
@@ -11,21 +15,10 @@ char ops[11][2] = {
 };
 char *S_LPA = ops[0], *S_RPA = ops[1], *S_LBC = ops[2], *S_RBC = ops[3], *S_LBK = ops[4], *S_RBK = ops[5], *S_END = ops[6], *S_EQU = ops[7], *S_ALT = ops[8], *S_CON = ops[9], *S_TIL = ops[10];
 
-
 void print_error_mtoken(char *comment, MetaToken *token)
 {
     printf("Unexpected token %s at [%d:%d-%d] during parsing %s\n", token->string, token->line, token->col, token->col + token->len, comment);
     exit(1);
-}
-
-static MetaToken *peek_tok(MetaParser *parser)
-{
-    return parser->tokens + parser->cursor;
-}
-
-static MetaToken *advance_parser(MetaParser *parser)
-{
-    return parser->tokens + parser->cursor++;
 }
 
 void regist_tok_class(MetaExpr *expr, Chunk *tokcs)
@@ -98,8 +91,8 @@ void parse_define(MetaParser *parser)
 
     while (parser->cursor < parser->tok_num)
     {
-        MetaToken *tok_id = advance_parser(parser);
-        MetaToken *tok_equ = advance_parser(parser);
+        MetaToken *tok_id = POP(parser);
+        MetaToken *tok_equ = POP(parser);
 
         if (!(
             tok_id->type == M_IDENTITY &&
@@ -108,7 +101,7 @@ void parse_define(MetaParser *parser)
         ))
             print_error_mtoken("parse_define equal", tok_equ);
         MetaExpr *expr = parse_alter(parser);
-        MetaToken *tok_end = advance_parser(parser);
+        MetaToken *tok_end = POP(parser);
 
         if (!(
             tok_end->type == M_OPERATOR &&
@@ -155,7 +148,7 @@ MetaExpr *parse_alter(MetaParser *parser)
     while (true)
     {
         buffer[expr_num++] = *parse_concat(parser);
-        MetaToken *token = peek_tok(parser);
+        MetaToken *token = PEEK(parser);
 
         if ((
             token->string == S_END ||
@@ -166,7 +159,7 @@ MetaExpr *parse_alter(MetaParser *parser)
         )
             break;
         else if (token->type == M_OPERATOR && token->string == S_ALT)
-            advance_parser(parser);
+            ADVANCE(parser);
         else
             print_error_mtoken("parse_alter", token);
     }
@@ -198,7 +191,7 @@ MetaExpr *parse_concat(MetaParser *parser)
     while (true)
     {
         buffer[expr_num++] = *parse_primary(parser);
-        MetaToken *token = peek_tok(parser);
+        MetaToken *token = PEEK(parser);
 
         if ((
             token->string == S_ALT ||
@@ -210,7 +203,7 @@ MetaExpr *parse_concat(MetaParser *parser)
         )
             break;
         else if (token->type == M_OPERATOR && token->string == S_CON)
-            advance_parser(parser);
+            ADVANCE(parser);
         else
             print_error_mtoken("parse_concat", token);
     }
@@ -237,18 +230,18 @@ MetaExpr *parse_concat(MetaParser *parser)
 
 MetaExpr *parse_primary(MetaParser *parser)
 {
-    MetaToken *token = advance_parser(parser);
+    MetaToken *token = POP(parser);
     char *string = token->string;
 
     switch (token->type)
     {
         case M_STRING:
         {
-            MetaToken *next_token = peek_tok(parser);
+            MetaToken *next_token = PEEK(parser);
             if (next_token->type == M_OPERATOR && next_token->string == S_TIL)
             {
-                advance_parser(parser);
-                MetaToken *end_token = advance_parser(parser);
+                ADVANCE(parser);
+                MetaToken *end_token = POP(parser);
                 MetaExpr *expr = alloc_mexpr(1, parser->arena);
 
                 expr->kind = E_CRANGE;
@@ -280,7 +273,7 @@ MetaExpr *parse_primary(MetaParser *parser)
             if (string == S_LPA || string == S_LBC || string == S_LBK)
             {
                 MetaExpr *body = parse_alter(parser);
-                MetaToken *next_token = advance_parser(parser);
+                MetaToken *next_token = POP(parser);
                 char *next_string = next_token->string;
 
                 if (string == S_LPA && next_string == S_RPA)

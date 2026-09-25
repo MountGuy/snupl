@@ -283,20 +283,18 @@ void print_expr(Expr *expr, int depth)
     {
         case C_TERM:
         {
-            printf("%s", expr->terminal.token->string);
+            printf("^%s^ %s ", expr->name, expr->terminal.token->string);
             return;
         }
         case C_SEQ:
         {
+            printf("(%s ", expr->name);
             for (int i = 0; i < expr->sequence.expr_num; i++)
-            {
                 print_expr(expr->sequence.exprs + i, depth + 1);
-            }
+            printf(")");
             return;
         }
         case C_NONE:
-        {
             return;
-        }
     }
 }

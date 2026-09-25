@@ -2,6 +2,10 @@
 #include "bitop.h"
 #include "dump.h"
 
+#define PEEK(p) (p->tokens + p->cursor)
+#define NEXT(p) (p->tokens + p->cursor + 1)
+#define POP(p) (p->tokens + p->cursor++)
+
 Expr expr_none = {
     .type = C_NONE,
     .name = p_null,
@@ -195,36 +199,21 @@ int can_accept(MetaExpr *mexpr, Token *token, FirstFollow *ff)
     return READ_OFFSET(ff->sets + ff->offset * mexpr->idx, token->tok_c->idx) > 0;
 }
 
-static Token *peek_tok(Parser *parser)
-{
-    return parser->tokens + parser->cursor;
-}
-
-static Token *peek_next(Parser *parser)
-{
-    return parser->tokens + parser->cursor + 1;
-}
-
-static Token *advance_parser(Parser *parser)
-{
-    return parser->tokens + parser->cursor++;
-}
-
 Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
 {
     while (true)
     {
-        Token *token = peek_tok(parser);
+        Token *token = PEEK(parser);
 
         if (token->string[0] != '/' || token->string[1] != '/')
             break;
-        advance_parser(parser);
+        parser->cursor++;
     }
     switch (mexpr->kind)
     {
         case E_ALTER:
         {
-            Token *token = peek_tok(parser);
+            Token *token = PEEK(parser);
             int i1 = -1, i2 = -1;
             for (int i = 0; i < mexpr->nary.expr_num; i++)
                 if (can_accept(mexpr->nary.exprs + i, token, parser->ff))
@@ -236,7 +225,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
                 }
             if (i2 >= 0)
             {
-                Token *next_token = peek_next(parser);
+                Token *next_token = NEXT(parser);
                 if (next_token->string[0] == '(' &&
                     strcmp(mexpr->nary.exprs[i2].identity.name, "subroutineCall") == 0)
                     return _parse(mexpr->nary.exprs + i2, parser, grammar);
@@ -273,7 +262,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
         }
         case E_OPTION:
         {
-            Token *token = peek_tok(parser);
+            Token *token = PEEK(parser);
             if (can_accept(mexpr->unary.expr, token, parser->ff))
                 return _parse(mexpr->unary.expr, parser, grammar);                
             else
@@ -282,7 +271,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
         case E_REPEAT:
         {
             Chunk chunk = init_chunk(sizeof(Expr), true);
-            while (can_accept(mexpr->unary.expr, peek_tok(parser), parser->ff))
+            while (can_accept(mexpr->unary.expr, PEEK(parser), parser->ff))
             {
                 Expr *expr = _parse(mexpr->unary.expr, parser, grammar);
                 append_data(expr, 1, &chunk);
@@ -320,7 +309,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             }
             else if (def.type == D_TERM)
             {
-                Token *token = advance_parser(parser);
+                Token *token = POP(parser);
                 if (token->tok_c->name == mexpr->identity.name && token->tok_c->type == T_VAR)
                 {
                     Expr *expr = alloc_expr(1, parser->arena);
@@ -341,7 +330,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
         }
         case E_STRING:
         {
-            Token *token = advance_parser(parser);
+            Token *token = POP(parser);
             if (token->string == mexpr->string.value && token->tok_c->type == T_CONST)
             {
                 Expr *expr = alloc_expr(1, parser->arena);
@@ -378,6 +367,10 @@ Expr *parse(Chunk *chunk, Grammar *grammar, Arena *arena)
         .arena = arena,
     };
 
-    return _parse(grammar->defs[0].expr, &parser, grammar);
+    Expr *expr = _parse(grammar->defs[0].expr, &parser, grammar);
+
+    free(ff.sets);
+
+    return expr;
 }
 

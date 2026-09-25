@@ -1,7 +1,6 @@
 #ifndef LEXER_H
 #define LEXER_H 1
 
-#define C_EPS ('\0')
 #define I_EPS 0
 
 #include "common.h"

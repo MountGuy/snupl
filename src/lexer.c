@@ -3,11 +3,8 @@
 #include "dump.h"
 
 #define IS_SKIP(c) ((c) == ' ' || (c) == '\t' || (c) == '\n')
+#define ALLOC_STATE(b) (b->used_state_num++)
 
-int alloc_NFA_state(NFABuilder *builder)
-{
-    return builder->used_state_num++;
-}
 
 void add_char(char lb, char ub, Chunk *lubs)
 {
@@ -99,10 +96,10 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
     {
         case E_ALTER:
         {
-            int end = alloc_NFA_state(builder);
+            int end = ALLOC_STATE(builder);
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                int _start = alloc_NFA_state(builder);
+                int _start = ALLOC_STATE(builder);
                 int _end = _build_NFA(expr->nary.exprs + i, _start, builder);
                 add_trans(start, I_EPS, _start, builder);
                 add_trans(_end, I_EPS, end, builder);
@@ -115,15 +112,15 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
                 cur_end = _build_NFA(expr->nary.exprs + i, cur_start, builder);
-                cur_start = alloc_NFA_state(builder);
+                cur_start = ALLOC_STATE(builder);
                 add_trans(cur_end, I_EPS, cur_start, builder);
             }
             return cur_start;
         }
         case E_OPTION:
         {
-            int end = alloc_NFA_state(builder);
-            int body_start = alloc_NFA_state(builder);
+            int end = ALLOC_STATE(builder);
+            int body_start = ALLOC_STATE(builder);
             int body_end = _build_NFA(expr->unary.expr, body_start, builder);
 
             add_trans(start, I_EPS, body_start, builder);
@@ -134,8 +131,8 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
         }
         case E_REPEAT:
         {
-            int end = alloc_NFA_state(builder);
-            int body_start = alloc_NFA_state(builder);
+            int end = ALLOC_STATE(builder);
+            int body_start = ALLOC_STATE(builder);
             int body_end = _build_NFA(expr->unary.expr, body_start, builder);
 
             add_trans(start, I_EPS, body_start, builder);
@@ -150,7 +147,7 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
             int cur_start = start, cur_end;
             for (char *c = expr->string.value; *c; c++)
             {
-                cur_end = alloc_NFA_state(builder);
+                cur_end = ALLOC_STATE(builder);
                 int cdx = find_char(*c, *c, &builder->lubs);
                 add_trans(cur_start, cdx, cur_end, builder);
                 cur_start = cur_end;
@@ -161,7 +158,7 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
         {
             char lb = expr->crange.lb, ub = expr->crange.ub;
             int idx = find_char(lb, ub, &builder->lubs);
-            int end = alloc_NFA_state(builder);
+            int end = ALLOC_STATE(builder);
             add_trans(start, idx, end, builder);
             return end;
         }
@@ -202,7 +199,7 @@ void postproc_trans(NFABuilder *builder)
 
 NFA build_NFA(Grammar *grammar)
 {
-    char c = C_EPS;
+    char c = c_null;
 
     Chunk lubs = init_chunk(sizeof(char), 1);
     append_data(&c, 1, &lubs);
@@ -280,7 +277,17 @@ NFA build_NFA(Grammar *grammar)
         nfa.ubs[i] = data[2 * i + 1];
     }
 
+    del_chunk(&lubs);
+
     return nfa;
+}
+
+void del_NFA(NFA *nfa)
+{
+    free(nfa->trans);
+    free(nfa->lbs);
+    free(nfa->ubs);
+    free(nfa->end_states);
 }
 
 void init_scanner(NFA *nfa, NFAScanner *scanner)
@@ -376,6 +383,7 @@ Chunk lexing(char *input, Grammar *grammar, Arena *arena)
             printf("failed to lex\n"), exit(1);
     }
     free(buffer);
+    del_NFA(&nfa);
 
     return tokens;
 }
