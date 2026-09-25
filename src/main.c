@@ -29,7 +29,9 @@ int main(int argv, char *argc[])
     Chunk m_tokens = meta_lexing(buf1, &arena);
     Grammar grammar = meta_parsing(m_tokens, &arena);
     Chunk tokens = lexing(buf2, &grammar, &arena);
-    parse(&tokens, &grammar, &arena);
+    Expr *expr = parse(&tokens, &grammar, &arena);
+    print_expr(expr, 0);
+    newline;
 
     return 0;
 }

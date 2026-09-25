@@ -23,8 +23,6 @@ typedef struct {
     Arena *arena;
 } Parser;
 
-FirstFollow solve_ff(Grammar *grammar);
-Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar);
-void parse(Chunk *tokens, Grammar *grammar, Arena *arena);
+Expr *parse(Chunk *chunk, Grammar *grammar, Arena *arena);
 
 #endif

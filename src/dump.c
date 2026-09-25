@@ -276,3 +276,27 @@ void print_token(Token token)
 {
     printf("token: %20s | class: %10s | class#: %d\n", token.string, token.tok_c->name, token.tok_c->idx);
 }
+
+void print_expr(Expr *expr, int depth)
+{
+    switch (expr->type)
+    {
+        case C_TERM:
+        {
+            printf("%s", expr->terminal.token->string);
+            return;
+        }
+        case C_SEQ:
+        {
+            for (int i = 0; i < expr->sequence.expr_num; i++)
+            {
+                print_expr(expr->sequence.exprs + i, depth + 1);
+            }
+            return;
+        }
+        case C_NONE:
+        {
+            return;
+        }
+    }
+}

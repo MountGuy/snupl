@@ -177,7 +177,7 @@ FirstFollow solve_ff(Grammar *grammar)
     return ff;
 }
 
-int can_first(MetaExpr *mexpr, TokenClass *tok_c, FirstFollow *ff)
+int can_accept(MetaExpr *mexpr, TokenClass *tok_c, FirstFollow *ff)
 {
     ulli *sets = ff->sets;
     int expr_idx = mexpr->idx, tok_c_idx = tok_c->idx, offset = ff->offset;
@@ -197,7 +197,6 @@ static Token *peek_next(Parser *parser)
 
 static Token *advance_parser(Parser *parser)
 {
-    printf("eat %s\n", parser->tokens[parser->cursor].string);
     return parser->tokens + parser->cursor++;
 }
 
@@ -218,7 +217,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             Token *token = peek_tok(parser);
             int i1 = -1, i2 = -1;
             for (int i = 0; i < mexpr->nary.expr_num; i++)
-                if (can_first(mexpr->nary.exprs + i, token->tok_c, parser->ff))
+                if (can_accept(mexpr->nary.exprs + i, token->tok_c, parser->ff))
                 {
                     if (i1 == -1)
                         i1 = i;
@@ -263,7 +262,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
         case E_OPTION:
         {
             Token *token = peek_tok(parser);
-            if (can_first(mexpr->unary.expr, token->tok_c, parser->ff))
+            if (can_accept(mexpr->unary.expr, token->tok_c, parser->ff))
                 return _parse(mexpr->unary.expr, parser, grammar);                
             else
             {
@@ -278,7 +277,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             while (true)
             {
                 Token *token = peek_tok(parser);
-                if (!can_first(mexpr->unary.expr, token->tok_c, parser->ff))
+                if (!can_accept(mexpr->unary.expr, token->tok_c, parser->ff))
                     break;
                 Expr *expr = _parse(mexpr->unary.expr, parser, grammar);
                 append_data(expr, 1, &chunk);
@@ -348,7 +347,7 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
     }
 }
 
-void parse(Chunk *chunk, Grammar *grammar, Arena *arena)
+Expr *parse(Chunk *chunk, Grammar *grammar, Arena *arena)
 {
     int token_num = chunk->used;
     Token *tokens = fix_chunk(chunk);
@@ -360,11 +359,6 @@ void parse(Chunk *chunk, Grammar *grammar, Arena *arena)
         .arena = arena,
     };
 
-    _parse(grammar->defs[0].expr, &parser, grammar);
-
-    if (parser.cursor + 1 == token_num)
-        printf("parsing was successfully done!\n");
-    else
-        printf("total token %d, seen token %d\n", token_num, parser.cursor + 1);
+    return _parse(grammar->defs[0].expr, &parser, grammar);
 }
 

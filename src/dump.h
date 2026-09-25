@@ -26,5 +26,6 @@ void print_seteq(SetEqu *equ);
 void print_ff(FirstFollow *ff, Grammar *grammar);
 void print_ff_tp(FirstFollow *ff, Grammar *grammar);
 void print_token(Token token);
+void print_expr(Expr *expr, int depth);
 
 #endif
