@@ -6,14 +6,13 @@
 #include "arena.h"
 
 typedef struct {
-    ulli *sets;
-    int set_num, set_size, offset, exact_set_size;
+    ulli *sets, *old_sets;
+    int set_num, set_size, mem_size, offset, exact_set_size;
 } FirstFollow;
 
 typedef struct {
-    FirstFollow *ff;
     int *can_eps;
-    Chunk sub_sets, sup_sets;
+    Chunk sub_idx, sup_idx;
 } SetEqu;
 
 typedef struct {

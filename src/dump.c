@@ -202,21 +202,21 @@ void print_binary_vector(ulli *vector, int length)
     newline;
 }
 
-void print_seteq(SetEqu *equ)
+void print_ff_bin(FirstFollow *ff)
 {
-    int set_size = equ->ff->exact_set_size, offset = equ->ff->offset;
-    for (int i = 0; i < equ->ff->set_num; i++)
+    int set_size = ff->exact_set_size, offset = ff->offset;
+    for (int i = 0; i < ff->set_num; i++)
     {
         printf("first [%d] ", i);
-        print_binary_vector(equ->ff->sets + i * offset, set_size);
+        print_binary_vector(ff->sets + i * offset, set_size);
     }
 
     newline;
 
-    for (int i = 0; i < equ->ff->set_num; i++)
+    for (int i = 0; i < ff->set_num; i++)
     {
         printf("follow [%d] ", i);
-        print_binary_vector(equ->ff->sets + (i + equ->ff->set_num) * offset, set_size);
+        print_binary_vector(ff->sets + (i + ff->set_num) * offset, set_size);
     }
 }
 

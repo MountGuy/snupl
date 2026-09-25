@@ -51,13 +51,13 @@ void null_analysis(Grammar *grammar, int *can_eps, int set_num)
 
 void regist_equ(int sub_idx, int sup_idx, SetEqu *equ)
 {
-    append_data(&sub_idx, 1, &equ->sub_sets);
-    append_data(&sup_idx, 1, &equ->sup_sets);
+    append_data(&sub_idx, 1, &equ->sub_idx);
+    append_data(&sup_idx, 1, &equ->sup_idx);
 }
 
-void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
+void build_equ(MetaExpr *expr, Grammar *grammar, FirstFollow *ff, SetEqu *equ)
 {
-    int sn = equ->ff->set_num;
+    int sn = ff->set_num;
 
     switch (expr->kind)
     {
@@ -67,7 +67,7 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
 
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                build_equ(exprs + i, grammar, equ);
+                build_equ(exprs + i, grammar, ff, equ);
                 regist_equ(exprs[i].idx, expr->idx, equ);
                 regist_equ(expr->idx + sn, exprs[i].idx + sn, equ);
             }
@@ -78,7 +78,7 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
             MetaExpr *exprs = expr->nary.exprs;
 
             for (int i = 0; i < expr->nary.expr_num; i++)
-                build_equ(exprs + i, grammar, equ);
+                build_equ(exprs + i, grammar, ff, equ);
 
             for (int i = 0; i < expr->nary.expr_num - 1; i++)
                 regist_equ(exprs[i + 1].idx, exprs[i].idx + sn, equ);
@@ -103,7 +103,7 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
         }
         case E_OPTION:
         case E_REPEAT:
-            build_equ(expr->unary.expr, grammar, equ);
+            build_equ(expr->unary.expr, grammar, ff, equ);
             regist_equ(expr->idx + sn, expr->unary.expr->idx + sn, equ);
             regist_equ(expr->unary.expr->idx, expr->idx, equ);
             if (expr->kind == E_REPEAT)
@@ -112,12 +112,12 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
         case E_STRING:
             for (int i = 0; i < grammar->tokc_num; i++)
                 if (grammar->tokcs[i].name == expr->string.value)
-                    WRITE_OFFSET(equ->ff->sets + equ->ff->offset * expr->idx, i);
+                    WRITE_OFFSET(ff->sets + ff->offset * expr->idx, i);
             break;
         case E_IDENTITY:
             for (int i = 0; i < grammar->tokc_num; i++)
                 if (grammar->tokcs[i].type == T_VAR && grammar->tokcs[i].name == expr->identity.name)
-                    WRITE_OFFSET(equ->ff->sets + equ->ff->offset * expr->idx, i);
+                    WRITE_OFFSET(ff->sets + ff->offset * expr->idx, i);
             break;
         case E_CRANGE:
             return;
@@ -127,52 +127,51 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
     }
 }
 
-int solve_equ(SetEqu *equ)
+int solve_equ(FirstFollow *ff, SetEqu *equ)
 {
-    int result = 0, offset = equ->ff->offset, equ_num = equ->sub_sets.used;
-    ulli *sets = equ->ff->sets;
-    int *sub_sets = equ->sub_sets.data, *sup_sets = equ->sup_sets.data;
+    int offset = ff->offset, equ_num = equ->sub_idx.used;
+    int *sub_idx = equ->sub_idx.data, *sup_idx = equ->sup_idx.data;
 
+    memcpy(ff->old_sets, ff->sets, ff->mem_size);
     for (int i = 0; i < equ_num; i++)
-    {
-        ulli *sub_set = sets + offset * sub_sets[i];
-        ulli *sup_set = sets + offset * sup_sets[i];
+        for (int j = 0; j < ff->set_size / SZLIB; j++)
+            ff->sets[offset * sup_idx[i] +j] |= ff->sets[offset * sub_idx[i] +j];
 
-        for (int j = 0; j < equ->ff->set_size / SZLIB; j++)
-        {
-            if ((sub_set[j] | sup_set[j]) > sup_set[j])
-                result++;
-            sup_set[j] |= sub_set[j];
-        }
-    }
-    return result;
+    for (int i = 0; i < ff->mem_size / sizeof(ulli); i++)
+        if (ff->sets[i] > ff->old_sets[i])
+            return 1;
+    return 0;
 }
 
 FirstFollow solve_ff(Grammar *grammar)
 {
-    int set_num = grammar->expr_num, set_size = PAD_SIZE(grammar->tokc_num);
+    int set_num = grammar->expr_num;
+    int set_size = PAD_SIZE(grammar->tokc_num);
+    int mem_size = set_num * 2 * set_size / BYTE_SIZE;
 
     FirstFollow ff = {
-        .sets = calloc(set_num * 2 * set_size / BYTE_SIZE, 1),
+        .sets = calloc(mem_size, 1),
+        .old_sets = calloc(mem_size, 1),
         .set_num = set_num,
         .set_size = set_size,
+        .mem_size = mem_size,
         .offset = set_size / SZLIB,
         .exact_set_size = grammar->tokc_num,
     };
 
     SetEqu equ = {
-        .ff = &ff,
         .can_eps = calloc(sizeof(int), set_num),
-        .sub_sets = init_chunk(sizeof(int), 1),
-        .sup_sets = init_chunk(sizeof(int), 1),
+        .sub_idx = init_chunk(sizeof(int), 1),
+        .sup_idx = init_chunk(sizeof(int), 1),
     };
     null_analysis(grammar, equ.can_eps, set_num);
 
     for (int i = 0; i < grammar->def_num; i++)
-        build_equ(grammar->defs[i].expr, grammar, &equ);
+        build_equ(grammar->defs[i].expr, grammar, &ff, &equ);
 
-    while(solve_equ(&equ) > 0);
-    free(equ.can_eps), del_chunk(&equ.sub_sets), del_chunk(&equ.sup_sets);
+    while(solve_equ(&ff, &equ) > 0);
+    free(ff.old_sets), free(equ.can_eps);
+    del_chunk(&equ.sub_idx), del_chunk(&equ.sup_idx);
 
     return ff;
 }
