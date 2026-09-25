@@ -21,7 +21,7 @@ typedef struct MetaExpr {
         struct { int expr_num; struct MetaExpr *exprs; } nary;
         struct { struct MetaExpr *expr; } unary;
         struct { char *value; } string;
-        struct { int idx; char *id; } identity;
+        struct { int idx; char *name; } identity;
         struct { char lb, ub; } crange;
     };
 } MetaExpr;

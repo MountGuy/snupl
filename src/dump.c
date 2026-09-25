@@ -132,7 +132,7 @@ void print_meta_expr(MetaExpr *expr)
             printf("\'%c\'~\'%c\'", expr->crange.lb, expr->crange.ub);
             break;
         case E_IDENTITY:
-            printf("%s[%d]", expr->identity.id, expr->identity.idx);
+            printf("%s[%d]", expr->identity.name, expr->identity.idx);
             break;
         default:
             printf("error on print expr: %d\n", expr->kind);

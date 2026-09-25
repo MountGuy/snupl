@@ -116,7 +116,7 @@ void build_equ(MetaExpr *expr, Grammar *grammar, SetEqu *equ)
             break;
         case E_IDENTITY:
             for (int i = 0; i < grammar->tokc_num; i++)
-                if (grammar->tokcs[i].type == T_VAR && grammar->tokcs[i].name == expr->identity.id)
+                if (grammar->tokcs[i].type == T_VAR && grammar->tokcs[i].name == expr->identity.name)
                     WRITE_OFFSET(equ->ff->sets + equ->ff->offset * expr->idx, i);
             break;
         case E_CRANGE:
@@ -228,11 +228,11 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             {
                 Token *next_token = peek_next(parser);
                 if (next_token->string[0] == '(' &&
-                    strcmp(mexpr->nary.exprs[i2].identity.id, "subroutineCall") == 0)
+                    strcmp(mexpr->nary.exprs[i2].identity.name, "subroutineCall") == 0)
                     return _parse(mexpr->nary.exprs + i2, parser, grammar);
                 else if (
-                    strcmp(mexpr->nary.exprs[i1].identity.id, "assignment") == 0 ||
-                    strcmp(mexpr->nary.exprs[i1].identity.id, "qualident") == 0)
+                    strcmp(mexpr->nary.exprs[i1].identity.name, "assignment") == 0 ||
+                    strcmp(mexpr->nary.exprs[i1].identity.name, "qualident") == 0)
                     return _parse(mexpr->nary.exprs + i1, parser, grammar);
                 else
                 {
@@ -301,14 +301,14 @@ Expr *_parse(MetaExpr *mexpr, Parser *parser, Grammar *grammar)
             if (def.type == D_GRAMMAR)
             {
                 Expr *expr = _parse(def.expr, parser, grammar);
-                expr->name = mexpr->identity.id;
+                expr->name = mexpr->identity.name;
                 
                 return expr;
             }
             else if (def.type == D_TERM)
             {
                 Token *token = advance_parser(parser);
-                if (token->tok_c->name == mexpr->identity.id && token->tok_c->type == T_VAR)
+                if (token->tok_c->name == mexpr->identity.name && token->tok_c->type == T_VAR)
                 {
                     Expr *expr = alloc_expr(1, parser->arena);
                     expr->type = C_TERM;

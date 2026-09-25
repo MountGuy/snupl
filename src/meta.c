@@ -81,13 +81,13 @@ void index_expr(MetaExpr *expr, Grammar *grammar)
             return;
         case E_IDENTITY:
             for (int i = 0; i < grammar->def_num; i++)
-                if (expr->identity.id == grammar->defs[i].identity)
+                if (expr->identity.name == grammar->defs[i].identity)
                 {
                     expr->identity.idx = i;
                     expr->idx = i;
                     return;
                 }
-            printf("Identity %s is not indexed...\n", expr->identity.id);
+            printf("Identity %s is not indexed...\n", expr->identity.name);
             exit(1);
     }
 }
@@ -271,7 +271,7 @@ MetaExpr *parse_primary(MetaParser *parser)
             MetaExpr *expr = alloc_mexpr(1, parser->arena);
             expr->kind = E_IDENTITY;
             expr->idx = -1;
-            expr->identity.id = string;
+            expr->identity.name = string;
             expr->identity.idx = -1;
             return expr;
         }
