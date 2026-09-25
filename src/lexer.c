@@ -354,6 +354,9 @@ Chunk lexing(char *input, Grammar *grammar, Arena *arena)
             if (*cursor == '\n')
                 line++, last_nl = cursor;
 
+        if (*cursor == c_null)
+            break;
+
         int tok_len = 0;
         while (step_NFA(*(cursor + tok_len), &nfa, &scanner))
             tok_len++;
@@ -361,9 +364,9 @@ Chunk lexing(char *input, Grammar *grammar, Arena *arena)
         int best_idx = -1, best_len = 0;
         for (int i = 0; i < nfa.tokc_num; i++)
             if (
-                (scanner.lens[i] > 0 && best_idx == -1) ||
                 (scanner.lens[i] > best_len) ||
-                (scanner.lens[i] == best_len && tokcs[i].type == T_CONST)
+                (scanner.lens[i] > 0 && best_idx == -1) ||
+                (scanner.lens[i] == best_len && best_len > 0 && tokcs[i].type == T_CONST)
             )
                 best_idx = i, best_len = scanner.lens[i];
 
@@ -382,6 +385,7 @@ Chunk lexing(char *input, Grammar *grammar, Arena *arena)
         else
             printf("failed to lex\n"), exit(1);
     }
+
     free(buffer);
     del_NFA(&nfa);
 
