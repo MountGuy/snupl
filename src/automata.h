@@ -26,6 +26,22 @@ typedef struct {
     ulli *visiting, *tmp;
 } NFAScanner;
 
+typedef struct {
+    int *trans, used_state_num, state_byte_size;
+    unsigned char *chars;
+    int char_num;
+    Chunk states;
+    NFA *nfa;
+} DFABuilder;
+
+typedef struct {
+    int *trans;
+    char *lbs, *ubs;
+    TokenClass *tokcs;
+    int state_num, char_num;
+    int tokc_num, *end_tokc;
+} DFA;
+
 NFA build_NFA(Grammar *grammar);
 void del_NFA(NFA *nfa);
 void init_scanner(NFA *nfa, NFAScanner *scanner);
