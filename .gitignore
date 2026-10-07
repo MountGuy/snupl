@@ -7,7 +7,6 @@ scanner*
 *.md
 *.txt
 *.tc
-*.gm
 *.spl
 *.bak
 *.tar

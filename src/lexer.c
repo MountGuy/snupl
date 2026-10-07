@@ -1,4 +1,4 @@
-#include "automata.h"
+#include "nfa.h"
 #include "character.h"
 #include "lexer.h"
 #include "bitop.h"

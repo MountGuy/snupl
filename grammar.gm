@@ -1,0 +1,111 @@
+// SnuPL/2 문법 — UTF-8 / 코드포인트 기준
+//
+// 표기
+//   "x"         리터럴 (멀티바이트 문자도 직접 쓸 수 있다: "α")
+//   "a" ~ "z"   코드포인트 범위
+//   0xHH        코드포인트 (유니코드의 U+00HH 와 같은 뜻, 바이트가 아니다)
+//
+// hex 를 쓴 자리는 두 종류다.
+//   필수: 0x22(") 0x27(') 0x5c(\) 0x0a(개행) — 직접 쓰면 .gm 포맷과 충돌한다
+//   편의: 범위의 양 끝 — 숫자가 더 읽기 쉬운 경우
+//
+// 인코딩: 소스 파일은 UTF-8 이다. 스펙의 ISO-8859-1(latin1) 요구는 버렸다.
+// 그래서 문자열/문자 상수 본문은 출력 가능 ASCII + 이스케이프만 받는다.
+// 유니코드 문자가 필요해지면 (Lean 등) 범위를 넓히거나 부정 연산자를 쓴다.
+
+module = "module" , _ident , ";" ,
+         { constDeclaration | varDeclaration | subroutineDecl } ,
+         [ "begin" , statSequence ] ,
+         "end" , _ident , "." ;
+
+//======================================================== 어휘 (lexical)
+
+__letter   = "A" ~ "Z" | "a" ~ "z" | "_" ;
+__digit    = "0" ~ "9" ;
+__hexdigit = __digit | "A" ~ "F" | "a" ~ "f" ;
+
+// 스펙의 이스케이프 표: \n \t \0 \" \' \\ \xHH
+// 백슬래시를 0x5c 로 쓰면 \" 처럼 .gm 리터럴로 표현 못 하는 조합도 조립된다.
+__hexescape  = "x" , __hexdigit , __hexdigit ;
+__escape     = 0x5c , ( "n" | "t" | 0x22 | 0x27 | 0x5c | __hexescape ) ;
+__nullescape = 0x5c , "0" ;              // \0 은 문자 상수에만 허용된다
+
+// 문자열 본문: 출력 가능 ASCII 에서 0x22(") 와 0x5c(\) 를 뺀 것
+__strchar  = 0x20 ~ 0x21 | 0x23 ~ 0x5b | 0x5d ~ 0x7e | __escape ;
+
+// 문자 상수 본문: 0x27(') 와 0x5c(\) 를 뺀 것. \0 이 여기만 허용된다
+__charchar = 0x20 ~ 0x26 | 0x28 ~ 0x5b | 0x5d ~ 0x7e | __escape | __nullescape ;
+
+// 주석 본문: 개행(0x0a) 과 NUL 을 뺀 유니코드 전체
+__commentchar = 0x01 ~ 0x09 | 0x0b ~ 0x10ffff ;
+
+_char    = 0x27 , __charchar , 0x27 ;
+_string  = 0x22 , { __strchar } , 0x22 ;
+_ident   = __letter , { __letter | __digit } ;
+_number  = __digit , { __digit } , [ "L" ] ;
+_comment = "//" , { __commentchar } , 0x0a ;
+
+//======================================================== 타입
+
+boolean  = "true" | "false" ;
+basetype = "boolean" | "char" | "integer" | "longint" ;
+type     = basetype , { "[" , [ simpleexpr ] , "]" } ;
+
+//======================================================== 식 (expression)
+
+qualident = _ident , { "[" , simpleexpr , "]" } ;
+
+factOp = "*" | "/" | "&&" ;
+termOp = "+" | "-" | "||" ;
+relOp  = "=" | "#" | "<" | "<=" | ">" | ">=" ;
+
+// LL(1) 충돌 1/2: qualident 와 subroutineCall 이 둘 다 _ident 로 시작한다.
+// 두 번째 토큰이 "(" 면 subroutineCall, 아니면 qualident 로 갈린다 (k=2).
+factor = qualident | _number | boolean | _char | _string
+       | "(" , expression , ")" | subroutineCall | "!" , factor ;
+
+term       = factor , { factOp , factor } ;
+simpleexpr = [ "+" | "-" ] , term , { termOp , term } ;
+expression = simpleexpr , [ relOp , simpleexpr ] ;
+
+//======================================================== 문 (statement)
+
+assignment     = qualident , ":=" , expression ;
+subroutineCall = _ident , "(" , [ expression , { "," , expression } ] , ")" ;
+
+ifStatement    = "if" , "(" , expression , ")" , "then" , statSequence ,
+                 [ "else" , statSequence ] , "end" ;
+whileStatement = "while" , "(" , expression , ")" , "do" , statSequence , "end" ;
+returnStatement = "return" , [ expression ] ;
+
+// LL(1) 충돌 2/2: assignment 와 subroutineCall 이 둘 다 _ident 로 시작한다.
+// 두 번째 토큰이 ":=" 나 "[" 면 assignment, "(" 면 subroutineCall (k=2).
+statement = assignment | subroutineCall | ifStatement | whileStatement
+          | returnStatement ;
+
+// 비어 있을 수 있다. "begin end" 나 빈 then/else 분기가 합법이기 때문.
+// 반복 { } 안에는 한 번도 들어가지 않으므로 무한루프 위험은 없다.
+statSequence = [ statement , { ";" , statement } ] ;
+
+//======================================================== 선언 (declaration)
+
+constDeclaration  = "const" , constDeclSequence ;
+constDeclSequence = constDecl , ";" , { constDecl , ";" } ;
+constDecl         = varDecl , "=" , expression ;
+
+// varDeclSequence 를 그대로 쓰면 안 된다. "var" varDeclSequence ";" 형태는
+// 반복 { ";" varDecl } 의 FIRST 가 { ";" } 라서 바깥 ";" 가 먹어야 할 세미콜론을
+// 가로챈다 (var A : integer ; begin  에서 실패). 아래가 left-factoring 한 형태.
+varDeclaration  = "var" , varDecl , ";" , { varDecl , ";" } ;
+varDeclSequence = varDecl , { ";" , varDecl } ;
+varDecl         = _ident , { "," , _ident } , ":" , type ;
+
+//======================================================== 서브루틴
+
+subroutineDecl = ( procedureDecl | functionDecl ) ,
+                 ( "extern" | subroutineBody , _ident ) , ";" ;
+procedureDecl  = "procedure" , _ident , [ formalParam ] , ";" ;
+functionDecl   = "function" , _ident , [ formalParam ] , ":" , type , ";" ;
+formalParam    = "(" , [ varDeclSequence ] , ")" ;
+subroutineBody = { constDeclaration | varDeclaration } ,
+                 "begin" , statSequence , "end" ;

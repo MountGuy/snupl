@@ -7,7 +7,7 @@
 #include "chunk.h"
 #include "arena.h"
 #include "meta.h"
-#include "automata.h"
+#include "nfa.h"
 #include "lexer.h"
 #include "parser.h"
 
