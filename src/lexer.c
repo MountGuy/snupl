@@ -1,6 +1,8 @@
 #include "automata.h"
+#include "character.h"
 #include "lexer.h"
 #include "bitop.h"
+#include "dump.h"
 
 #define IS_SKIP(c) ((c) == ' ' || (c) == '\t' || (c) == '\n')
 
@@ -31,9 +33,11 @@ Chunk lexing(char *input, Grammar *grammar, Arena *arena)
         if (*cursor == c_null)
             break;
 
-        int tok_len = 0;
-        while (step_NFA(*(cursor + tok_len), &nfa, &scanner))
-            tok_len++;
+        int tok_len = 0, code_len;
+        ulli code;
+        do
+            tok_len += (code_len = read_utf8_char(cursor + tok_len, &code));
+        while (step_NFA(code, code_len, &nfa, &scanner));
 
         int best_idx = -1, best_len = 0;
         for (int i = 0; i < nfa.tokc_num; i++)

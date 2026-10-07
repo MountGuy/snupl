@@ -1,6 +1,44 @@
 #include "dump.h"
 #include "bitop.h"
 
+char *utf8_to_str(ulli code, char *buffer)
+{
+    unsigned char *b = (unsigned char *) buffer;
+
+    if (code < 0x80)
+    {
+        b[0] = code;
+        b[1] = 0;
+    }
+    else if (code < 0x800)
+    {
+        b[0] = 0xC0 | (code >> 6);
+        b[1] = 0x80 | (code & 0x3F);
+        b[2] = 0;
+    }
+    else if (code < 0x10000)
+    {
+        b[0] = 0xE0 | (code >> 12);
+        b[1] = 0x80 | ((code >> 6) & 0x3F);
+        b[2] = 0x80 | (code & 0x3F);
+        b[3] = 0;
+    }
+    else if (code <= 0x10FFFF)
+    {
+        b[0] = 0xF0 | (code >> 18);
+        b[1] = 0x80 | ((code >> 12) & 0x3F);
+        b[2] = 0x80 | ((code >> 6) & 0x3F);
+        b[3] = 0x80 | (code & 0x3F);
+        b[4] = 0;
+    }
+    else
+    {
+        buffer[0] = 0;
+        return NULL;      /* 유니코드 범위 밖 */
+    }
+    return buffer;
+}
+
 void print_arena(Arena *arena)
 {
     char **strs = arena->string_heads.data;
@@ -129,7 +167,10 @@ void print_meta_expr(MetaExpr *expr)
             printf("\"%s\"", expr->string.value);
             break;
         case E_CRANGE:
-            printf("\'%c\'~\'%c\'", expr->crange.lb, expr->crange.ub);
+            char buffer1[10], buffer2[10];
+            utf8_to_str(expr->crange.lb, buffer1);
+            utf8_to_str(expr->crange.ub, buffer2);
+            printf("\'%s\'~\'%s\'", buffer1, buffer2);
             break;
         case E_IDENTITY:
             printf("%s[%d]", expr->identity.name, expr->identity.idx);
@@ -144,9 +185,14 @@ void print_meta_expr(MetaExpr *expr)
 
 void print_nfa(NFA *nfa, int debug)
 {
+    char buffer1[10], buffer2[10];
     printf("nfa characters:\n");
     for (int cdx = 0; cdx < nfa->char_num; cdx++)
-        printf("[%d] %c-%c\n", cdx, nfa->lbs[cdx], nfa->ubs[cdx]);
+    {
+        utf8_to_str(nfa->lbs[cdx], buffer1);
+        utf8_to_str(nfa->ubs[cdx], buffer2);
+        printf("[%d] %s[%llu]-%s[%llu]\n", cdx, buffer1, nfa->lbs[cdx], buffer2, nfa->ubs[cdx]);
+    }
     newline;
     printf("nfa ends:\n");
     for (int i = 0; i < nfa->tokc_num; i++)

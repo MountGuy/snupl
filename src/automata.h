@@ -14,8 +14,7 @@ typedef struct {
 } NFABuilder;
 
 typedef struct {
-    ulli *trans;
-    char *lbs, *ubs;
+    ulli *trans, *lbs, *ubs;
     TokenClass *tokcs;
     int state_num, char_num, exact_state_num;
     int *end_states, tokc_num;
@@ -28,7 +27,7 @@ typedef struct {
 
 typedef struct {
     int *trans, used_state_num, state_byte_size;
-    unsigned char *chars;
+    ulli *chars;
     int char_num;
     Chunk states;
     NFA *nfa;
@@ -36,7 +35,7 @@ typedef struct {
 
 typedef struct {
     int *trans;
-    char *lbs, *ubs;
+    ulli *lbs, *ubs;
     TokenClass *tokcs;
     int state_num, char_num;
     int tokc_num, *end_tokc;
@@ -45,7 +44,6 @@ typedef struct {
 NFA build_NFA(Grammar *grammar);
 void del_NFA(NFA *nfa);
 void init_scanner(NFA *nfa, NFAScanner *scanner);
-int step_NFA(char letter, NFA *nfa, NFAScanner *scanner);
-
+int step_NFA(ulli letter, int width, NFA *nfa, NFAScanner *scanner);
 
 #endif

@@ -236,6 +236,7 @@ MetaExpr *parse_primary(MetaParser *parser)
     switch (token->type)
     {
         case M_STRING:
+        case M_HEXCODE:
         {
             MetaToken *next_token = PEEK(parser);
             if (next_token->type == M_OPERATOR && next_token->string == S_TIL)
@@ -246,8 +247,8 @@ MetaExpr *parse_primary(MetaParser *parser)
 
                 expr->kind = E_CRANGE;
                 expr->idx = -1;
-                expr->crange.lb = token->string[0];
-                expr->crange.ub = end_token->string[0];
+                expr->crange.lb = string_to_ulli(token->string);
+                expr->crange.ub = string_to_ulli(end_token->string);
                 return expr;
             }
             else
@@ -255,7 +256,15 @@ MetaExpr *parse_primary(MetaParser *parser)
                 MetaExpr *expr = alloc_mexpr(1, parser->arena);
                 expr->kind = E_STRING;
                 expr->idx = -1;
-                expr->string.value = string;
+                if (token->type == M_STRING)
+                    expr->string.value = string;
+                else
+                {
+                    char buffer[10];
+                    ulli code = string_to_ulli(token->string);
+                    utf8_to_str(code, buffer);
+                    expr->string.value = add_string(buffer, strlen(buffer), parser->arena);
+                }
                 return expr;
             }
         }
@@ -315,21 +324,22 @@ Chunk meta_lexing(char *input, Arena *arena)
         MetaToken token = { p_null };
         if (cursor[0] == '/' && cursor[1] == '/')
         {
-            while (cursor[0] != '\n')
-                cursor++;
-            cursor++;
+            while ((cursor++)[0] != '\n');
             line++;
             line_front = cursor;
         }
         else if (cursor[0] == '0' && cursor[1] == 'x')
         {
-            char hex_str[2] = { hex_to_int(cursor[2]) * 16 + hex_to_int(cursor[3]), c_null };
-            token.string = add_string(hex_str, 1, arena);
-            token.type = M_STRING;
+            int string_len = 2;
+            while (is_hex(cursor[string_len]))
+                string_len++;
+
+            token.string = add_string(cursor, string_len, arena);
+            token.type = M_HEXCODE;
             token.line = line;
             token.col = cursor - line_front + 1;
-            token.len = 4;
-            cursor += 4;
+            token.len = string_len;
+            cursor += string_len;
         }
         else if (is_identc(cursor[0]))
         {

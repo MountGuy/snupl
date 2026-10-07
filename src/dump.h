@@ -11,6 +11,7 @@
 #include "lexer.h"
 #include "parser.h"
 
+char *utf8_to_str(ulli code, char *buffer);
 void print_arena(Arena *arena);
 void print_meta_token(MetaToken token);
 void print_meta_lexer(MetaToken *tokens, int token_num);

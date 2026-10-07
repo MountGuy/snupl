@@ -38,6 +38,34 @@ SAFE = (string.ascii_letters + string.digits +
 
 RANGE_BANDS = [("a", "z"), ("A", "Z"), ("0", "9")]
 
+# UTF-8 바이트 폭 1/2/3/4 를 모두 덮는 유니코드 밴드.
+# 미할당/서로게이트/공백/0폭 문자가 섞이지 않은 "틈 없는" 구간만 골랐다.
+# (U+00AD soft hyphen, U+03A2, U+2072-2073, U+1D53A 등이 틈이라 피해서 쪼갰다)
+UNI_BANDS = [
+    (0x00A1, 0x00AC),   # 2바이트  ¡-¬
+    (0x00AE, 0x00FF),   # 2바이트  ®-ÿ
+    (0x0391, 0x03A1),   # 2바이트  Α-Ρ
+    (0x03A3, 0x03A9),   # 2바이트  Σ-Ω
+    (0x03B1, 0x03C9),   # 2바이트  α-ω
+    (0x2080, 0x2089),   # 3바이트  ₀-₉  (하첨자)
+    (0x2100, 0x214F),   # 3바이트  ℕ ℤ ℚ ℝ ℂ (문자유사)
+    (0x2190, 0x21FF),   # 3바이트  ←→↔⇒↦ (화살표)
+    (0x2200, 0x22FF),   # 3바이트  ∀∃∈∧∨≤≥ (수학 연산자)
+    (0x27E6, 0x27EB),   # 3바이트  ⟦⟧⟨⟩
+    (0x1D55C, 0x1D56B), # 4바이트  𝕜-𝕫 (BMP 밖, surrogate pair)
+]
+
+
+def band_chars(bands):
+    out = []
+    for lo, hi in bands:
+        out.extend(chr(c) for c in range(lo, hi + 1))
+    return out
+
+
+def utf8_width(ch):
+    return len(ch.encode("utf-8"))
+
 
 # --------------------------------------------------------------------------
 # 규칙 트리
@@ -269,7 +297,22 @@ def main():
                     help="키워드 리터럴 개수 (0 이면 생성 안 함)")
     ap.add_argument("--tries", type=int, default=50,
                     help="오라클과 어긋나면 문법을 다시 뽑는 최대 횟수")
+    ap.add_argument("--unicode", action="store_true",
+                    help="리터럴/범위에 유니코드(2~4바이트 UTF-8)를 섞는다")
+    ap.add_argument("--unicode-only", action="store_true",
+                    help="ASCII 를 빼고 유니코드만 쓴다 (멀티바이트 경계 집중 테스트)")
+    ap.add_argument("--with-lengths", action="store_true",
+                    help=".expected 에 바이트 길이/코드포인트 수 열을 추가")
     args = ap.parse_args()
+
+    global SAFE, RANGE_BANDS
+    if args.unicode or args.unicode_only:
+        uni = band_chars(UNI_BANDS)
+        uni_bands = [(chr(lo), chr(hi)) for lo, hi in UNI_BANDS]
+        if args.unicode_only:
+            SAFE, RANGE_BANDS = uni, uni_bands
+        else:
+            SAFE, RANGE_BANDS = list(SAFE) + uni, RANGE_BANDS + uni_bands
 
     rng = random.Random(args.seed)
 
@@ -306,19 +349,32 @@ def main():
     mod_path = args.out + ".mod"
     exp_path = args.out + ".expected"
 
-    with open(gm_path, "w") as f:
+    with open(gm_path, "w", encoding="utf-8") as f:
         f.write(emit_gm(rules, order, keywords))
-    with open(mod_path, "w") as f:
+    with open(mod_path, "w", encoding="utf-8") as f:
         f.write(text + "\n")
-    with open(exp_path, "w") as f:
+    with open(exp_path, "w", encoding="utf-8") as f:
         for lex, name in expected:
-            f.write("%s\t%s\n" % (lex, name))
+            if args.with_lengths:
+                f.write("%s\t%s\t%d\t%d\n"
+                        % (lex, name, len(lex.encode("utf-8")), len(lex)))
+            else:
+                f.write("%s\t%s\n" % (lex, name))
 
     drift = sum(1 for a, b in zip(picked, expected) if a[0] != b[0])
     print("%s / %s / %s" % (gm_path, mod_path, exp_path), file=sys.stderr)
-    print("  규칙 %d(토큰) + %d(헬퍼) + %d(키워드), 문자 %d, 기대 토큰 %d개"
-          % (len(tokens), args.helpers, len(keywords), len(text), len(expected)),
+    print("  규칙 %d(토큰) + %d(헬퍼) + %d(키워드), 코드포인트 %d / 바이트 %d, 기대 토큰 %d개"
+          % (len(tokens), args.helpers, len(keywords),
+             len(text), len(text.encode("utf-8")), len(expected)),
           file=sys.stderr)
+    dist = {}
+    for ch in text:
+        if not ch.isspace():
+            dist[utf8_width(ch)] = dist.get(utf8_width(ch), 0) + 1
+    if dist:
+        print("  UTF-8 바이트폭 분포: "
+              + ", ".join("%d바이트 %d자" % (w, dist[w]) for w in sorted(dist)),
+              file=sys.stderr)
     if len(expected) != len(picked) or drift:
         print("  주의: 뽑은 토큰 %d개 -> 오라클 재렉싱 %d개 (경계가 재조합됨). "
               "모호한 문법이라는 뜻이고, .expected 가 정답이다."
