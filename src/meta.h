@@ -4,7 +4,7 @@
 #include "common.h"
 #include "arena.h"
 
-typedef enum { M_IDENTITY, M_OPERATOR, M_HEXCODE, M_STRING } MType;
+typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;
 typedef struct MetaToken {
     char *string;
     MType type;

@@ -12,6 +12,7 @@
 #define sepline printf("==============================================\n")
 
 typedef unsigned long long int ulli;
+typedef unsigned char uchar;
 typedef enum { E_ALTER, E_CONCAT, E_OPTION, E_REPEAT, E_STRING, E_CRANGE, E_IDENTITY } ExprKind;
 typedef struct MetaExpr {
     ExprKind kind;
@@ -22,7 +23,7 @@ typedef struct MetaExpr {
         struct { struct MetaExpr *expr; } unary;
         struct { char *value; } string;
         struct { int idx; char *name; } identity;
-        struct { ulli lb, ub; } crange;
+        struct { uchar lb, ub; } crange;
     };
 } MetaExpr;
 

@@ -9,6 +9,8 @@
 MetaExpr *parse_alter(MetaParser *parser);
 MetaExpr *parse_concat(MetaParser *parser);
 MetaExpr *parse_primary(MetaParser *parser);
+MetaExpr *cc_expr(char *lower, char *upper, CharClass cc, Arena *arena);
+MetaExpr *parse_crange(MetaToken *tok_lower, MetaToken *tok_upper, Arena *arena);
 
 char ops[11][2] = {
     "(", ")", "{", "}", "[", "]", ";", "=", "|", ",", "~"
@@ -168,7 +170,6 @@ MetaExpr *parse_alter(MetaParser *parser)
     {
         expr = alloc_mexpr(1, parser->arena);
         *expr = buffer[0];
-        return expr;
     }
     else
     {
@@ -212,7 +213,6 @@ MetaExpr *parse_concat(MetaParser *parser)
     {
         expr = alloc_mexpr(1, parser->arena);
         *expr = buffer[0];
-        return expr;
     }
     else
     {
@@ -225,7 +225,6 @@ MetaExpr *parse_concat(MetaParser *parser)
     }
     free(buffer);
     return expr;
-
 }
 
 MetaExpr *parse_primary(MetaParser *parser)
@@ -236,35 +235,20 @@ MetaExpr *parse_primary(MetaParser *parser)
     switch (token->type)
     {
         case M_STRING:
-        case M_HEXCODE:
         {
             MetaToken *next_token = PEEK(parser);
             if (next_token->type == M_OPERATOR && next_token->string == S_TIL)
             {
                 ADVANCE(parser);
                 MetaToken *end_token = POP(parser);
-                MetaExpr *expr = alloc_mexpr(1, parser->arena);
-
-                expr->kind = E_CRANGE;
-                expr->idx = -1;
-                expr->crange.lb = string_to_ulli(token->string);
-                expr->crange.ub = string_to_ulli(end_token->string);
-                return expr;
+                return parse_crange(token, end_token, parser->arena);
             }
             else
             {
                 MetaExpr *expr = alloc_mexpr(1, parser->arena);
                 expr->kind = E_STRING;
                 expr->idx = -1;
-                if (token->type == M_STRING)
-                    expr->string.value = string;
-                else
-                {
-                    char buffer[10];
-                    ulli code = string_to_ulli(token->string);
-                    utf8_to_str(code, buffer);
-                    expr->string.value = add_string(buffer, strlen(buffer), parser->arena);
-                }
+                expr->string.value = string;
                 return expr;
             }
         }
@@ -312,6 +296,70 @@ MetaExpr *parse_primary(MetaParser *parser)
     return p_null;
 }
 
+MetaExpr *cc_expr(char *_lower, char *_upper, CharClass cc, Arena *arena)
+{
+    int width = utf8_bound[cc][0];
+    uchar *lower = (uchar*) _lower, *upper = (uchar*) _upper;
+    MetaExpr *expr = alloc_mexpr(width + 1, arena);
+
+    for (int i = 0; i < width; i++)
+    {
+        expr[i + 1].kind = E_CRANGE;
+        expr[i + 1].idx = -1;
+        expr[i + 1].crange.lb = (lower == p_null? utf8_bound[cc][2 * i + 1] : lower[i]);
+        expr[i + 1].crange.ub = (upper == p_null? utf8_bound[cc][2 * i + 2] : upper[i]);
+    }
+
+    expr[0].kind = E_CONCAT;
+    expr[0].idx = -1;
+    expr[0].nary.expr_num = width;
+    expr[0].nary.exprs = expr + 1;
+
+    return expr;
+}
+
+MetaExpr *parse_crange(MetaToken *tok_lower, MetaToken *tok_upper, Arena *arena)
+{
+    char *str_lower = tok_lower->string, *str_upper = tok_upper->string;
+    CharClass cc_lower = det_cc(str_lower), cc_upper = det_cc(str_upper);
+
+    if (cc_lower == CC_NASCII || cc_upper == CC_NASCII)
+    {
+        if ((cc_lower != CC_ASCII && cc_lower != CC_NASCII) ||
+            (cc_upper != CC_ASCII && cc_upper != CC_NASCII))
+            {
+                printf("This kind of a crange expression is invalid");
+                exit(1);
+            }
+        MetaExpr *expr = alloc_mexpr(1, arena);
+        expr->kind = E_CRANGE;
+        expr->idx = -1;
+        expr->crange.lb = tok_lower->string[0];
+        expr->crange.ub = tok_upper->string[0];
+
+        return expr;
+    }
+    else if (cc_lower == cc_upper)
+        return cc_expr(str_lower, str_upper, cc_lower, arena);
+    else
+    {
+        int class_num = cc_upper - cc_lower + 1;
+        MetaExpr *expr = alloc_mexpr(class_num + 1, arena);
+
+        expr[1] = *cc_expr(str_lower, p_null, cc_lower, arena);
+        expr[class_num] = *cc_expr(p_null, str_upper, cc_upper, arena);
+        for (int i = 1; i < class_num - 1; i++)
+            expr[i + 1] = *cc_expr(p_null, p_null, cc_lower + i, arena);
+
+        expr[0].kind = E_ALTER;
+        expr[0].idx = -1;
+        expr[0].nary.expr_num = class_num;
+        expr[0].nary.exprs = expr + 1;
+
+        return expr;
+    }
+}
+
 Chunk meta_lexing(char *input, Arena *arena)
 {
     Chunk tokens = init_chunk(sizeof(MetaToken), 1);
@@ -330,16 +378,23 @@ Chunk meta_lexing(char *input, Arena *arena)
         }
         else if (cursor[0] == '0' && cursor[1] == 'x')
         {
-            int string_len = 2;
-            while (is_hex(cursor[string_len]))
-                string_len++;
+            int hex_len = 0;
+            while (is_hex(cursor[hex_len + 2]))
+                hex_len++;
 
-            token.string = add_string(cursor, string_len, arena);
-            token.type = M_HEXCODE;
+            char data[10] = { 0 };
+            int string_len = (hex_len + 1) / 2;
+            int remain = (hex_len % 2 > 0);
+
+            for (int i = 0; i < hex_len; i++)
+                data[(i + remain) / 2] += ((i + remain) % 2? 1 : 16) * hex_to_int(cursor[i + 2]);
+
+            token.string = add_string(data, string_len, arena);
+            token.type = M_STRING;
             token.line = line;
             token.col = cursor - line_front + 1;
             token.len = string_len;
-            cursor += string_len;
+            cursor += hex_len + 2;
         }
         else if (is_identc(cursor[0]))
         {

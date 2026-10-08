@@ -5,9 +5,9 @@
 
 #define ALLOC_STATE(b) (b->used_state_num++)
 
-void add_char(ulli lb, ulli ub, Chunk *lubs)
+void add_char(uchar lb, uchar ub, Chunk *lubs)
 {
-    ulli *data = lubs->data;
+    uchar *data = lubs->data;
     for (int i = 0; i < lubs->used; i += 2)
         if (lb == data[i] && ub == data[i + 1])
             return;
@@ -16,9 +16,9 @@ void add_char(ulli lb, ulli ub, Chunk *lubs)
     append_data(&ub, 1, lubs);
 }
 
-int find_char(ulli lb, ulli ub, Chunk *lubs)
+int find_char(uchar lb, uchar ub, Chunk *lubs)
 {
-    ulli *data = lubs->data;
+    uchar *data = lubs->data;
     for (int i = 0; i < lubs->used; i += 2)
         if (data[i] == lb && data[i + 1] == ub)
             return i / 2;
@@ -42,7 +42,7 @@ int count_state(MetaExpr *expr, Grammar *grammar)
         case E_REPEAT:
             return count_state(expr->unary.expr, grammar) + 2;
         case E_STRING:
-            return utf8_strlen(expr->string.value);
+            return strlen(expr->string.value);
         case E_CRANGE:
             return 1;
         case E_IDENTITY:
@@ -60,10 +60,8 @@ void gather_char(MetaExpr *expr, Chunk *lubs)
     {
         case E_STRING:
         {
-            ulli buffer[strlen(expr->string.value) + 10];
-            int length = parse_utf8(expr->string.value, buffer);
-            for (int i = 0; i < length; i++)
-                add_char(buffer[i], buffer[i], lubs);
+            for (uchar *str = (uchar*) expr->string.value; *str; str++)
+                add_char(*str, *str, lubs);
             break;
         }
         case E_CRANGE:
@@ -148,12 +146,10 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
         }
         case E_STRING:
         {
-            ulli code;
-            int cur_start = start, cur_end, code_len;
-            for (char *c = expr->string.value; *c; c += code_len)
+            int cur_start = start, cur_end;
+            for (uchar *c = (uchar*) expr->string.value; *c; c++)
             {
-                code_len = read_utf8_char(c, &code);
-                int cdx = find_char(code, code, &builder->lubs);
+                int cdx = find_char(*c, *c, &builder->lubs);
                 cur_end = ALLOC_STATE(builder);
                 add_trans(cur_start, cdx, cur_end, builder);
                 cur_start = cur_end;
@@ -162,7 +158,7 @@ int _build_NFA(MetaExpr *expr, int start, NFABuilder *builder)
         }
         case E_CRANGE:
         {
-            ulli lb = expr->crange.lb, ub = expr->crange.ub;
+            uchar lb = expr->crange.lb, ub = expr->crange.ub;
             int cdx = find_char(lb, ub, &builder->lubs);
             int end = ALLOC_STATE(builder);
             add_trans(start, cdx, end, builder);
@@ -205,9 +201,9 @@ void postproc_trans(NFABuilder *builder)
 
 NFA build_NFA(Grammar *grammar)
 {
-    ulli c = c_null;
+    uchar c = c_null;
 
-    Chunk lubs = init_chunk(sizeof(ulli), 1);
+    Chunk lubs = init_chunk(sizeof(uchar), 1);
     append_data(&c, 1, &lubs);
     append_data(&c, 1, &lubs);
 
@@ -266,8 +262,8 @@ NFA build_NFA(Grammar *grammar)
 
     NFA nfa = {
         .trans = builder.trans,
-        .lbs = malloc(sizeof(ulli) * lubs.used / 2),
-        .ubs = malloc(sizeof(ulli) * lubs.used / 2),
+        .lbs = malloc(sizeof(uchar) * lubs.used / 2),
+        .ubs = malloc(sizeof(uchar) * lubs.used / 2),
         .tokcs = grammar->tokcs,
         .state_num = builder.state_num,
         .exact_state_num = exact_state_num,
@@ -276,7 +272,7 @@ NFA build_NFA(Grammar *grammar)
         .tokc_num = grammar->tokc_num,
     };
 
-    ulli *data = lubs.data;
+    uchar *data = lubs.data;
     for (int i = 0; i < char_num; i++)
     {
         nfa.lbs[i] = data[2 * i];
@@ -305,7 +301,7 @@ void init_scanner(NFA *nfa, NFAScanner *scanner)
     scanner->len = 0;
 }
 
-int step_NFA(ulli letter, int width, NFA *nfa, NFAScanner *scanner)
+int step_NFA(uchar letter, int width, NFA *nfa, NFAScanner *scanner)
 {
     int state_num = nfa->state_num, char_num = nfa->char_num;
     scanner->len += width;

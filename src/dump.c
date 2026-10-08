@@ -43,9 +43,7 @@ void print_arena(Arena *arena)
 {
     char **strs = arena->string_heads.data;
     for (int i = 0; i < arena->string_num; i++)
-    {
         printf("[%d] %s\n", i, strs[i]);
-    }
     newline;
 }
 
@@ -68,11 +66,11 @@ void print_meta_token(MetaToken token)
     }
 }
 
-void print_meta_lexer(MetaToken *tokens, int token_num)
+void print_meta_lexer(Chunk *tok_chunk)
 {
     printf("print meta lexer\n");
-    for (int i = 0; i < token_num; i++)
-        print_meta_token(tokens[i]);
+    for (int i = 0; i < tok_chunk->used; i++)
+        print_meta_token(((MetaToken*) tok_chunk->data)[i]);
 }
 
 void print_grammar(Grammar *grammar)
@@ -167,10 +165,7 @@ void print_meta_expr(MetaExpr *expr)
             printf("\"%s\"", expr->string.value);
             break;
         case E_CRANGE:
-            char buffer1[10], buffer2[10];
-            utf8_to_str(expr->crange.lb, buffer1);
-            utf8_to_str(expr->crange.ub, buffer2);
-            printf("\'%s\'~\'%s\'", buffer1, buffer2);
+            printf("\'%c\'~\'%c\'", expr->crange.lb, expr->crange.ub);
             break;
         case E_IDENTITY:
             printf("%s[%d]", expr->identity.name, expr->identity.idx);
@@ -185,14 +180,9 @@ void print_meta_expr(MetaExpr *expr)
 
 void print_nfa(NFA *nfa, int debug)
 {
-    char buffer1[10], buffer2[10];
     printf("nfa characters:\n");
     for (int cdx = 0; cdx < nfa->char_num; cdx++)
-    {
-        utf8_to_str(nfa->lbs[cdx], buffer1);
-        utf8_to_str(nfa->ubs[cdx], buffer2);
-        printf("[%d] %s[%llu]-%s[%llu]\n", cdx, buffer1, nfa->lbs[cdx], buffer2, nfa->ubs[cdx]);
-    }
+        printf("[%d] %c-%c\n", cdx, nfa->lbs[cdx], nfa->ubs[cdx]);
     newline;
     printf("nfa ends:\n");
     for (int i = 0; i < nfa->tokc_num; i++)

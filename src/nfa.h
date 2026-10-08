@@ -14,7 +14,8 @@ typedef struct {
 } NFABuilder;
 
 typedef struct {
-    ulli *trans, *lbs, *ubs;
+    ulli *trans;
+    uchar *lbs, *ubs;
     TokenClass *tokcs;
     int state_num, char_num, exact_state_num;
     int *end_states, tokc_num;
@@ -44,6 +45,6 @@ typedef struct {
 NFA build_NFA(Grammar *grammar);
 void del_NFA(NFA *nfa);
 void init_scanner(NFA *nfa, NFAScanner *scanner);
-int step_NFA(ulli letter, int width, NFA *nfa, NFAScanner *scanner);
+int step_NFA(uchar letter, int width, NFA *nfa, NFAScanner *scanner);
 
 #endif
