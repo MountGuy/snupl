@@ -87,6 +87,100 @@ void index_expr(MetaExpr *expr, Grammar *grammar)
     }
 }
 
+Chunk meta_lexing(char *input, Arena *arena)
+{
+    Chunk tokens = init_chunk(sizeof(MetaToken), 1);
+
+    char *cursor = input, *line_front = input;
+    int line = 1;
+
+    while (cursor[0])
+    {
+        MetaToken token = { p_null };
+        if (cursor[0] == '/' && cursor[1] == '/')
+        {
+            while ((cursor++)[0] != '\n');
+            line++;
+            line_front = cursor;
+        }
+        else if (cursor[0] == '0' && cursor[1] == 'x')
+        {
+            int hex_len = 0;
+            while (is_hex(cursor[hex_len + 2]))
+                hex_len++;
+
+            char data[10] = { 0 };
+            int string_len = (hex_len + 1) / 2;
+            int remain = (hex_len % 2 > 0);
+
+            for (int i = 0; i < hex_len; i++)
+                data[(i + remain) / 2] += ((i + remain) % 2? 1 : 16) * hex_to_int(cursor[i + 2]);
+
+            token.string = add_string(data, string_len, arena);
+            token.type = M_STRING;
+            token.line = line;
+            token.col = cursor - line_front + 1;
+            token.len = string_len;
+            cursor += hex_len + 2;
+        }
+        else if (is_identc(cursor[0]))
+        {
+            int string_len = 0;
+            while (is_identc(cursor[string_len]))
+                string_len++;
+            token.string = add_string(cursor, string_len, arena);
+            token.type = M_IDENTITY;
+            token.line = line;
+            token.col = cursor - line_front + 1;
+            token.len = string_len;
+            cursor += string_len;
+        }
+        else if (cursor[0] == '\"')
+        {
+            int string_len = 1;
+            cursor++;
+            while (cursor[string_len] != '\"')
+                string_len++;
+            token.string = add_string(cursor, string_len, arena);
+            token.type = M_STRING;
+            token.line = line;
+            token.col = cursor - line_front;
+            token.len = string_len + 2;
+            cursor += string_len + 1;
+        }
+        else
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                if (cursor[0] == ops[i][0])
+                {
+                    token.string = ops[i];
+                    token.type = M_OPERATOR;
+                    token.line = line;
+                    token.col = cursor - line_front + 1;
+                    token.len = 1;
+                    cursor++;
+                    break;
+                }
+            }
+        }
+        if (token.string != p_null)
+            append_data(&token, 1, &tokens);
+
+        while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n')
+        {
+            if (*cursor == '\n')
+            {
+                line++;
+                line_front = cursor + 1;
+            }
+            cursor++;
+        }
+    }
+
+    return tokens;
+}
+
 void parse_define(MetaParser *parser)
 {
     parser->cursor = 0;
@@ -358,100 +452,6 @@ MetaExpr *parse_crange(MetaToken *tok_lower, MetaToken *tok_upper, Arena *arena)
 
         return expr;
     }
-}
-
-Chunk meta_lexing(char *input, Arena *arena)
-{
-    Chunk tokens = init_chunk(sizeof(MetaToken), 1);
-
-    char *cursor = input, *line_front = input;
-    int line = 1;
-
-    while (cursor[0])
-    {
-        MetaToken token = { p_null };
-        if (cursor[0] == '/' && cursor[1] == '/')
-        {
-            while ((cursor++)[0] != '\n');
-            line++;
-            line_front = cursor;
-        }
-        else if (cursor[0] == '0' && cursor[1] == 'x')
-        {
-            int hex_len = 0;
-            while (is_hex(cursor[hex_len + 2]))
-                hex_len++;
-
-            char data[10] = { 0 };
-            int string_len = (hex_len + 1) / 2;
-            int remain = (hex_len % 2 > 0);
-
-            for (int i = 0; i < hex_len; i++)
-                data[(i + remain) / 2] += ((i + remain) % 2? 1 : 16) * hex_to_int(cursor[i + 2]);
-
-            token.string = add_string(data, string_len, arena);
-            token.type = M_STRING;
-            token.line = line;
-            token.col = cursor - line_front + 1;
-            token.len = string_len;
-            cursor += hex_len + 2;
-        }
-        else if (is_identc(cursor[0]))
-        {
-            int string_len = 0;
-            while (is_identc(cursor[string_len]))
-                string_len++;
-            token.string = add_string(cursor, string_len, arena);
-            token.type = M_IDENTITY;
-            token.line = line;
-            token.col = cursor - line_front + 1;
-            token.len = string_len;
-            cursor += string_len;
-        }
-        else if (cursor[0] == '\"')
-        {
-            int string_len = 1;
-            cursor++;
-            while (cursor[string_len] != '\"')
-                string_len++;
-            token.string = add_string(cursor, string_len, arena);
-            token.type = M_STRING;
-            token.line = line;
-            token.col = cursor - line_front;
-            token.len = string_len + 2;
-            cursor += string_len + 1;
-        }
-        else
-        {
-            for (int i = 0; i < 11; i++)
-            {
-                if (cursor[0] == ops[i][0])
-                {
-                    token.string = ops[i];
-                    token.type = M_OPERATOR;
-                    token.line = line;
-                    token.col = cursor - line_front + 1;
-                    token.len = 1;
-                    cursor++;
-                    break;
-                }
-            }
-        }
-        if (token.string != p_null)
-            append_data(&token, 1, &tokens);
-
-        while (*cursor == ' ' || *cursor == '\t' || *cursor == '\n')
-        {
-            if (*cursor == '\n')
-            {
-                line++;
-                line_front = cursor + 1;
-            }
-            cursor++;
-        }
-    }
-
-    return tokens;
 }
 
 Grammar meta_parsing(Chunk tokens, Arena *arena)
