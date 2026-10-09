@@ -6,6 +6,7 @@
 #include "common.h"
 #include "arena.h"
 
-Chunk lexing(char *input, Grammar *grammar, Arena *arena);
+Chunk nfa_lexing(const char *input, Grammar *grammar, Arena *arena);
+Chunk dfa_lexing(const char *input, Grammar *grammar, Arena *arena);
 
 #endif

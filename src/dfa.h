@@ -18,6 +18,6 @@ typedef struct {
     TokenClass *tokcs;
 } DFA;
 
-DFA nfa_to_dfa(NFA *nfa);
+DFA build_DFA(Grammar *grammar);
 
 #endif

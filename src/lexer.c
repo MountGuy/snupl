@@ -6,10 +6,10 @@
 
 #define IS_SKIP(c) ((c) == ' ' || (c) == '\t' || (c) == '\n')
 
-Chunk lexing(char *input, Grammar *grammar, Arena *arena)
+Chunk nfa_lexing(const char *input, Grammar *grammar, Arena *arena)
 {
     int input_len = strlen(input), line = 1;
-    char *cursor = input, *last_nl = input - 1;
+    const char *cursor = input, *last_nl = input - 1;
 
     Chunk tokens = init_chunk(sizeof(Token), 1);
     NFA nfa = build_NFA(grammar);
@@ -64,6 +64,54 @@ Chunk lexing(char *input, Grammar *grammar, Arena *arena)
 
     free(buffer);
     del_NFA(&nfa);
+
+    return tokens;
+}
+
+Chunk dfa_lexing(const char *input, Grammar *grammar, Arena *arena)
+{
+    int line = 1;
+    const char *cursor = input, *last_nl = input - 1;
+
+    Chunk tokens = init_chunk(sizeof(Token), 1);
+    DFA dfa = build_DFA(grammar);
+    TokenClass *tokcs = dfa.tokcs;
+
+    int (*trans)[256] = dfa.trans;
+    int *tokc_output = dfa.tokc_output;
+
+    while (*cursor)
+    {
+        for (; IS_SKIP(*cursor); cursor++)
+            if (*cursor == '\n')
+                line++, last_nl = cursor;
+
+        if (*cursor == c_null)
+            break;
+
+        int state = 1, length = 0, max_length = -1, max_class_idx = -1;
+
+        while (state != 0)
+        {
+            state = trans[state][(uchar) cursor[length++]];
+            if (tokc_output[state] >= 0)
+                max_length = length, max_class_idx = tokc_output[state];
+        }
+        if (max_length > 0)
+        {
+            Token token = {
+                .tok_c = tokcs + max_class_idx,
+                .string = add_string(cursor, max_length, arena),
+                .string_len = max_length,
+                .line = line,
+                .col = cursor - last_nl,
+            };
+            append_data(&token, 1, &tokens);
+            cursor += max_length;
+        }
+        else
+            printf("failed to lex\n"), exit(1);
+    }
 
     return tokens;
 }

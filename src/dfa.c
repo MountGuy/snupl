@@ -52,7 +52,7 @@ void add_dfa_trans(int before, int after, uchar letter, DFABuilder *builder)
     data[letter] = after;
 }
 
-void _nfa_to_dfa(ulli *before, NFA *nfa, DFABuilder *builder)
+void nfa_to_dfa(ulli *before, NFA *nfa, DFABuilder *builder)
 {
     int state_size = builder->state_size;
     int before_idx = find_state(state_size, before, &builder->states);
@@ -68,23 +68,24 @@ void _nfa_to_dfa(ulli *before, NFA *nfa, DFABuilder *builder)
             after_idx = builder->states.used;
             append_data(after, 1, &builder->states);
             add_dfa_trans(before_idx, after_idx, (uchar) i, builder);
-            _nfa_to_dfa(after, nfa, builder);
+            nfa_to_dfa(after, nfa, builder);
         }
         else
             add_dfa_trans(before_idx, after_idx, (uchar) i, builder);
     }
 }
 
-DFA nfa_to_dfa(NFA *nfa)
+DFA build_DFA(Grammar *grammar)
 {
-    int state_size = nfa->state_num / SZLIB;
+    NFA nfa = build_NFA(grammar);
+    int state_size = nfa.state_num / SZLIB;
 
     DFABuilder builder = {
         .used_state_num = 0,
         .state_size = state_size,
         .trans = init_chunk(sizeof(int) * 256, true),
         .states = init_chunk(sizeof(ulli) * state_size, true),
-        .nfa = nfa,
+        .nfa = &nfa,
     };
 
     ulli before[state_size];
@@ -94,21 +95,19 @@ DFA nfa_to_dfa(NFA *nfa)
     append_data(before, 1, &builder.states);
 
     for (int i = 0; i < state_size; i++)
-        before[i] = nfa->trans[i];
+        before[i] = nfa.trans[i];
     append_data(before, 1, &builder.states);
 
-    _nfa_to_dfa(before, nfa, &builder);
+    nfa_to_dfa(before, &nfa, &builder);
 
     int state_num = builder.states.used;
-
-    printf("total state num: %d\n", state_num);
 
     DFA dfa = {
         .trans = malloc(sizeof (*dfa.trans) * state_num),
         .state_num = state_num,
         .tokc_output = malloc(sizeof(int) * state_num),
-        .tokc_num = nfa->tokc_num,
-        .tokcs = nfa->tokcs, 
+        .tokc_num = nfa.tokc_num,
+        .tokcs = nfa.tokcs, 
     };
 
     for (int i = 0; i < dfa.state_num; i++)
@@ -118,15 +117,15 @@ DFA nfa_to_dfa(NFA *nfa)
             dfa.trans[i][c] = trans[c];
     }
 
-    TokenClass *tokcs = nfa->tokcs;
+    TokenClass *tokcs = nfa.tokcs;
 
     for (int i = 0; i < dfa.state_num; i++)
     {
         int tokc_idx = -1;
         ulli *state = (ulli*) builder.states.data + state_size * i;
-        for (int i = 0; i < nfa->tokc_num; i++)
+        for (int i = 0; i < nfa.tokc_num; i++)
         {
-            int end_state = nfa->end_states[i];
+            int end_state = nfa.end_states[i];
             if (READ_OFFSET(state, end_state))
             {
                 if (tokc_idx == -1)
@@ -137,7 +136,7 @@ DFA nfa_to_dfa(NFA *nfa)
                     continue;
                 else
                 {
-                    printf("Some state has two token class output!\n");
+                    printf("Some state has ambiguous token class output!\n");
                     printf("%d %s\n", tokcs[i].type, tokcs[i].name);
                     printf("%d %s\n", tokcs[tokc_idx].type, tokcs[tokc_idx].name);
                     exit(1);
