@@ -46,7 +46,7 @@ int _null_analysis(MetaExpr *expr, int *can_eps)
     }
 }
 
-void null_analysis(Grammar *grammar, int *can_eps, int set_num)
+void null_analysis(Grammar *grammar, int *can_eps)
 {
     int prev_total = 0, curr_total = 0;
     do {
@@ -149,7 +149,7 @@ int solve_equ(SetEqu *equ)
         for (int j = 0; j < equ->set_size / SZLIB; j++)
             equ->sets[offset * sup_idx[i] + j] |= equ->sets[offset * sub_idx[i] + j];
 
-    for (int i = 0; i < mem_size / sizeof(ulli); i++)
+    for (int i = 0; i < mem_size / (int) sizeof(ulli); i++)
         if (equ->sets[i] > equ->old_sets[i])
             return 1;
     return 0;
@@ -172,8 +172,8 @@ FirstFollow solve_ff(Grammar *grammar)
         .sup_idx = init_chunk(sizeof(int), 1),
     };
 
-    int *can_eps = calloc(sizeof(int), set_num);
-    null_analysis(grammar, can_eps, set_num);
+    int *can_eps = calloc(set_num, sizeof(int));
+    null_analysis(grammar, can_eps);
 
     for (int i = 0; i < grammar->def_num; i++)
         build_equ(grammar->defs[i].expr, grammar, &equ, can_eps);

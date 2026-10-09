@@ -409,7 +409,7 @@ MetaExpr build_branch(const char *lower, const char *upper, int length, Arena *a
 
     MetaExpr case_upper = make_nary(2, p_null, E_CONCAT, arena);
     case_upper.nary.exprs[0] = make_crange(upper[0], upper[0]); 
-    case_upper.nary.exprs[1] = build_branch(lower_t, upper, length - 1, arena);;
+    case_upper.nary.exprs[1] = build_branch(lower_t, upper + 1, length - 1, arena);;
 
     MetaExpr expr = make_nary(3, p_null, E_ALTER, arena);
     expr.nary.exprs[0] = case_mid;
@@ -458,7 +458,7 @@ MetaExpr parse_crange(MetaToken *tok_lower, MetaToken *tok_upper, Arena *arena)
 
     MetaExpr expr = make_nary(cc_upper - cc_lower + 1, p_null, E_ALTER, arena);
         
-    for (int cc = cc_lower; cc <= cc_upper; cc++)
+    for (CharClass cc = cc_lower; cc <= cc_upper; cc++)
     {
         int length = utf8_bound[cc][0];
         char lower[length], upper[length];

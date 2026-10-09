@@ -29,7 +29,8 @@ int main(int argv, char *argc[])
     Arena arena = init_arena();
     Chunk m_tokens = meta_lexing(buf1, &arena);
     Grammar grammar = meta_parsing(m_tokens, &arena);
-    Chunk tokens = dfa_lexing(buf2, &grammar, &arena);
+    Chunk tokens = lexing_through_nfa(buf2, &grammar, &arena);
+    // Chunk tokens = lexing_through_dfa(buf2, &grammar, &arena);
     print_lexing_result(&tokens);
     Expr *expr = parse(&tokens, &grammar, &arena);
     print_expr(expr, 0);

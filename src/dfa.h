@@ -19,5 +19,6 @@ typedef struct {
 } DFA;
 
 DFA build_DFA(Grammar *grammar);
+void del_DFA(DFA *dfa);
 
 #endif

@@ -39,13 +39,18 @@ void nfa_trans(ulli *before, ulli *after, uchar letter, NFA *nfa)
                 }
 }
 
-void add_dfa_trans(int before, int after, uchar letter, DFABuilder *builder)
+void add_dfa_state(ulli *state, DFABuilder *builder)
 {
-    int max = builder->trans.max;
+    append_data(state, 1, &builder->states);
 
-    if (after >= max || before >= max)
+    if (builder->trans.used == builder->trans.max)
         expand_chunk(&builder->trans);
 
+    memset(alloc_mem(1, &builder->trans), 0, builder->trans.unit);
+}
+
+void add_dfa_trans(int before, int after, uchar letter, DFABuilder *builder)
+{
     int *data = builder->trans.data;
     data += before * 256;
 
@@ -66,7 +71,7 @@ void nfa_to_dfa(ulli *before, NFA *nfa, DFABuilder *builder)
         if (after_idx == -1)
         {
             after_idx = builder->states.used;
-            append_data(after, 1, &builder->states);
+            add_dfa_state(after, builder);
             add_dfa_trans(before_idx, after_idx, (uchar) i, builder);
             nfa_to_dfa(after, nfa, builder);
         }
@@ -92,11 +97,11 @@ DFA build_DFA(Grammar *grammar)
 
     for (int i = 0; i < state_size; i++)
         before[i] = 0;
-    append_data(before, 1, &builder.states);
+    add_dfa_state(before, &builder);
 
     for (int i = 0; i < state_size; i++)
         before[i] = nfa.trans[i];
-    append_data(before, 1, &builder.states);
+    add_dfa_state(before, &builder);
 
     nfa_to_dfa(before, &nfa, &builder);
 
@@ -148,7 +153,13 @@ DFA build_DFA(Grammar *grammar)
 
     del_chunk(&builder.states);
     del_chunk(&builder.trans);
+    del_NFA(&nfa);
 
     return dfa;
+}
+
+void del_DFA(DFA *dfa)
+{
+    free(dfa->trans), free(dfa->tokc_output);
 }
 
