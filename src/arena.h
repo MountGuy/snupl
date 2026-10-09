@@ -10,7 +10,7 @@ typedef struct {
 } Arena;
 
 Arena init_arena();
-char *add_string(const char *string, int string_len, Arena *arena);
+const char *add_string(const char *string, int string_len, Arena *arena);
 MetaExpr *alloc_mexpr(int size, Arena *arena);
 Expr *alloc_expr(int size, Arena *arena);
 

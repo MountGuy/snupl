@@ -19,6 +19,6 @@ int read_utf8_char(char *c, ulli *result);
 ulli string_to_ulli(char *c);
 int utf8_strlen(char *c);
 int parse_utf8(char *c, ulli *buffer);
-CharClass det_cc(char *str);
+CharClass det_cc(const char *str);
 
 #endif

@@ -134,24 +134,16 @@ void print_meta_def(MetaDef *def)
 
 void print_meta_expr(MetaExpr *expr)
 {
-    // printf("< %d ", expr->idx);
-    static int depth = 0;
+    printf("< %d ", expr->idx);
     switch (expr->kind)
     {
         case E_ALTER:
-            newline;
-            indent(depth);
-            printf("(\n");
-            depth++;
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
-                indent(depth);
                 print_meta_expr(expr->nary.exprs + i);
                 if (i < expr->nary.expr_num - 1)
-                    printf(" | \n");
+                    printf(" | ");
             }
-            printf(")");
-            depth--;
             break;
         case E_CONCAT:
             printf("(");
@@ -174,8 +166,7 @@ void print_meta_expr(MetaExpr *expr)
             printf("}");
             break;
         case E_STRING:
-            // printf("\"%s\"", expr->string.value);
-            for (char *c = expr->string.value; *c; c++)
+            for (const char *c = expr->string.value; *c; c++)
                 printf("0x%02x", (uchar) *c);
             break;
         case E_CRANGE:
@@ -189,7 +180,7 @@ void print_meta_expr(MetaExpr *expr)
             exit(1);
             break;
     }
-    // printf(">");
+    printf(">");
 }
 
 void print_nfa(NFA *nfa, int debug)

@@ -27,7 +27,7 @@ Arena init_arena()
     return arena;
 }
 
-char *insert_string(const char *string, int string_len, Arena *arena)
+const char *insert_string(const char *string, int string_len, Arena *arena)
 {
     Chunk *last_chunk = LAST_DATA(&arena->strings);
 
@@ -38,14 +38,14 @@ char *insert_string(const char *string, int string_len, Arena *arena)
         last_chunk = LAST_DATA(&arena->strings);
     }
 
-    char *head = append_data(string, string_len, last_chunk);
-    char null = c_null;
+    const char *head = append_data(string, string_len, last_chunk);
+    const char null = c_null;
     append_data(&null, 1, last_chunk);
 
     return head;
 }
 
-char *add_string(const char *string, int string_len, Arena *arena)
+const char *add_string(const char *string, int string_len, Arena *arena)
 {
     char **strs = arena->string_heads.data;
     int *lens = arena->string_lens.data;
@@ -54,7 +54,7 @@ char *add_string(const char *string, int string_len, Arena *arena)
         if (strncmp(strs[i], string, string_len) == 0 && lens[i] == string_len)
             return strs[i];
    
-    char *str = insert_string(string, string_len, arena);
+    const char *str = insert_string(string, string_len, arena);
     append_data(&str, 1, &arena->string_heads);
     append_data(&string_len, 1, &arena->string_lens);
     arena->string_num++;
@@ -73,7 +73,12 @@ MetaExpr *alloc_mexpr(int size, Arena *arena)
         last_chunk = LAST_DATA(&arena->mexprs);
     }
 
-    return alloc_mem(size, last_chunk);
+    MetaExpr *expr = alloc_mem(size, last_chunk);
+
+    for (int i = 0; i < size; i++)
+        expr[i].idx = -1;
+
+    return expr;
 }
 
 Expr *alloc_expr(int size, Arena *arena)

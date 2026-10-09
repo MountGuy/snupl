@@ -21,22 +21,22 @@ typedef struct MetaExpr {
     {
         struct { int expr_num; struct MetaExpr *exprs; } nary;
         struct { struct MetaExpr *expr; } unary;
-        struct { char *value; } string;
-        struct { int idx; char *name; } identity;
+        struct { const char *value; int length; } string;
+        struct { int idx; const char *name; } identity;
         struct { uchar lb, ub; } crange;
     };
 } MetaExpr;
 
 typedef enum { D_LETTER, D_TERM, D_GRAMMAR } DType;
 typedef struct  {
-    char *identity;
+    const char *identity;
     DType type;
     MetaExpr *expr;
 } MetaDef;
 
 typedef enum { T_EPS, T_VAR, T_CONST } TType;
 typedef struct {
-    char *name;
+    const char *name;
     int idx;
     TType type;
 } TokenClass;
@@ -49,7 +49,7 @@ typedef struct {
 
 typedef struct {
     TokenClass *tok_c;
-    char *string;
+    const char *string;
     int string_len;
     int line, col;
 } Token;
@@ -57,7 +57,7 @@ typedef struct {
 typedef enum { C_TERM, C_SEQ, C_NONE } CType;
 typedef struct Expr {
     CType type;
-    char *name;
+    const char *name;
     union
     {
         struct { int expr_num; struct Expr *exprs; } sequence;

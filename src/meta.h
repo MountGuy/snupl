@@ -6,7 +6,7 @@
 
 typedef enum { M_IDENTITY, M_OPERATOR, M_STRING } MType;
 typedef struct MetaToken {
-    char *string;
+    const char *string;
     MType type;
     int line, col, len;
 } MetaToken;

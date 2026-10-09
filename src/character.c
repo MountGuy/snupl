@@ -95,7 +95,7 @@ int parse_utf8(char *c, ulli *buffer)
     return length;
 }
 
-CharClass det_cc(char *_str)
+CharClass det_cc(const char *_str)
 {
     uchar *str = (uchar*) _str;
     for (CharClass cc = CC_ASCII; cc <= CC_UTF9; cc++)

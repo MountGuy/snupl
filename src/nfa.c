@@ -60,8 +60,8 @@ void gather_char(MetaExpr *expr, Chunk *lubs)
     {
         case E_STRING:
         {
-            for (uchar *str = (uchar*) expr->string.value; *str; str++)
-                add_char(*str, *str, lubs);
+            for (const char *str = expr->string.value; *str; str++)
+                add_char((uchar) *str,(uchar)  *str, lubs);
             break;
         }
         case E_CRANGE:
@@ -305,7 +305,6 @@ int step_NFA(uchar letter, int width, NFA *nfa, NFAScanner *scanner)
 {
     int state_num = nfa->state_num, char_num = nfa->char_num;
     scanner->len += width;
-    // printf("eating %#x %c\n", letter, letter);
 
     for (int i = 0; i < state_num / SZLIB; i++)
         scanner->tmp[i] = 0;

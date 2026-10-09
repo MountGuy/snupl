@@ -36,6 +36,9 @@ output: $(TARGET)
 simple: $(TARGET)
 	./$(TARGET) simple.gm simple.mod
 
+lean: $(TARGET)
+	./$(TARGET) test/lean.gm test/lean.lean
+
 rtest: $(TARGET)
 	python3 gen_pair.py
 	./$(TARGET) t.gm t.mod > t.output
