@@ -1,6 +1,12 @@
 #include "dump.h"
 #include "bitop.h"
 
+void indent(int depth)
+{
+    for (int i = 0; i < depth; i++)
+        printf("    ");
+}
+
 char *utf8_to_str(ulli code, char *buffer)
 {
     unsigned char *b = (unsigned char *) buffer;
@@ -128,18 +134,24 @@ void print_meta_def(MetaDef *def)
 
 void print_meta_expr(MetaExpr *expr)
 {
-    printf("< %d ", expr->idx);
+    // printf("< %d ", expr->idx);
+    static int depth = 0;
     switch (expr->kind)
     {
         case E_ALTER:
-            printf("(");
+            newline;
+            indent(depth);
+            printf("(\n");
+            depth++;
             for (int i = 0; i < expr->nary.expr_num; i++)
             {
+                indent(depth);
                 print_meta_expr(expr->nary.exprs + i);
                 if (i < expr->nary.expr_num - 1)
-                    printf(" | ");
+                    printf(" | \n");
             }
             printf(")");
+            depth--;
             break;
         case E_CONCAT:
             printf("(");
@@ -162,10 +174,12 @@ void print_meta_expr(MetaExpr *expr)
             printf("}");
             break;
         case E_STRING:
-            printf("\"%s\"", expr->string.value);
+            // printf("\"%s\"", expr->string.value);
+            for (char *c = expr->string.value; *c; c++)
+                printf("0x%02x", (uchar) *c);
             break;
         case E_CRANGE:
-            printf("\'%c\'~\'%c\'", expr->crange.lb, expr->crange.ub);
+            printf("\'0x%02x\'~\'0x%02x\'", expr->crange.lb, expr->crange.ub);
             break;
         case E_IDENTITY:
             printf("%s[%d]", expr->identity.name, expr->identity.idx);
@@ -175,14 +189,14 @@ void print_meta_expr(MetaExpr *expr)
             exit(1);
             break;
     }
-    printf(">");
+    // printf(">");
 }
 
 void print_nfa(NFA *nfa, int debug)
 {
     printf("nfa characters:\n");
     for (int cdx = 0; cdx < nfa->char_num; cdx++)
-        printf("[%d] %c-%c\n", cdx, nfa->lbs[cdx], nfa->ubs[cdx]);
+        printf("[%d] 0x%02x-0x%02x\n", cdx, nfa->lbs[cdx], nfa->ubs[cdx]);
     newline;
     printf("nfa ends:\n");
     for (int i = 0; i < nfa->tokc_num; i++)
@@ -310,7 +324,7 @@ void print_ff_tp(FirstFollow *ff, Grammar *grammar)
 
 void print_token(Token token)
 {
-    printf("token: %20s | class: %10s | class#: %d\n", token.string, token.tok_c->name, token.tok_c->idx);
+    printf("token: %20s | legnth: %d | class: %10s | class#: %d\n", token.string, token.string_len, token.tok_c->name, token.tok_c->idx);
 }
 
 void print_expr(Expr *expr, int depth)

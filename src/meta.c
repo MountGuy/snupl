@@ -5,6 +5,21 @@
 #define PEEK(p) (p->tokens + p->cursor)
 #define POP(p) (p->tokens + p->cursor++)
 #define ADVANCE(p) (p->cursor++)
+#define IS_1BYTE(cc) (((cc) == CC_ASCII) || ((cc) == CC_NASCII))
+#define UTF8_MIN 0x80
+#define UTF8_MAX 0xBF
+
+const char lower_t[5] = { UTF8_MIN, UTF8_MIN, UTF8_MIN, UTF8_MIN, UTF8_MIN };
+const char upper_t[5] = { UTF8_MAX, UTF8_MAX, UTF8_MAX, UTF8_MAX, UTF8_MAX };
+
+MetaExpr
+    temp_alter =  { .kind = E_ALTER, .idx = -1},
+    temp_concat = { .kind = E_CONCAT, .idx = -1},
+    temp_option = { .kind = E_OPTION, .idx = -1},
+    temp_repeat = { .kind = E_REPEAT, .idx = -1},
+    temp_string = { .kind = E_STRING, .idx = -1},
+    temp_crange = { .kind = E_CRANGE, .idx = -1},
+    temp_identity = { .kind = E_IDENTITY, .idx = -1};
 
 MetaExpr *parse_alter(MetaParser *parser);
 MetaExpr *parse_concat(MetaParser *parser);
@@ -205,9 +220,9 @@ void parse_define(MetaParser *parser)
         ))
             print_error_mtoken("parse_define end", tok_end);
 
-        DType type = (tok_id->string[0] != '_'? D_GRAMMAR : 
+        DType type = (tok_id->string[0] != '_'? D_GRAMMAR :
             (tok_id->string[1] != '_'? D_TERM : D_LETTER));
-            
+
         MetaDef def = {
             .identity = tok_id->string,
             .type = type,
@@ -263,16 +278,15 @@ MetaExpr *parse_alter(MetaParser *parser)
     if (expr_num == 1)
     {
         expr = alloc_mexpr(1, parser->arena);
-        *expr = buffer[0];
+        expr[0] = buffer[0];
     }
     else
     {
         expr = alloc_mexpr(expr_num + 1, parser->arena);
-        expr->kind = E_ALTER;
-        expr->idx = -1;
-        expr->nary.expr_num = expr_num;
-        expr->nary.exprs = expr + 1;
-        memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr) * expr_num);
+        memcpy(expr + 1, buffer, sizeof(MetaExpr) * expr_num);
+        expr[0] = temp_alter;
+        expr[0].nary.expr_num = expr_num;
+        expr[0].nary.exprs = expr + 1;
     }
     free(buffer);
     return expr;
@@ -306,18 +320,158 @@ MetaExpr *parse_concat(MetaParser *parser)
     if (expr_num == 1)
     {
         expr = alloc_mexpr(1, parser->arena);
-        *expr = buffer[0];
+        expr[0] = buffer[0];
     }
     else
     {
         expr = alloc_mexpr(expr_num + 1, parser->arena);
-        expr->kind = E_CONCAT;
-        expr->idx = -1;
-        expr->nary.expr_num = expr_num;
-        expr->nary.exprs = expr + 1;
-        memcpy(expr->nary.exprs, buffer, sizeof(MetaExpr) * expr_num);
+        memcpy(expr + 1, buffer, sizeof(MetaExpr) * expr_num);
+        expr[0] = temp_concat;
+        expr[0].nary.expr_num = expr_num;
+        expr[0].nary.exprs = expr + 1;
     }
     free(buffer);
+    return expr;
+}
+
+MetaExpr *build_branch(const char *lower, const char *upper, int length, Arena *arena)
+{
+    // printf("building branch for ");
+    // for (int i = 0; i < length; i++)
+    //     printf("0x%02x ", (uchar) lower[i]);
+    // printf(" ~ ");
+    // for (int i = 0; i < length; i++)
+    //     printf("0x%02x ", (uchar) upper[i]);
+    // newline;
+
+    if (length == 1)
+    {
+        MetaExpr *expr = alloc_mexpr(1, arena);
+        expr[0] = temp_crange;
+        expr[0].crange.lb = lower[0];
+        expr[0].crange.ub = upper[0];
+
+        return expr;
+    }
+
+    MetaExpr *expr = alloc_mexpr(4, arena);
+    expr[0] = temp_alter;
+    expr[0].nary.expr_num = 3;
+    expr[0].nary.exprs = expr + 1;
+
+    expr[1] = temp_concat;
+    expr[1].nary.expr_num = 2;
+    expr[1].nary.exprs = alloc_mexpr(2, arena);
+
+    expr[1].nary.exprs[0] = temp_crange;
+    expr[1].nary.exprs[0].crange.lb = lower[0] + 1;
+    expr[1].nary.exprs[0].crange.ub = upper[0] - 1;
+    expr[1].nary.exprs[1] = *build_branch(lower_t, upper_t, length - 1, arena);
+
+    expr[2] = temp_concat;
+    expr[2].nary.expr_num = 2;
+    expr[2].nary.exprs = alloc_mexpr(2, arena);
+
+    expr[2].nary.exprs[0] = temp_crange;
+    expr[2].nary.exprs[0].crange.lb = lower[0];
+    expr[2].nary.exprs[0].crange.ub = lower[0];
+    expr[2].nary.exprs[1] = *build_branch(lower + 1, upper_t, length - 1, arena);
+
+    expr[3] = temp_concat;
+    expr[3].nary.expr_num = 2;
+    expr[3].nary.exprs = alloc_mexpr(2, arena);
+
+    expr[3].nary.exprs[0] = temp_crange;
+    expr[3].nary.exprs[0].crange.lb = upper[0];
+    expr[3].nary.exprs[0].crange.ub = upper[0];
+    expr[3].nary.exprs[1] = *build_branch(lower_t, upper + 1, length - 1, arena);
+    // newline;
+
+    // print_meta_expr(expr);
+    // newline;
+    // sepline;
+    return expr;
+}
+
+MetaExpr *build_band(const char *lower, const char *upper, int length, Arena *arena)
+{
+    int idle_d = 0;
+    // printf("building band for ");
+    // for (int i = 0; i < length; i++)
+    //     printf("0x%02x ", (uchar) lower[i]);
+    // printf(" ~ ");
+    // for (int i = 0; i < length; i++)
+    //     printf("0x%02x ", (uchar) upper[i]);
+    // newline;
+
+    while (lower[idle_d] == upper[idle_d])
+        idle_d++;
+
+    if (idle_d == 0)
+        return build_branch(lower, upper, length, arena);
+
+    if (idle_d == length)
+    {
+        MetaExpr *expr = alloc_mexpr(1, arena);
+        expr[0] = temp_string;
+        expr[0].string.value = lower;
+
+        return expr;
+    }
+
+    MetaExpr *expr = alloc_mexpr(3, arena);
+    expr[0] = temp_concat;
+    expr[0].nary.expr_num = 2;
+    expr[0].nary.exprs = expr + 1;
+
+    expr[1] = temp_string;
+    expr[1].string.value = add_string(lower, idle_d, arena);
+
+    expr[2] = *build_branch(lower + idle_d, upper + idle_d, length - idle_d, arena);
+
+    return expr;
+}
+
+MetaExpr *parse_crange(MetaToken *tok_lower, MetaToken *tok_upper, Arena *arena)
+{
+    char *str_lower = tok_lower->string, *str_upper = tok_upper->string;
+    CharClass cc_lower = det_cc(str_lower), cc_upper = det_cc(str_upper);
+
+    if (cc_lower == CC_NASCII || cc_upper == CC_NASCII)
+    {
+        if (!IS_1BYTE(cc_lower) || !IS_1BYTE(cc_upper))
+            printf("This kind of a crange expression is invalid: %d %d\n", cc_lower, cc_upper), exit(1);
+
+        MetaExpr *expr = alloc_mexpr(1, arena);
+        expr[0] = temp_crange;
+        expr[0].crange.lb = tok_lower->string[0];
+        expr[0].crange.ub = tok_upper->string[0];
+
+        return expr;
+    }
+
+    if (cc_lower == cc_upper)
+        return build_band(str_lower, str_upper, utf8_bound[cc_lower][0], arena);
+
+    char lower[4], upper[4];
+    MetaExpr *expr = alloc_mexpr(cc_upper - cc_lower + 2, arena);
+
+    for (int cc = cc_lower; cc <= cc_upper; cc++)
+    {
+        int length = utf8_bound[cc][0];
+        for (int j = 0; j < length; j++)
+        {
+            lower[j] = (cc == cc_lower? str_lower[j] : utf8_bound[cc][2 * j + 1]);
+            upper[j] = (cc == cc_upper? str_upper[j] : utf8_bound[cc][2 * j + 2]);
+        }
+
+        expr[cc - cc_lower + 1] = *build_band(lower, upper, length, arena);
+    }
+
+    expr[0] = temp_alter;
+    expr[0].nary.expr_num = cc_upper - cc_lower + 1;
+    expr[0].nary.exprs = expr + 1;
+
     return expr;
 }
 
@@ -340,19 +494,17 @@ MetaExpr *parse_primary(MetaParser *parser)
             else
             {
                 MetaExpr *expr = alloc_mexpr(1, parser->arena);
-                expr->kind = E_STRING;
-                expr->idx = -1;
-                expr->string.value = string;
+                expr[0] = temp_string;
+                expr[0].string.value = string;
                 return expr;
             }
         }
         case M_IDENTITY:
         {
             MetaExpr *expr = alloc_mexpr(1, parser->arena);
-            expr->kind = E_IDENTITY;
-            expr->idx = -1;
-            expr->identity.name = string;
-            expr->identity.idx = -1;
+            expr[0] = temp_identity;
+            expr[0].identity.name = string;
+            expr[0].identity.idx = -1;
             return expr;
         }
         case M_OPERATOR:
@@ -368,17 +520,15 @@ MetaExpr *parse_primary(MetaParser *parser)
                 if (string == S_LBC && next_string == S_RBC)
                 {
                     MetaExpr *expr = alloc_mexpr(1, parser->arena);
-                    expr->kind = E_REPEAT;
-                    expr->idx = -1;
-                    expr->unary.expr = body;
+                    expr[0] = temp_repeat;
+                    expr[0].unary.expr = body;
                     return expr;
                 }
                 if (string == S_LBK && next_string == S_RBK)
                 {
                     MetaExpr *expr = alloc_mexpr(1, parser->arena);
-                    expr->kind = E_OPTION;
-                    expr->idx = -1;
-                    expr->unary.expr = body;
+                    expr[0] = temp_option;
+                    expr[0].unary.expr = body;
                     return expr;
                 }
             }
@@ -388,70 +538,6 @@ MetaExpr *parse_primary(MetaParser *parser)
             print_error_mtoken("parse_primary default", token);
     }
     return p_null;
-}
-
-MetaExpr *cc_expr(char *_lower, char *_upper, CharClass cc, Arena *arena)
-{
-    int width = utf8_bound[cc][0];
-    uchar *lower = (uchar*) _lower, *upper = (uchar*) _upper;
-    MetaExpr *expr = alloc_mexpr(width + 1, arena);
-
-    for (int i = 0; i < width; i++)
-    {
-        expr[i + 1].kind = E_CRANGE;
-        expr[i + 1].idx = -1;
-        expr[i + 1].crange.lb = (lower == p_null? utf8_bound[cc][2 * i + 1] : lower[i]);
-        expr[i + 1].crange.ub = (upper == p_null? utf8_bound[cc][2 * i + 2] : upper[i]);
-    }
-
-    expr[0].kind = E_CONCAT;
-    expr[0].idx = -1;
-    expr[0].nary.expr_num = width;
-    expr[0].nary.exprs = expr + 1;
-
-    return expr;
-}
-
-MetaExpr *parse_crange(MetaToken *tok_lower, MetaToken *tok_upper, Arena *arena)
-{
-    char *str_lower = tok_lower->string, *str_upper = tok_upper->string;
-    CharClass cc_lower = det_cc(str_lower), cc_upper = det_cc(str_upper);
-
-    if (cc_lower == CC_NASCII || cc_upper == CC_NASCII)
-    {
-        if ((cc_lower != CC_ASCII && cc_lower != CC_NASCII) ||
-            (cc_upper != CC_ASCII && cc_upper != CC_NASCII))
-            {
-                printf("This kind of a crange expression is invalid");
-                exit(1);
-            }
-        MetaExpr *expr = alloc_mexpr(1, arena);
-        expr->kind = E_CRANGE;
-        expr->idx = -1;
-        expr->crange.lb = tok_lower->string[0];
-        expr->crange.ub = tok_upper->string[0];
-
-        return expr;
-    }
-    else if (cc_lower == cc_upper)
-        return cc_expr(str_lower, str_upper, cc_lower, arena);
-    else
-    {
-        int class_num = cc_upper - cc_lower + 1;
-        MetaExpr *expr = alloc_mexpr(class_num + 1, arena);
-
-        expr[1] = *cc_expr(str_lower, p_null, cc_lower, arena);
-        expr[class_num] = *cc_expr(p_null, str_upper, cc_upper, arena);
-        for (int i = 1; i < class_num - 1; i++)
-            expr[i + 1] = *cc_expr(p_null, p_null, cc_lower + i, arena);
-
-        expr[0].kind = E_ALTER;
-        expr[0].idx = -1;
-        expr[0].nary.expr_num = class_num;
-        expr[0].nary.exprs = expr + 1;
-
-        return expr;
-    }
 }
 
 Grammar meta_parsing(Chunk tokens, Arena *arena)

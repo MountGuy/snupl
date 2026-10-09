@@ -55,7 +55,7 @@ void *alloc_mem(int length, Chunk *chunk)
     return return_val;
 }
 
-void *append_data(void *source, int length, Chunk *chunk)
+void *append_data(const void *source, int length, Chunk *chunk)
 {
     if (chunk->used + length > chunk->max)
         expand_chunk(chunk);

@@ -27,7 +27,7 @@ Arena init_arena()
     return arena;
 }
 
-char *insert_string(char *string, int string_len, Arena *arena)
+char *insert_string(const char *string, int string_len, Arena *arena)
 {
     Chunk *last_chunk = LAST_DATA(&arena->strings);
 
@@ -45,7 +45,7 @@ char *insert_string(char *string, int string_len, Arena *arena)
     return head;
 }
 
-char *add_string(char *string, int string_len, Arena *arena)
+char *add_string(const char *string, int string_len, Arena *arena)
 {
     char **strs = arena->string_heads.data;
     int *lens = arena->string_lens.data;

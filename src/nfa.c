@@ -305,6 +305,7 @@ int step_NFA(uchar letter, int width, NFA *nfa, NFAScanner *scanner)
 {
     int state_num = nfa->state_num, char_num = nfa->char_num;
     scanner->len += width;
+    // printf("eating %#x %c\n", letter, letter);
 
     for (int i = 0; i < state_num / SZLIB; i++)
         scanner->tmp[i] = 0;

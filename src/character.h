@@ -9,7 +9,7 @@
 #define is_identc(c) (is_char(c) || is_digit(c) || (c == '_'))
 
 typedef enum {
-    CC_ASCII, CC_NASCII, CC_UTF2, CC_UTF3, CC_UTF4, CC_UTF5, CC_UTF6, CC_UTF7, CC_UTF8, CC_UTF9
+    CC_NASCII, CC_ASCII, CC_UTF2, CC_UTF3, CC_UTF4, CC_UTF5, CC_UTF6, CC_UTF7, CC_UTF8, CC_UTF9
 } CharClass;
 
 extern uchar utf8_bound[10][9];
