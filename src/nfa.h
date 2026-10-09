@@ -1,5 +1,5 @@
-#ifndef AUTOMATA_H
-#define AUTOMATA_H 1
+#ifndef NFA_H
+#define NFA_H 1
 
 #define I_EPS 0
 
@@ -26,25 +26,9 @@ typedef struct {
     ulli *visiting, *tmp;
 } NFAScanner;
 
-typedef struct {
-    int *trans, used_state_num, state_byte_size;
-    ulli *chars;
-    int char_num;
-    Chunk states;
-    NFA *nfa;
-} DFABuilder;
-
-typedef struct {
-    int *trans;
-    ulli *lbs, *ubs;
-    TokenClass *tokcs;
-    int state_num, char_num;
-    int tokc_num, *end_tokc;
-} DFA;
-
 NFA build_NFA(Grammar *grammar);
 void del_NFA(NFA *nfa);
 void init_scanner(NFA *nfa, NFAScanner *scanner);
-int step_NFA(uchar letter, int width, NFA *nfa, NFAScanner *scanner);
+int step_NFA(uchar letter, NFA *nfa, NFAScanner *scanner);
 
 #endif

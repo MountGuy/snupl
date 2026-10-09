@@ -8,6 +8,7 @@
 #include "arena.h"
 #include "meta.h"
 #include "nfa.h"
+#include "dfa.h"
 #include "lexer.h"
 #include "parser.h"
 
@@ -21,6 +22,7 @@ void print_meta_expr(MetaExpr *expr);
 void print_arena(Arena *arena);
 
 void print_nfa(NFA *nfa, int debug);
+void print_dfa(DFA dfa, int debug);
 void print_trans(int trim_state_num, int state_num, int char_num, ulli *trans);
 void print_lexing_result(Chunk *tok_chunk);
 void print_binary_vector(ulli *vector, int length);

@@ -339,3 +339,27 @@ void print_expr(Expr *expr, int depth)
             return;
     }
 }
+
+void print_dfa(DFA dfa, int debug)
+{
+    int state_num = dfa.state_num;
+
+    printf("number of state: %d\n", dfa.state_num);
+    printf("number of tokc: %d\n", dfa.tokc_num);
+
+    for (int i = 0; i < dfa.state_num; i++)
+    {
+        int tokc_idx = dfa.tokc_output[i];
+        printf("%d state is for %s\n", i, dfa.tokcs[tokc_idx].name);
+    }
+
+    if (debug)
+        for (int i = 0; i < state_num; i++)
+        {
+            for (int c = 0; c < 256; c++)
+            {
+                if (dfa.trans[i][c] != 0)
+                    printf("%d =(%c)=> %d\n", i, c, dfa.trans[i][c]);
+            }
+        }
+}

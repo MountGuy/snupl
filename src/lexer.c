@@ -34,7 +34,7 @@ Chunk lexing(char *input, Grammar *grammar, Arena *arena)
             break;
 
         int tok_len = 0;
-        while (step_NFA(cursor[tok_len], 1, &nfa, &scanner))
+        while (step_NFA(cursor[tok_len], &nfa, &scanner))
             tok_len++;
 
         int best_idx = -1, best_len = 0;

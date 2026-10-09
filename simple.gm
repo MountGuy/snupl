@@ -1,1 +1,4 @@
-_unicode = 0x01 ~ 0x09 | 0x0b ~ 0xf48fbfbf ;
+_a = "a" | "b";
+_b = _a, "c", _a;
+
+
