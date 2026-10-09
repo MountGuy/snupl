@@ -15,7 +15,7 @@ char *utf8_to_str(ulli code, char *buffer);
 void print_arena(Arena *arena);
 void print_meta_token(MetaToken token);
 void print_meta_lexer(Chunk *tok_chunk);
-void print_grammar(Grammar *grammar);
+void print_grammar(Grammar grammar);
 void print_meta_def(MetaDef *def);
 void print_meta_expr(MetaExpr *expr);
 void print_arena(Arena *arena);

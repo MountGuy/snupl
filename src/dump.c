@@ -79,11 +79,11 @@ void print_meta_lexer(Chunk *tok_chunk)
         print_meta_token(((MetaToken*) tok_chunk->data)[i]);
 }
 
-void print_grammar(Grammar *grammar)
+void print_grammar(Grammar grammar)
 {
-    MetaDef *defs = grammar->defs;
-    printf("number of grammar: %d\n", grammar->def_num);
-    for (int i = 0; i < grammar->def_num; i++)
+    MetaDef *defs = grammar.defs;
+    printf("number of grammar: %d\n", grammar.def_num);
+    for (int i = 0; i < grammar.def_num; i++)
     {
         switch (defs[i].type)
         {
@@ -103,10 +103,10 @@ void print_grammar(Grammar *grammar)
         print_meta_expr(defs[i].expr);
         newline;
     }
-    printf("number of token class: %d\n", grammar->tokc_num);
-    for (int i = 0; i < grammar->tokc_num; i++)
+    printf("number of token class: %d\n", grammar.tokc_num);
+    for (int i = 0; i < grammar.tokc_num; i++)
     {
-        TokenClass class = grammar->tokcs[i];
+        TokenClass class = grammar.tokcs[i];
         printf("[%d] %s %d\n", i, class.name, class.type);
     }
 }
