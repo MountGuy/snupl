@@ -1,0 +1,7 @@
+parsing './parser/char04.mod'...
+successfully parsed.
+running semantic analysis...
+semantic error at 16:7 : type should be integer or longint, not 'char'
+
+
+Done.

@@ -1,0 +1,8 @@
+digraph IR {
+  graph [fontname="Times New Roman",fontsize=10];
+  node  [fontname="Courier New",fontsize=10];
+  edge  [fontname="Times New Roman",fontsize=10];
+
+  // scope 'test05'
+  test05_cb [label="test05\r  0:     assign min <- -2147483648 <integer>\l  1:     assign max <- 2147483647 <integer>\l",shape=box]
+}

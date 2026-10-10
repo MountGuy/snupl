@@ -1,0 +1,7 @@
+parsing './parser/mytest02.mod'...
+successfully parsed.
+running semantic analysis...
+semantic error at 4:8 : integer value out of range
+
+
+Done.

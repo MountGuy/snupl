@@ -1,0 +1,10 @@
+digraph IR {
+  graph [fontname="Times New Roman",fontsize=10];
+  node  [fontname="Courier New",fontsize=10];
+  edge  [fontname="Times New Roman",fontsize=10];
+
+  // scope 'array01'
+  array01_cb [label="array01\r  0:     &()    t <- A\l  1:     &()    t0 <- A\l  2:     param  1 <integer> <- 2 <integer>\l  3:     param  0 <integer> <- t0\l  4:     call   t1 <- DIM\l  5:     mul    t2 <- 2 <integer>, t1\l  6:     add    t3 <- t2, 3 <integer>\l  7:     mul    t4 <- t3, 4 <integer>\l  8:     &()    t5 <- A\l  9:     param  0 <integer> <- t5\l 10:     call   t6 <- DOFS\l 11:     add    t7 <- t4, t6\l 12:     add    t8 <- t, t7\l 13:     &()    t9 <- A\l 14:     &()    t10 <- A\l 15:     param  1 <integer> <- 2 <integer>\l 16:     param  0 <integer> <- t10\l 17:     call   t11 <- DIM\l 18:     mul    t12 <- 0 <integer>, t11\l 19:     add    t13 <- t12, 1 <integer>\l 20:     mul    t14 <- t13, 4 <integer>\l 21:     &()    t15 <- A\l 22:     param  0 <integer> <- t15\l 23:     call   t16 <- DOFS\l 24:     add    t17 <- t14, t16\l 25:     add    t18 <- t9, t17\l 26:     assign @t18 <- @t8\l",shape=box]
+  // scope 'foo'
+  foo_cb [label="foo\r  0:     &()    t19 <- B\l  1:     mul    t20 <- 7 <integer>, 4 <integer>\l  2:     &()    t21 <- B\l  3:     param  0 <integer> <- t21\l  4:     call   t22 <- DOFS\l  5:     add    t23 <- t20, t22\l  6:     add    t24 <- t19, t23\l  7:     assign @t24 <- a\l",shape=box]
+}

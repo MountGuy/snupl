@@ -1,0 +1,161 @@
+parsing './parser/test04.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: test06
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+
+    array types:
+      arrayof <char>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ @a        <integer>           a     ]
+    [ *asdf() --> <NULL>     ]
+    [ @b        <integer>           b     ]
+    [ @b0       <boolean>          b0     ]
+    [ @b1       <boolean>          b1     ]
+    [ *binop(<integer>,<integer>) --> <boolean>     ]
+    [ @c        <integer>           c     ]
+    [ *compare(<integer>,<integer>) --> <boolean>     ]
+    [ *foo(<integer>) --> <NULL>     ]
+    [ *intop(<integer>,<integer>) --> <integer>     ]
+    [ *unary() --> <NULL>     ]
+  ]]
+  [[ test06
+  ]]
+
+  [[ procedure: foo
+    [[
+      [ %a        <integer>       ]
+      [ $b        <integer>       ]
+      [ $t        <integer>       ]
+    ]]
+    [[ foo
+        0:     assign b <- c
+        1:     add    t <- a, b
+        2:     assign c <- t
+    ]]
+  ]]
+
+  [[ procedure: unary
+    [[
+      [ $t        <integer>       ]
+      [ $t0       <boolean>       ]
+    ]]
+    [[ unary
+        0:     neg    t <- b
+        1:     assign a <- t
+        2:     if     b1 = 1 <boolean> goto 3
+        3:     assign t0 <- 1 <boolean>
+        4:     goto   4
+        5: 3:
+        6:     assign t0 <- 0 <boolean>
+        7: 4:
+        8:     assign b0 <- t0
+    ]]
+  ]]
+
+  [[ procedure: binop
+    [[
+      [ %p0       <integer>       ]
+      [ %p1       <integer>       ]
+      [ $t        <integer>       ]
+      [ $t0       <integer>       ]
+      [ $t1       <boolean>       ]
+    ]]
+    [[ binop
+        0:     neg    t <- p0
+        1:     add    t0 <- t, p1
+        2:     if     t0 > 0 <integer> goto 2
+        3:     if     p0 > 0 <integer> goto 6
+        4:     goto   1
+        5: 6:
+        6:     if     p1 < 0 <integer> goto 2
+        7: 1:
+        8:     assign t1 <- 1 <boolean>
+        9:     goto   3
+       10: 2:
+       11:     assign t1 <- 0 <boolean>
+       12: 3:
+       13:     return t1
+    ]]
+  ]]
+
+  [[ procedure: intop
+    [[
+      [ %p0       <integer>       ]
+      [ %p1       <integer>       ]
+      [ $t        <integer>       ]
+      [ $t0       <integer>       ]
+      [ $t1       <integer>       ]
+    ]]
+    [[ intop
+        0:     neg    t <- p0
+        1:     pos    t0 <- p1
+        2:     add    t1 <- t, t0
+        3:     return t1
+    ]]
+  ]]
+
+  [[ procedure: compare
+    [[
+      [ %a        <integer>       ]
+      [ %b        <integer>       ]
+      [ $t        <boolean>       ]
+      [ $t0       <integer>       ]
+    ]]
+    [[ compare
+        0:     param  1 <integer> <- b
+        1:     param  0 <integer> <- a
+        2:     call   t <- binop
+        3:     if     t = 1 <boolean> goto 4
+        4:     goto   2_if_false
+        5: 4:
+        6:     param  1 <integer> <- a
+        7:     param  0 <integer> <- b
+        8:     call   t0 <- intop
+        9:     if     t0 < a goto 3
+       10:     goto   2_if_false
+       11: 3:
+       12:     if     a # b goto 1_if_true
+       13:     goto   2_if_false
+       14: 1_if_true:
+       15:     return 1 <boolean>
+       16:     goto   0
+       17: 2_if_false:
+       18:     return 0 <boolean>
+       19: 0:
+    ]]
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/test04.mod.pdf ./parser/test04.mod.dot
+
+
+Done.

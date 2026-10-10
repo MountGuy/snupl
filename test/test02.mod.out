@@ -1,0 +1,80 @@
+parsing './parser/test02.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: test04
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+
+    array types:
+      arrayof <char>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ @a        <integer>           a     ]
+    [ @b        <integer>           b     ]
+    [ @c        <integer>           c     ]
+    [ $t        <integer>     ]
+    [ $t0       <integer>     ]
+    [ $t1       <integer>     ]
+    [ $t2       <integer>     ]
+    [ $t3       <integer>     ]
+    [ $t4       <integer>     ]
+    [ $t5       <integer>     ]
+    [ $t6       <integer>     ]
+    [ $t7       <integer>     ]
+    [ $t8       <integer>     ]
+    [ $t9       <integer>     ]
+  ]]
+  [[ test04
+      0:     assign a <- 1 <integer>
+      1:     assign b <- 2 <integer>
+      2:     assign c <- 3 <integer>
+      3:     add    t <- a, b
+      4:     add    t0 <- t, c
+      5:     assign a <- t0
+      6:     sub    t1 <- a, b
+      7:     sub    t2 <- t1, c
+      8:     assign b <- t2
+      9:     mul    t3 <- b, c
+     10:     add    t4 <- a, t3
+     11:     assign c <- t4
+     12:     neg    t5 <- a
+     13:     assign a <- t5
+     14:     add    t6 <- a, b
+     15:     div    t7 <- t6, c
+     16:     assign b <- t7
+     17:     add    t8 <- -1 <integer>, a
+     18:     neg    t9 <- t8
+     19:     assign c <- t9
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/test02.mod.pdf ./parser/test02.mod.dot
+
+
+Done.

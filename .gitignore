@@ -1,11 +1,14 @@
-test
 build
 build-asan
 build-bench
-
 scanner*
+lexbench
 
-*.md
+simple.mod
+simple.gm
+
+todo.md
+
 *.txt
 *.tc
 *.spl
@@ -13,6 +16,3 @@ scanner*
 *.tar
 *.code
 *.pdf
-*.mod
-t.*bench/corpus/
-lexbench

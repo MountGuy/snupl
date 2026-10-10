@@ -1,0 +1,5 @@
+parsing './parser/mytest03.mod'...
+syntax error at 2:9 : open index is not allowed in variable declaration
+
+
+Done.

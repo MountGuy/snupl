@@ -1,0 +1,56 @@
+parsing './parser/test03.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: test05
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+
+    array types:
+      arrayof <char>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ =a        <integer>     ]
+      [ data: 10000 ]
+    [ =b        <integer>     ]
+      [ data: 20000 ]
+    [ =c        <integer>     ]
+      [ data: 30000 ]
+    [ @max      <integer>         max     ]
+    [ @min      <integer>         min     ]
+  ]]
+  [[ test05
+      0:     assign min <- -2147483648 <integer>
+      1:     assign max <- 2147483647 <integer>
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/test03.mod.pdf ./parser/test03.mod.dot
+
+
+Done.

@@ -1,0 +1,149 @@
+parsing './parser/array02.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: array02
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+      <ptr(8) to array 5 of array 5 of <integer>>>>
+
+    array types:
+      arrayof <char>>
+      array 5 of <integer>>
+      array 5 of array 5 of <integer>>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ @A        array 5 of array 5 of <integer>>>           A     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ $t        <integer>     ]
+    [ $t0       <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t1       <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t10      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t11      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t12      <integer>     ]
+    [ $t13      <integer>     ]
+    [ $t14      <integer>     ]
+    [ $t15      <integer>     ]
+    [ $t16      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t17      <integer>     ]
+    [ $t18      <integer>     ]
+    [ $t19      <integer>     ]
+    [ $t2       <integer>     ]
+    [ $t20      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t21      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t22      <integer>     ]
+    [ $t23      <integer>     ]
+    [ $t24      <integer>     ]
+    [ $t25      <integer>     ]
+    [ $t26      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t27      <integer>     ]
+    [ $t28      <integer>     ]
+    [ $t29      <integer>     ]
+    [ $t3       <integer>     ]
+    [ $t30      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t31      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t32      <integer>     ]
+    [ $t33      <integer>     ]
+    [ $t34      <integer>     ]
+    [ $t35      <integer>     ]
+    [ $t36      <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t37      <integer>     ]
+    [ $t38      <integer>     ]
+    [ $t39      <integer>     ]
+    [ $t4       <integer>     ]
+    [ $t5       <integer>     ]
+    [ $t6       <ptr(8) to array 5 of array 5 of <integer>>>>     ]
+    [ $t7       <integer>     ]
+    [ $t8       <integer>     ]
+    [ $t9       <integer>     ]
+  ]]
+  [[ array02
+      0:     call   t <- ReadInt
+      1:     &()    t0 <- A
+      2:     &()    t1 <- A
+      3:     param  1 <integer> <- 2 <integer>
+      4:     param  0 <integer> <- t1
+      5:     call   t2 <- DIM
+      6:     mul    t3 <- 2 <integer>, t2
+      7:     add    t4 <- t3, 3 <integer>
+      8:     mul    t5 <- t4, 4 <integer>
+      9:     &()    t6 <- A
+     10:     param  0 <integer> <- t6
+     11:     call   t7 <- DOFS
+     12:     add    t8 <- t5, t7
+     13:     add    t9 <- t0, t8
+     14:     assign @t9 <- t
+     15:     &()    t10 <- A
+     16:     &()    t11 <- A
+     17:     param  1 <integer> <- 2 <integer>
+     18:     param  0 <integer> <- t11
+     19:     call   t12 <- DIM
+     20:     mul    t13 <- 2 <integer>, t12
+     21:     add    t14 <- t13, 3 <integer>
+     22:     mul    t15 <- t14, 4 <integer>
+     23:     &()    t16 <- A
+     24:     param  0 <integer> <- t16
+     25:     call   t17 <- DOFS
+     26:     add    t18 <- t15, t17
+     27:     add    t19 <- t10, t18
+     28:     &()    t20 <- A
+     29:     &()    t21 <- A
+     30:     param  1 <integer> <- 2 <integer>
+     31:     param  0 <integer> <- t21
+     32:     call   t22 <- DIM
+     33:     mul    t23 <- 0 <integer>, t22
+     34:     add    t24 <- t23, 1 <integer>
+     35:     mul    t25 <- t24, 4 <integer>
+     36:     &()    t26 <- A
+     37:     param  0 <integer> <- t26
+     38:     call   t27 <- DOFS
+     39:     add    t28 <- t25, t27
+     40:     add    t29 <- t20, t28
+     41:     assign @t29 <- @t19
+     42:     &()    t30 <- A
+     43:     &()    t31 <- A
+     44:     param  1 <integer> <- 2 <integer>
+     45:     param  0 <integer> <- t31
+     46:     call   t32 <- DIM
+     47:     mul    t33 <- 0 <integer>, t32
+     48:     add    t34 <- t33, 1 <integer>
+     49:     mul    t35 <- t34, 4 <integer>
+     50:     &()    t36 <- A
+     51:     param  0 <integer> <- t36
+     52:     call   t37 <- DOFS
+     53:     add    t38 <- t35, t37
+     54:     add    t39 <- t30, t38
+     55:     param  0 <integer> <- @t39
+     56:     call   WriteInt
+     57:     call   WriteLn
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/array02.mod.pdf ./parser/array02.mod.dot
+
+
+Done.

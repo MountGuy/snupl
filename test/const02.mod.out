@@ -1,0 +1,53 @@
+parsing './parser/const02.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: const02
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+
+    array types:
+      arrayof <char>>
+      array 30 of <integer>>
+      array 5 of array 30 of <integer>>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ @A        array 5 of array 30 of <integer>>>           A     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ =M        <integer>     ]
+      [ data: 30 ]
+    [ =N        <integer>     ]
+      [ data: 5 ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+  ]]
+  [[ const02
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/const02.mod.pdf ./parser/const02.mod.dot
+
+
+Done.

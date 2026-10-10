@@ -1,0 +1,207 @@
+parsing './parser/array06.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: array06
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+      <ptr(8) to arrayof arrayof <integer>>>>
+      <ptr(8) to array 3 of array 3 of <integer>>>>
+
+    array types:
+      arrayof <char>>
+      arrayof <integer>>
+      arrayof arrayof <integer>>>
+      array 3 of <integer>>
+      array 3 of array 3 of <integer>>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *Init(<ptr(8) to arrayof arrayof <integer>>>>) --> <NULL>     ]
+    [ *Print(<ptr(8) to arrayof arrayof <integer>>>>) --> <NULL>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *Test() --> <NULL>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+  ]]
+  [[ array06
+      0:     call   Test
+  ]]
+
+  [[ procedure: Print
+    [[
+      [ %A        <ptr(8) to arrayof arrayof <integer>>>>       ]
+      [ $M        <integer>       ]
+      [ $N        <integer>       ]
+      [ $i        <integer>       ]
+      [ $j        <integer>       ]
+      [ $t        <integer>       ]
+      [ $t0       <integer>       ]
+      [ $t1       <integer>       ]
+      [ $t2       <integer>       ]
+      [ $t3       <integer>       ]
+      [ $t4       <integer>       ]
+      [ $t5       <integer>       ]
+      [ $t6       <integer>       ]
+      [ $t7       <integer>       ]
+      [ $t8       <integer>       ]
+      [ $t9       <integer>       ]
+    ]]
+    [[ Print
+        0:     param  1 <integer> <- 1 <integer>
+        1:     param  0 <integer> <- A
+        2:     call   t <- DIM
+        3:     assign N <- t
+        4:     param  1 <integer> <- 2 <integer>
+        5:     param  0 <integer> <- A
+        6:     call   t0 <- DIM
+        7:     assign M <- t0
+        8:     assign i <- 0 <integer>
+        9: 4_while_cond:
+       10:     if     i < N goto 5_while_body
+       11:     goto   3
+       12: 5_while_body:
+       13:     assign j <- 0 <integer>
+       14: 9_while_cond:
+       15:     if     j < M goto 10_while_body
+       16:     goto   8
+       17: 10_while_body:
+       18:     param  1 <integer> <- 2 <integer>
+       19:     param  0 <integer> <- A
+       20:     call   t1 <- DIM
+       21:     mul    t2 <- i, t1
+       22:     add    t3 <- t2, j
+       23:     mul    t4 <- t3, 4 <integer>
+       24:     param  0 <integer> <- A
+       25:     call   t5 <- DOFS
+       26:     add    t6 <- t4, t5
+       27:     add    t7 <- A, t6
+       28:     param  0 <integer> <- @t7
+       29:     call   WriteInt
+       30:     call   WriteLn
+       31:     add    t8 <- j, 1 <integer>
+       32:     assign j <- t8
+       33:     goto   9_while_cond
+       34: 8:
+       35:     add    t9 <- i, 1 <integer>
+       36:     assign i <- t9
+       37:     goto   4_while_cond
+       38: 3:
+    ]]
+  ]]
+
+  [[ procedure: Init
+    [[
+      [ $M        <integer>       ]
+      [ $N        <integer>       ]
+      [ %a        <ptr(8) to arrayof arrayof <integer>>>>       ]
+      [ $c        <integer>       ]
+      [ $i        <integer>       ]
+      [ $j        <integer>       ]
+      [ $t        <integer>       ]
+      [ $t0       <integer>       ]
+      [ $t1       <integer>       ]
+      [ $t10      <integer>       ]
+      [ $t2       <integer>       ]
+      [ $t3       <integer>       ]
+      [ $t4       <integer>       ]
+      [ $t5       <integer>       ]
+      [ $t6       <integer>       ]
+      [ $t7       <integer>       ]
+      [ $t8       <integer>       ]
+      [ $t9       <integer>       ]
+    ]]
+    [[ Init
+        0:     param  1 <integer> <- 1 <integer>
+        1:     param  0 <integer> <- a
+        2:     call   t <- DIM
+        3:     assign N <- t
+        4:     param  1 <integer> <- 2 <integer>
+        5:     param  0 <integer> <- a
+        6:     call   t0 <- DIM
+        7:     assign M <- t0
+        8:     assign c <- 0 <integer>
+        9:     assign i <- 0 <integer>
+       10: 5_while_cond:
+       11:     if     i < N goto 6_while_body
+       12:     goto   4
+       13: 6_while_body:
+       14:     assign j <- 0 <integer>
+       15: 10_while_cond:
+       16:     if     j < M goto 11_while_body
+       17:     goto   9
+       18: 11_while_body:
+       19:     param  1 <integer> <- 2 <integer>
+       20:     param  0 <integer> <- a
+       21:     call   t1 <- DIM
+       22:     mul    t2 <- i, t1
+       23:     add    t3 <- t2, j
+       24:     mul    t4 <- t3, 4 <integer>
+       25:     param  0 <integer> <- a
+       26:     call   t5 <- DOFS
+       27:     add    t6 <- t4, t5
+       28:     add    t7 <- a, t6
+       29:     assign @t7 <- c
+       30:     add    t8 <- c, 1 <integer>
+       31:     assign c <- t8
+       32:     add    t9 <- j, 1 <integer>
+       33:     assign j <- t9
+       34:     goto   10_while_cond
+       35: 9:
+       36:     add    t10 <- i, 1 <integer>
+       37:     assign i <- t10
+       38:     goto   5_while_cond
+       39: 4:
+       40:     param  0 <integer> <- a
+       41:     call   Print
+    ]]
+  ]]
+
+  [[ procedure: Test
+    [[
+      [ $t        <ptr(8) to array 3 of array 3 of <integer>>>>       ]
+      [ $t0       <ptr(8) to array 3 of array 3 of <integer>>>>       ]
+      [ $x        array 3 of array 3 of <integer>>>       ]
+    ]]
+    [[ Test
+        0:     param  0 <integer> <- 11111111 <integer>
+        1:     call   WriteInt
+        2:     call   WriteLn
+        3:     &()    t <- x
+        4:     param  0 <integer> <- t
+        5:     call   Print
+        6:     param  0 <integer> <- 22222222 <integer>
+        7:     call   WriteInt
+        8:     call   WriteLn
+        9:     &()    t0 <- x
+       10:     param  0 <integer> <- t0
+       11:     call   Init
+    ]]
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/array06.mod.pdf ./parser/array06.mod.dot
+
+
+Done.

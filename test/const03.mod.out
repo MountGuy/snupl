@@ -1,0 +1,88 @@
+parsing './parser/const03.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: const03
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+      <ptr(8) to array 14 of <char>>>
+      <ptr(8) to array 5 of <char>>>
+
+    array types:
+      arrayof <char>>
+      array 14 of <char>>
+      array 30 of <integer>>
+      array 5 of array 30 of <integer>>>
+      array 5 of <char>>
+  ]]
+  [[
+    [ @#_str_1  array 14 of <char>>     #_str_1     ]
+      [ data: "Hello, world!" ]
+    [ @#_str_2  array 5 of <char>>     #_str_2     ]
+      [ data: "N = " ]
+    [ @#_str_3  array 5 of <char>>     #_str_3     ]
+      [ data: "M = " ]
+    [ #main    <NULL>     ]
+    [ @A        array 5 of array 30 of <integer>>>           A     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ =F        <boolean>     ]
+      [ data: false ]
+    [ =M        <integer>     ]
+      [ data: 30 ]
+    [ =N        <integer>     ]
+      [ data: 5 ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ =S        arrayof <char>>     ]
+      [ data: "Hello, world!" ]
+    [ =T        <boolean>     ]
+      [ data: true ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ $t        <ptr(8) to array 14 of <char>>>     ]
+    [ $t0       <ptr(8) to array 5 of <char>>>     ]
+    [ $t1       <ptr(8) to array 5 of <char>>>     ]
+  ]]
+  [[ const03
+      0:     &()    t <- #_str_1
+      1:     param  0 <integer> <- t
+      2:     call   WriteStr
+      3:     call   WriteLn
+      4:     &()    t0 <- #_str_2
+      5:     param  0 <integer> <- t0
+      6:     call   WriteStr
+      7:     param  0 <integer> <- 5 <integer>
+      8:     call   WriteInt
+      9:     call   WriteLn
+     10:     &()    t1 <- #_str_3
+     11:     param  0 <integer> <- t1
+     12:     call   WriteStr
+     13:     param  0 <integer> <- 30 <integer>
+     14:     call   WriteInt
+     15:     call   WriteLn
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/const03.mod.pdf ./parser/const03.mod.dot
+
+
+Done.

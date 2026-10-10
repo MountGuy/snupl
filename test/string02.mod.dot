@@ -1,0 +1,8 @@
+digraph IR {
+  graph [fontname="Times New Roman",fontsize=10];
+  node  [fontname="Courier New",fontsize=10];
+  edge  [fontname="Times New Roman",fontsize=10];
+
+  // scope 'string02'
+  string02_cb [label="string02\r  0:     &()    t <- #_str_1\l  1:     param  0 <integer> <- t\l  2:     call   WriteStr\l  3:     call   t0 <- ReadInt\l  4:     assign age <- t0\l  5:     &()    t1 <- #_str_2\l  6:     param  0 <integer> <- t1\l  7:     call   WriteStr\l  8:     call   t2 <- ReadInt\l  9:     assign year <- t2\l 10:     &()    t3 <- #_str_3\l 11:     param  0 <integer> <- t3\l 12:     call   WriteStr\l 13:     add    t4 <- year, 100 <integer>\l 14:     sub    t5 <- t4, age\l 15:     param  0 <integer> <- t5\l 16:     call   WriteInt\l 17:     &()    t6 <- #_str_4\l 18:     param  0 <integer> <- t6\l 19:     call   WriteStr\l",shape=box]
+}

@@ -1,0 +1,12 @@
+digraph IR {
+  graph [fontname="Times New Roman",fontsize=10];
+  node  [fontname="Courier New",fontsize=10];
+  edge  [fontname="Times New Roman",fontsize=10];
+
+  // scope 'array03'
+  array03_cb [label="array03\r  0:     param  0 <integer> <- 11111111 <integer>\l  1:     call   WriteInt\l  2:     call   WriteLn\l  3:     call   print\l  4:     &()    t <- A\l  5:     mul    t0 <- 2 <integer>, 4 <integer>\l  6:     &()    t1 <- A\l  7:     param  0 <integer> <- t1\l  8:     call   t2 <- DOFS\l  9:     add    t3 <- t0, t2\l 10:     add    t4 <- t, t3\l 11:     assign @t4 <- 3 <integer>\l 12:     &()    t5 <- A\l 13:     mul    t6 <- 2 <integer>, 4 <integer>\l 14:     &()    t7 <- A\l 15:     param  0 <integer> <- t7\l 16:     call   t8 <- DOFS\l 17:     add    t9 <- t6, t8\l 18:     add    t10 <- t5, t9\l 19:     assign i <- @t10\l 20:     &()    t11 <- A\l 21:     param  1 <integer> <- i\l 22:     param  0 <integer> <- t11\l 23:     call   Set\l 24:     param  0 <integer> <- 22222222 <integer>\l 25:     call   WriteInt\l 26:     call   WriteLn\l 27:     call   print\l",shape=box]
+  // scope 'Set'
+  Set_cb [label="Set\r  0:     mul    t12 <- v, 4 <integer>\l  1:     param  0 <integer> <- P\l  2:     call   t13 <- DOFS\l  3:     add    t14 <- t12, t13\l  4:     add    t15 <- P, t14\l  5:     assign @t15 <- 1 <integer>\l",shape=box]
+  // scope 'print'
+  print_cb [label="print\r  0:     assign i <- 0 <integer>\l  1: 2_while_cond:\l  2:     if     i < 5 <integer> goto 3_while_body\l  3:     goto   1\l  4: 3_while_body:\l  5:     &()    t12 <- A\l  6:     mul    t13 <- i, 4 <integer>\l  7:     &()    t14 <- A\l  8:     param  0 <integer> <- t14\l  9:     call   t15 <- DOFS\l 10:     add    t16 <- t13, t15\l 11:     add    t17 <- t12, t16\l 12:     param  0 <integer> <- @t17\l 13:     call   WriteInt\l 14:     call   WriteLn\l 15:     add    t18 <- i, 1 <integer>\l 16:     assign i <- t18\l 17:     goto   2_while_cond\l 18: 1:\l",shape=box]
+}

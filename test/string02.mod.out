@@ -1,0 +1,90 @@
+parsing './parser/string02.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: string02
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+      <ptr(8) to array 17 of <char>>>
+      <ptr(8) to array 39 of <char>>>
+      <ptr(8) to array 3 of <char>>>
+
+    array types:
+      arrayof <char>>
+      array 17 of <char>>
+      array 39 of <char>>
+      array 3 of <char>>
+  ]]
+  [[
+    [ @#_str_1  array 17 of <char>>     #_str_1     ]
+      [ data: "Enter your age: " ]
+    [ @#_str_2  array 17 of <char>>     #_str_2     ]
+      [ data: "Enter the year: " ]
+    [ @#_str_3  array 39 of <char>>     #_str_3     ]
+      [ data: "You will be 100 years old in the year " ]
+    [ @#_str_4  array 3 of <char>>     #_str_4     ]
+      [ data: ".\n" ]
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ @age      <integer>         age     ]
+    [ $t        <ptr(8) to array 17 of <char>>>     ]
+    [ $t0       <integer>     ]
+    [ $t1       <ptr(8) to array 17 of <char>>>     ]
+    [ $t2       <integer>     ]
+    [ $t3       <ptr(8) to array 39 of <char>>>     ]
+    [ $t4       <integer>     ]
+    [ $t5       <integer>     ]
+    [ $t6       <ptr(8) to array 3 of <char>>>     ]
+    [ @year     <integer>        year     ]
+  ]]
+  [[ string02
+      0:     &()    t <- #_str_1
+      1:     param  0 <integer> <- t
+      2:     call   WriteStr
+      3:     call   t0 <- ReadInt
+      4:     assign age <- t0
+      5:     &()    t1 <- #_str_2
+      6:     param  0 <integer> <- t1
+      7:     call   WriteStr
+      8:     call   t2 <- ReadInt
+      9:     assign year <- t2
+     10:     &()    t3 <- #_str_3
+     11:     param  0 <integer> <- t3
+     12:     call   WriteStr
+     13:     add    t4 <- year, 100 <integer>
+     14:     sub    t5 <- t4, age
+     15:     param  0 <integer> <- t5
+     16:     call   WriteInt
+     17:     &()    t6 <- #_str_4
+     18:     param  0 <integer> <- t6
+     19:     call   WriteStr
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/string02.mod.pdf ./parser/string02.mod.dot
+
+
+Done.

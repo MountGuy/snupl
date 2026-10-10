@@ -1,0 +1,5 @@
+parsing './parser/mytest04.mod'...
+syntax error at 3:17 : expression type is not matched to declaration
+
+
+Done.

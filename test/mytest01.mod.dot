@@ -1,0 +1,12 @@
+digraph IR {
+  graph [fontname="Times New Roman",fontsize=10];
+  node  [fontname="Courier New",fontsize=10];
+  edge  [fontname="Times New Roman",fontsize=10];
+
+  // scope 'test'
+  test_cb [label="test\r",shape=box]
+  // scope 'predefinedTest'
+  predefinedTest_cb [label="predefinedTest\r  0:     param  1 <integer> <- 1 <integer>\l  1:     param  0 <integer> <- A\l  2:     call   t <- DIM\l  3:     assign a <- t\l  4:     param  0 <integer> <- A\l  5:     call   t0 <- DOFS\l  6:     assign b <- t0\l  7:     call   t1 <- ReadInt\l  8:     assign c <- t1\l  9:     call   t2 <- ReadLong\l 10:     assign d <- t2\l 11:     param  0 <integer> <- c\l 12:     call   WriteInt\l 13:     param  0 <integer> <- d\l 14:     call   WriteLong\l 15:     param  0 <integer> <- 97 <char>\l 16:     call   WriteChar\l 17:     &()    t3 <- #_str_1\l 18:     param  0 <integer> <- t3\l 19:     call   WriteStr\l 20:     call   WriteLn\l",shape=box]
+  // scope 'c'
+  c_cb [label="c\r  0:     call   c\l",shape=box]
+}

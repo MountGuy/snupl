@@ -1,0 +1,76 @@
+parsing './parser/char02.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: char02
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+
+    array types:
+      arrayof <char>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ @c        <char>           c     ]
+    [ *compare(<char>) --> <NULL>     ]
+  ]]
+  [[ char02
+      0:     assign c <- 49 <char>
+      1:     param  0 <integer> <- c
+      2:     call   compare
+      3:     param  0 <integer> <- 97 <char>
+      4:     call   compare
+      5:     param  0 <integer> <- 49 <char>
+      6:     call   compare
+      7:     param  0 <integer> <- 0 <char>
+      8:     call   compare
+  ]]
+
+  [[ procedure: compare
+    [[
+      [ %c        <char>       ]
+    ]]
+    [[ compare
+        0:     if     c >= 49 <char> goto 1_if_true
+        1:     goto   2_if_false
+        2: 1_if_true:
+        3:     param  0 <integer> <- 49 <char>
+        4:     call   WriteChar
+        5:     goto   0
+        6: 2_if_false:
+        7:     param  0 <integer> <- 48 <char>
+        8:     call   WriteChar
+        9: 0:
+       10:     call   WriteLn
+    ]]
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/char02.mod.pdf ./parser/char02.mod.dot
+
+
+Done.

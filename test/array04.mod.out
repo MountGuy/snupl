@@ -1,0 +1,199 @@
+parsing './parser/array04.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: array04
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+      <ptr(8) to arrayof arrayof <integer>>>>
+      <ptr(8) to array 3 of array 3 of <integer>>>>
+
+    array types:
+      arrayof <char>>
+      array 3 of <integer>>
+      array 3 of array 3 of <integer>>>
+      arrayof <integer>>
+      arrayof arrayof <integer>>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ @A        array 3 of array 3 of <integer>>>           A     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *Set(<ptr(8) to arrayof arrayof <integer>>>>,<integer>) --> <NULL>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ @i        <integer>           i     ]
+    [ *print() --> <NULL>     ]
+    [ $t        <ptr(8) to array 3 of array 3 of <integer>>>>     ]
+    [ $t0       <ptr(8) to array 3 of array 3 of <integer>>>>     ]
+    [ $t1       <integer>     ]
+    [ $t10      <ptr(8) to array 3 of array 3 of <integer>>>>     ]
+    [ $t11      <integer>     ]
+    [ $t12      <integer>     ]
+    [ $t13      <integer>     ]
+    [ $t14      <integer>     ]
+    [ $t15      <ptr(8) to array 3 of array 3 of <integer>>>>     ]
+    [ $t16      <integer>     ]
+    [ $t17      <integer>     ]
+    [ $t18      <integer>     ]
+    [ $t19      <ptr(8) to array 3 of array 3 of <integer>>>>     ]
+    [ $t2       <integer>     ]
+    [ $t3       <integer>     ]
+    [ $t4       <integer>     ]
+    [ $t5       <ptr(8) to array 3 of array 3 of <integer>>>>     ]
+    [ $t6       <integer>     ]
+    [ $t7       <integer>     ]
+    [ $t8       <integer>     ]
+    [ $t9       <ptr(8) to array 3 of array 3 of <integer>>>>     ]
+  ]]
+  [[ array04
+      0:     param  0 <integer> <- 11111111 <integer>
+      1:     call   WriteInt
+      2:     call   WriteLn
+      3:     call   print
+      4:     &()    t <- A
+      5:     &()    t0 <- A
+      6:     param  1 <integer> <- 2 <integer>
+      7:     param  0 <integer> <- t0
+      8:     call   t1 <- DIM
+      9:     mul    t2 <- 0 <integer>, t1
+     10:     add    t3 <- t2, 0 <integer>
+     11:     mul    t4 <- t3, 4 <integer>
+     12:     &()    t5 <- A
+     13:     param  0 <integer> <- t5
+     14:     call   t6 <- DOFS
+     15:     add    t7 <- t4, t6
+     16:     add    t8 <- t, t7
+     17:     assign @t8 <- 2 <integer>
+     18:     &()    t9 <- A
+     19:     &()    t10 <- A
+     20:     param  1 <integer> <- 2 <integer>
+     21:     param  0 <integer> <- t10
+     22:     call   t11 <- DIM
+     23:     mul    t12 <- 0 <integer>, t11
+     24:     add    t13 <- t12, 0 <integer>
+     25:     mul    t14 <- t13, 4 <integer>
+     26:     &()    t15 <- A
+     27:     param  0 <integer> <- t15
+     28:     call   t16 <- DOFS
+     29:     add    t17 <- t14, t16
+     30:     add    t18 <- t9, t17
+     31:     assign i <- @t18
+     32:     &()    t19 <- A
+     33:     param  1 <integer> <- i
+     34:     param  0 <integer> <- t19
+     35:     call   Set
+     36:     param  0 <integer> <- 22222222 <integer>
+     37:     call   WriteInt
+     38:     call   WriteLn
+     39:     call   print
+  ]]
+
+  [[ procedure: Set
+    [[
+      [ %P        <ptr(8) to arrayof arrayof <integer>>>>       ]
+      [ $t20      <integer>       ]
+      [ $t21      <integer>       ]
+      [ $t22      <integer>       ]
+      [ $t23      <integer>       ]
+      [ $t24      <integer>       ]
+      [ $t25      <integer>       ]
+      [ $t26      <integer>       ]
+      [ %v        <integer>       ]
+    ]]
+    [[ Set
+        0:     param  1 <integer> <- 2 <integer>
+        1:     param  0 <integer> <- P
+        2:     call   t20 <- DIM
+        3:     mul    t21 <- v, t20
+        4:     add    t22 <- t21, v
+        5:     mul    t23 <- t22, 4 <integer>
+        6:     param  0 <integer> <- P
+        7:     call   t24 <- DOFS
+        8:     add    t25 <- t23, t24
+        9:     add    t26 <- P, t25
+       10:     assign @t26 <- 1 <integer>
+    ]]
+  ]]
+
+  [[ procedure: print
+    [[
+      [ $i        <integer>       ]
+      [ $j        <integer>       ]
+      [ $t20      <ptr(8) to array 3 of array 3 of <integer>>>>       ]
+      [ $t21      <ptr(8) to array 3 of array 3 of <integer>>>>       ]
+      [ $t22      <integer>       ]
+      [ $t23      <integer>       ]
+      [ $t24      <integer>       ]
+      [ $t25      <integer>       ]
+      [ $t26      <ptr(8) to array 3 of array 3 of <integer>>>>       ]
+      [ $t27      <integer>       ]
+      [ $t28      <integer>       ]
+      [ $t29      <integer>       ]
+      [ $t30      <integer>       ]
+      [ $t31      <integer>       ]
+    ]]
+    [[ print
+        0:     assign i <- 0 <integer>
+        1: 2_while_cond:
+        2:     if     i < 3 <integer> goto 3_while_body
+        3:     goto   1
+        4: 3_while_body:
+        5:     assign j <- 0 <integer>
+        6: 7_while_cond:
+        7:     if     j < 3 <integer> goto 8_while_body
+        8:     goto   6
+        9: 8_while_body:
+       10:     &()    t20 <- A
+       11:     &()    t21 <- A
+       12:     param  1 <integer> <- 2 <integer>
+       13:     param  0 <integer> <- t21
+       14:     call   t22 <- DIM
+       15:     mul    t23 <- i, t22
+       16:     add    t24 <- t23, j
+       17:     mul    t25 <- t24, 4 <integer>
+       18:     &()    t26 <- A
+       19:     param  0 <integer> <- t26
+       20:     call   t27 <- DOFS
+       21:     add    t28 <- t25, t27
+       22:     add    t29 <- t20, t28
+       23:     param  0 <integer> <- @t29
+       24:     call   WriteInt
+       25:     add    t30 <- j, 1 <integer>
+       26:     assign j <- t30
+       27:     goto   7_while_cond
+       28: 6:
+       29:     add    t31 <- i, 1 <integer>
+       30:     assign i <- t31
+       31:     goto   2_while_cond
+       32: 1:
+       33:     call   WriteLn
+    ]]
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/array04.mod.pdf ./parser/array04.mod.dot
+
+
+Done.

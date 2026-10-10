@@ -1,0 +1,62 @@
+parsing './parser/string01.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: string01
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+      <ptr(8) to array 14 of <char>>>
+      <ptr(8) to array 23 of <char>>>
+
+    array types:
+      arrayof <char>>
+      array 14 of <char>>
+      array 23 of <char>>
+  ]]
+  [[
+    [ @#_str_1  array 14 of <char>>     #_str_1     ]
+      [ data: "Hello, world\n" ]
+    [ @#_str_2  array 23 of <char>>     #_str_2     ]
+      [ data: "This is pretty nice!\n\n" ]
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ $t        <ptr(8) to array 14 of <char>>>     ]
+    [ $t0       <ptr(8) to array 23 of <char>>>     ]
+  ]]
+  [[ string01
+      0:     &()    t <- #_str_1
+      1:     param  0 <integer> <- t
+      2:     call   WriteStr
+      3:     &()    t0 <- #_str_2
+      4:     param  0 <integer> <- t0
+      5:     call   WriteStr
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/string01.mod.pdf ./parser/string01.mod.dot
+
+
+Done.

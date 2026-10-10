@@ -1,0 +1,168 @@
+parsing './parser/char03.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: char03
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+
+    array types:
+      arrayof <char>>
+  ]]
+  [[
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *PrintInt(<integer>) --> <NULL>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ @i        <integer>           i     ]
+    [ $t        <integer>     ]
+  ]]
+  [[ char03
+      0:     assign i <- 1 <integer>
+      1: 2_while_cond:
+      2:     if     i # 0 <integer> goto 3_while_body
+      3:     goto   1
+      4: 3_while_body:
+      5:     call   t <- ReadInt
+      6:     assign i <- t
+      7:     param  0 <integer> <- i
+      8:     call   PrintInt
+      9:     call   WriteLn
+     10:     goto   2_while_cond
+     11: 1:
+  ]]
+
+  [[ procedure: PrintInt
+    [[
+      [ $r        <integer>       ]
+      [ $t0       <integer>       ]
+      [ $t1       <integer>       ]
+      [ $t2       <integer>       ]
+      [ $t3       <integer>       ]
+      [ %v        <integer>       ]
+    ]]
+    [[ PrintInt
+        0:     div    t0 <- v, 10 <integer>
+        1:     mul    t1 <- t0, 10 <integer>
+        2:     sub    t2 <- v, t1
+        3:     assign r <- t2
+        4:     div    t3 <- v, 10 <integer>
+        5:     assign v <- t3
+        6:     if     v > 0 <integer> goto 3_if_true
+        7:     goto   4_if_false
+        8: 3_if_true:
+        9:     param  0 <integer> <- v
+       10:     call   PrintInt
+       11:     goto   2
+       12: 4_if_false:
+       13: 2:
+       14:     if     r = 0 <integer> goto 8_if_true
+       15:     goto   9_if_false
+       16: 8_if_true:
+       17:     param  0 <integer> <- 48 <char>
+       18:     call   WriteChar
+       19:     goto   7
+       20: 9_if_false:
+       21: 7:
+       22:     if     r = 1 <integer> goto 13_if_true
+       23:     goto   14_if_false
+       24: 13_if_true:
+       25:     param  0 <integer> <- 49 <char>
+       26:     call   WriteChar
+       27:     goto   12
+       28: 14_if_false:
+       29: 12:
+       30:     if     r = 2 <integer> goto 18_if_true
+       31:     goto   19_if_false
+       32: 18_if_true:
+       33:     param  0 <integer> <- 50 <char>
+       34:     call   WriteChar
+       35:     goto   17
+       36: 19_if_false:
+       37: 17:
+       38:     if     r = 3 <integer> goto 23_if_true
+       39:     goto   24_if_false
+       40: 23_if_true:
+       41:     param  0 <integer> <- 51 <char>
+       42:     call   WriteChar
+       43:     goto   22
+       44: 24_if_false:
+       45: 22:
+       46:     if     r = 4 <integer> goto 28_if_true
+       47:     goto   29_if_false
+       48: 28_if_true:
+       49:     param  0 <integer> <- 52 <char>
+       50:     call   WriteChar
+       51:     goto   27
+       52: 29_if_false:
+       53: 27:
+       54:     if     r = 5 <integer> goto 33_if_true
+       55:     goto   34_if_false
+       56: 33_if_true:
+       57:     param  0 <integer> <- 53 <char>
+       58:     call   WriteChar
+       59:     goto   32
+       60: 34_if_false:
+       61: 32:
+       62:     if     r = 6 <integer> goto 38_if_true
+       63:     goto   39_if_false
+       64: 38_if_true:
+       65:     param  0 <integer> <- 54 <char>
+       66:     call   WriteChar
+       67:     goto   37
+       68: 39_if_false:
+       69: 37:
+       70:     if     r = 7 <integer> goto 43_if_true
+       71:     goto   44_if_false
+       72: 43_if_true:
+       73:     param  0 <integer> <- 55 <char>
+       74:     call   WriteChar
+       75:     goto   42
+       76: 44_if_false:
+       77: 42:
+       78:     if     r = 8 <integer> goto 48_if_true
+       79:     goto   49_if_false
+       80: 48_if_true:
+       81:     param  0 <integer> <- 56 <char>
+       82:     call   WriteChar
+       83:     goto   47
+       84: 49_if_false:
+       85: 47:
+       86:     if     r = 9 <integer> goto 53_if_true
+       87:     goto   54_if_false
+       88: 53_if_true:
+       89:     param  0 <integer> <- 57 <char>
+       90:     call   WriteChar
+       91:     goto   52
+       92: 54_if_false:
+       93: 52:
+    ]]
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/char03.mod.pdf ./parser/char03.mod.dot
+
+
+Done.

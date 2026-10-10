@@ -1,0 +1,106 @@
+parsing './parser/mytest01.mod'...
+successfully parsed.
+running semantic analysis...
+semantic analysis completed.
+converting to TAC...
+[[ module: test
+  [[ type manager
+    base types:
+      <NULL>
+      <boolean>
+      <char>
+      <integer>
+      <longint>
+      <ptr(8) to <NULL>>
+
+    machine register type:
+      <longint>
+
+    pointer types:
+      <ptr(8) to <NULL>>
+      <ptr(8) to arrayof <char>>>
+      <ptr(8) to arrayof arrayof <integer>>>>
+      <ptr(8) to array 12 of <char>>>
+
+    array types:
+      arrayof <char>>
+      arrayof <integer>>
+      arrayof arrayof <integer>>>
+      array 12 of <char>>
+  ]]
+  [[
+    [ @#_str_1  array 12 of <char>>     #_str_1     ]
+      [ data: "string test" ]
+    [ #main    <NULL>     ]
+    [ *DIM(<ptr(8) to <NULL>>,<integer>) --> <integer>     ]
+    [ *DOFS(<ptr(8) to <NULL>>) --> <integer>     ]
+    [ *ReadInt() --> <integer>     ]
+    [ *ReadLong() --> <longint>     ]
+    [ *WriteChar(<char>) --> <NULL>     ]
+    [ *WriteInt(<integer>) --> <NULL>     ]
+    [ *WriteLn() --> <NULL>     ]
+    [ *WriteLong(<longint>) --> <NULL>     ]
+    [ *WriteStr(<ptr(8) to arrayof <char>>>) --> <NULL>     ]
+    [ *c() --> <NULL>     ]
+    [ *predefinedTest(<ptr(8) to arrayof arrayof <integer>>>>) --> <NULL>     ]
+  ]]
+  [[ test
+  ]]
+
+  [[ procedure: predefinedTest
+    [[
+      [ %A        <ptr(8) to arrayof arrayof <integer>>>>       ]
+      [ $a        <integer>       ]
+      [ $b        <integer>       ]
+      [ $c        <integer>       ]
+      [ $d        <longint>       ]
+      [ =e        <char>       ]
+        [ data: 'a' ]
+      [ =f        arrayof <char>>       ]
+        [ data: "string test" ]
+      [ $t        <integer>       ]
+      [ $t0       <integer>       ]
+      [ $t1       <integer>       ]
+      [ $t2       <longint>       ]
+      [ $t3       <ptr(8) to array 12 of <char>>>       ]
+    ]]
+    [[ predefinedTest
+        0:     param  1 <integer> <- 1 <integer>
+        1:     param  0 <integer> <- A
+        2:     call   t <- DIM
+        3:     assign a <- t
+        4:     param  0 <integer> <- A
+        5:     call   t0 <- DOFS
+        6:     assign b <- t0
+        7:     call   t1 <- ReadInt
+        8:     assign c <- t1
+        9:     call   t2 <- ReadLong
+       10:     assign d <- t2
+       11:     param  0 <integer> <- c
+       12:     call   WriteInt
+       13:     param  0 <integer> <- d
+       14:     call   WriteLong
+       15:     param  0 <integer> <- 97 <char>
+       16:     call   WriteChar
+       17:     &()    t3 <- #_str_1
+       18:     param  0 <integer> <- t3
+       19:     call   WriteStr
+       20:     call   WriteLn
+    ]]
+  ]]
+
+  [[ procedure: c
+    [[
+      [ $d        <integer>       ]
+    ]]
+    [[ c
+        0:     call   c
+    ]]
+  ]]
+]]
+
+run the following command to convert the .dot file into a PDF:
+  dot -Tpdf -o./parser/mytest01.mod.pdf ./parser/mytest01.mod.dot
+
+
+Done.
